@@ -168,7 +168,7 @@ namespace sprogar {
                     ASSERT(C == Cortex{});  // Requires deep comparison in operator==
                 },
                 [](time_t) {
-                    clog << "#2 Emergence (Bias emerges from the inputs and experiences.)\n";
+                    clog << "#2 Knowledge (Bias emerges from the inputs.)\n";
 
                     Cortex C;
                     C << generate_random_pattern();
@@ -186,7 +186,7 @@ namespace sprogar {
                     ASSERT(C == D);
                 },
                 [](time_t) {
-                    clog << "#4 Time (The ordering of inputs affects the system.)\n";
+                    clog << "#4 Time (The order of inputs is crucial.)\n";
                     const Pattern pattern = generate_random_pattern(), patteRn = helpers::mutate(pattern);
 
                     Cortex C, D;
@@ -196,7 +196,7 @@ namespace sprogar {
                     ASSERT(C != D);
                 },
                 [](time_t) {
-                    clog << "#5 Sensitivity (The system behaves as a chaotic system.)\n";
+                    clog << "#5 Sensitivity (The cortex behaves as a chaotic system.)\n";
                     const Pattern initial_condition = generate_random_pattern(), mutated_condition = helpers::mutate(initial_condition);
                     const TemporalSequence<Pattern> life = generate_random_sequence(SimulatedInfinity);
 
