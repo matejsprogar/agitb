@@ -56,6 +56,101 @@ namespace sprogar {
                 pattern[random_index] = !pattern[random_index];
                 return pattern;
             }
+
+            template <typename Cortex, typename Pattern, size_t SimulatedInfinity>
+            class TestbedBase
+            {
+            public:
+                using time_t = size_t;
+                template <typename T> using TemporalSequence = std::vector<T>;
+
+                // Each bit in the pattern is set randomly unless explicitly required to remain off.
+                template<std::same_as<Pattern>... Patterns>
+                static Pattern generate_random_pattern(const Patterns&... off)
+                {
+                    static thread_local std::mt19937 generator{ std::random_device{}() };
+                    static std::bernoulli_distribution bd(0.5);
+
+                    Pattern pattern;
+                    for (size_t i = 0; i < Pattern::size(); ++i)
+                        if (!(false | ... | off[i]))
+                            pattern[i] = bd(generator);
+
+                    return pattern;
+                }
+                static TemporalSequence<Pattern> generate_random_sequence(time_t temporal_sequence_length)
+                {
+                    assert(temporal_sequence_length > 0);
+                    TemporalSequence<Pattern> sequence;
+                    sequence.reserve(temporal_sequence_length);
+
+                    sequence.push_back(generate_random_pattern());
+                    while (sequence.size() < temporal_sequence_length)
+                        sequence.push_back(generate_random_pattern(sequence.back()));
+
+                    return sequence;
+                }
+                static TemporalSequence<Pattern> generate_circular_random_sequence(time_t circle_length)
+                {
+                    assert(circle_length > 1);
+                    TemporalSequence<Pattern> sequence = generate_random_sequence(circle_length);
+
+                    sequence.pop_back();
+                    sequence.push_back(generate_random_pattern(sequence.back(), sequence.front()));
+
+                    return sequence;
+                }
+                static TemporalSequence<Pattern> generate_random_learnable_sequence(time_t temporal_sequence_length)
+                {
+                    while (true) {
+                        Cortex C;
+                        TemporalSequence<Pattern> sequence = generate_circular_random_sequence(temporal_sequence_length);
+                        if (adapt(C, sequence))
+                            return sequence;
+                    }
+                }
+                static Cortex generate_random_cortex(time_t random_strength)
+                {
+                    Cortex C;
+                    C << generate_random_sequence(random_strength);
+                    return C;
+                }
+
+                static TemporalSequence<Pattern> behaviour(Cortex& C, time_t output_size = SimulatedInfinity)
+                {
+                    TemporalSequence<Pattern> predictions;
+                    predictions.reserve(output_size);
+
+                    while (predictions.size() < output_size) {
+                        predictions.push_back(C.predict());
+                        C << predictions.back();
+                    }
+                    return predictions;
+                }
+                static TemporalSequence<Pattern> predict(Cortex& C, const TemporalSequence<Pattern>& inputs)
+                {
+                    TemporalSequence<Pattern> predictions;
+                    predictions.reserve(inputs.size());
+
+                    for (const Pattern& in : inputs) {
+                        predictions.push_back(C.predict());
+                        C << in;
+                    }
+                    return predictions;
+                }
+                static time_t time_to_repeat(Cortex& C, const TemporalSequence<Pattern>& inputs)
+                {
+                    for (time_t time = 0; time < SimulatedInfinity; time += inputs.size()) {
+                        if (predict(C, inputs) == inputs)
+                            return time;
+                    }
+                    return SimulatedInfinity;
+                }
+                static bool adapt(Cortex& C, const TemporalSequence<Pattern>& inputs)
+                {
+                    return time_to_repeat(C, inputs) < SimulatedInfinity;
+                }
+            };
         }
     }
 }
