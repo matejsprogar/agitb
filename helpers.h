@@ -43,7 +43,7 @@ namespace sprogar {
             template <BitProvider Pattern>
             size_t count_matches(const Pattern& a, const Pattern& b)
             {
-                return std::ranges::count_if(std::views::iota(0ull, Pattern::size()), [&](size_t i) { return a[i] == b[i]; });
+                return std::ranges::count_if(std::views::iota(0ul, Pattern::size()), [&](size_t i) { return a[i] == b[i]; });
             }
 
             template <BitProvider Pattern>
