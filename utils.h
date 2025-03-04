@@ -18,6 +18,7 @@
  * */
 #pragma once
 
+#include <string>
 #include <format>
 #include <algorithm>
 #include <ranges>
@@ -32,6 +33,8 @@ namespace sprogar {
     namespace AGI {
         using time_t = size_t;
         using std::vector;
+        
+        const int impossible_task = 42;
     
         template <typename T, std::ranges::range Range>
             requires InputPredictor<T, std::ranges::range_value_t<Range>>
@@ -63,7 +66,7 @@ namespace sprogar {
                 return pattern;
             }
 
-            // Each bit in the pattern is set randomly unless explicitly required to remain off.
+            // Returns a pattern where each bit is set randomly unless explicitly required to remain off.
             template<std::same_as<Pattern>... Patterns>
             static Pattern random_pattern(const Patterns&... off)
             {
@@ -77,7 +80,7 @@ namespace sprogar {
                 return pattern;
             }
             
-            // Generates a random sequence of patterns with a specified length.
+            // Returns a random sequence of patterns with a specified length.
             static vector<Pattern> random_sequence(time_t temporal_sequence_length)
             {
                 assert(temporal_sequence_length > 0);
@@ -92,7 +95,8 @@ namespace sprogar {
                 return sequence;
             }
             
-            // Generates a random sequence of patterns with a specified length that exhibits a circular property.
+            // Returns a random sequence of patterns with a specified length, exhibiting a circular property 
+            // where the first pattern incorporates refractory periods for the last pattern in the sequence.
             static vector<Pattern> circular_random_sequence(time_t circle_length)
             {
                 assert(circle_length > 1);
@@ -105,16 +109,17 @@ namespace sprogar {
                 return sequence;
             }
             
-            // Generates a learnable random sequence of patterns with a specified length.
+            // Returns a learnable random sequence of patterns with a specified length.
             static vector<Pattern> learnable_random_sequence(time_t temporal_sequence_length)
             {
-                while (true) {
+                for (time_t time = 0; time < SimulatedInfinity; ++time) {
                     Cortex C;
                     vector<Pattern> sequence = circular_random_sequence(temporal_sequence_length);
                     
                     if (adapt(C, sequence)) // not every circular sequence is inherently learnable.
                         return sequence;
                 }
+                throw "Unable to find a learnable sequence of patterns."s;
             }
             
             // Creates a randomly initialized cortex object.

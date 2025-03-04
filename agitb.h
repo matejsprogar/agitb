@@ -51,10 +51,16 @@ namespace sprogar {
                 std::clog << "Artificial Intelligence Testbed:\n"
                      << "Conducting tests on temporal sequences of " << temporal_sequence_length << " patterns\n\n";
 
-                for (const auto& test : testbed)
-                    test(temporal_sequence_length);
+                try {
+                    for (const auto& test : testbed)
+                        test(temporal_sequence_length);
 
-                std::clog << green("PASS") << std::endl << std::endl;
+                    std::clog << green("PASS") << std::endl << std::endl;
+                }
+                catch (std::string msg) {
+                    std::clog << red("Error: ") << msg << std::endl;
+                    exit(-1);
+                }
             }
             static time_t achievable_sequence_length()
             {
@@ -96,7 +102,7 @@ namespace sprogar {
                     ASSERT(C == D);
                 },
                 [](time_t) {
-                    std::clog << "#4 Time (The order of inputs is crucial.)\n";
+                    std::clog << "#4 Time (The input order is inherently temporal and crucial to the process.)\n";
                     const Pattern pattern = util::random_pattern();
                     const Pattern patteRn = util::mutate(pattern);
 
@@ -131,7 +137,7 @@ namespace sprogar {
                     ASSERT(not util::adapt(D, consecutive_spikes));
                 },
                 [](time_t temporal_sequence_length) {
-                    std::clog << "#7 Scalability (The system can util::adapt to util::predict longer sequences.)\n";
+                    std::clog << "#7 Scalability (The system can adapt to predict longer sequences.)\n";
                     auto can_adapt_to_longer_sequences = [&]() -> bool {
                         for (time_t time = 0; time < SimulatedInfinity; ++time) {
                             Cortex C;
