@@ -27,10 +27,8 @@
 #include "concepts.h"
 #include "utils.h"
 
-
-#define ASSERT(expression) (void)((!!(expression)) || (std::cerr << red("Assertion failed ") \
-	<< __FILE__ << "\nLine " << __LINE__ << ": " << #expression << std::endl, exit(-1), 0))
-
+#define ASSERT(expression) (void)((!!(expression)) || \
+            (throw std::runtime_error(std::format("Assertion failed in {}.\nLine {}: {}", __FILE__, __LINE__, #expression)), 0))
 
 
 namespace sprogar {
@@ -57,8 +55,8 @@ namespace sprogar {
 
                     std::clog << green("PASS") << std::endl << std::endl;
                 }
-                catch (std::string msg) {
-                    std::clog << red("Error: ") << msg << std::endl;
+                catch (const std::runtime_error& err) {
+                    std::clog << red("Error: ") << err.what() << std::endl;
                     exit(-1);
                 }
             }

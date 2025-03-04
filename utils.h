@@ -33,6 +33,7 @@ namespace sprogar {
     namespace AGI {
         using time_t = size_t;
         using std::vector;
+        using namespace std::literals;
         
         const int impossible_task = 42;
     
@@ -119,7 +120,7 @@ namespace sprogar {
                     if (adapt(C, sequence)) // not every circular sequence is inherently learnable.
                         return sequence;
                 }
-                throw "Unable to find a learnable sequence of patterns."s;
+                throw std::runtime_error{ "Unable to find any learnable sequence of patterns." };
             }
             
             // Creates a randomly initialized cortex object.
