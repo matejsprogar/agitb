@@ -27,8 +27,8 @@
 #include "concepts.h"
 #include "utils.h"
 
-#define ASSERT(expression) (void)((!!(expression)) || \
-            (std::clog << red("Assertion failed") << std::format(" in {}.\nLine {}: {}", __FILE__, __LINE__, #expression), exit(-1), 0))
+#define ASSERT(expression) (void)((!!(expression)) || (std::clog << red("Assertion failed in ") \
+        << __FILE__ << "\nLine " << __LINE__ << ": " << #expression, exit(-1), 0))
 
 
 namespace sprogar {
