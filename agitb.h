@@ -129,7 +129,7 @@ namespace sprogar {
                     ASSERT(not util::adapt(D, consecutive_spikes));
                 },
                 [](time_t temporal_sequence_length) {
-                    std::clog << "#7 Scalability (The system can adapt to predict longer sequences.)\n";
+                    std::clog << "#7 Scalability (The system can adapt to predict also longer sequences.)\n";
                     
                     ASSERT(!util::learnable_random_sequence(temporal_sequence_length + 1).empty());
                 },
