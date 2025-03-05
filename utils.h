@@ -120,7 +120,7 @@ namespace sprogar {
                     if (adapt(C, sequence)) // not every circular sequence is inherently learnable.
                         return sequence;
                 }
-                throw std::runtime_error{ "Unable to find any learnable sequence of patterns." };
+                return vector<Pattern>{};
             }
             
             // Creates a randomly initialized cortex object.
