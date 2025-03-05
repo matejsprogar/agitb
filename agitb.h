@@ -31,6 +31,7 @@
         << __FILE__ << "\nLine " << __LINE__ << ": " << #expression, exit(-1), 0))
 
 
+
 namespace sprogar {
     namespace AGI {
         using std::vector;
@@ -188,7 +189,7 @@ namespace sprogar {
                     ASSERT(learning_time_can_differ_across_cortices());   // rejects the null hypothesis
                 },
                 [](time_t temporal_sequence_length) {
-                    std::clog << "#11 Unobservability (Different internal states can produce identical util::behaviour.)\n";
+                    std::clog << "#11 Unobservability (Different internal states can produce identical behaviour.)\n";
                     // Null Hypothesis: "Different cortices cannot produce identical behavior."
                     auto behaviour_can_be_identical_across_cortices = [&]() -> bool {
                         const time_t nontrivial_problem_size = 2;
@@ -211,7 +212,7 @@ namespace sprogar {
                     ASSERT(behaviour_can_be_identical_across_cortices());   // rejects the null hypothesis
                 },
                 [](time_t temporal_sequence_length) {
-                    std::clog << "#12 Advantage (Adapted models util::predict more accurately.)\n";
+                    std::clog << "#12 Advantage (Adapted models predict more accurately.)\n";
                     
                     size_t average_adapted_score = 0, average_unadapted_score = 0;
                     for (time_t time = 0; time < SimulatedInfinity; ++time) {
