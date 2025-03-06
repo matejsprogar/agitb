@@ -33,7 +33,7 @@ namespace sprogar {
     namespace AGI {
         using time_t = size_t;
         using std::vector;
-        using namespace std::literals;
+        using std::string;
         
         const int impossible_task = 42;
     
@@ -44,6 +44,12 @@ namespace sprogar {
                 target << elt;
             return target;
         }
+        
+        class Error : public std::runtime_error
+        {
+        public:
+            Error(const string& file, int line, const string& msg) : std::runtime_error{std::format(" in {}\nLine {}: {}", file, line, msg)} {}
+        };
 
         template <typename Cortex, typename Pattern, size_t SimulatedInfinity>
             requires InputPredictor<Cortex, Pattern> and BitProvider<Pattern>
@@ -120,7 +126,7 @@ namespace sprogar {
                     if (adapt(C, sequence)) // not every circular sequence is inherently learnable.
                         return sequence;
                 }
-                return vector<Pattern>{};
+                throw Error(__FILE__, __LINE__, std::format("Unable to find a learnable sequence of {} patterns.", temporal_sequence_length));
             }
             
             // Creates a randomly initialized cortex object.

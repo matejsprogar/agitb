@@ -27,8 +27,7 @@
 #include "concepts.h"
 #include "utils.h"
 
-#define ASSERT(expression) (void)((!!(expression)) || (std::clog << red("Assertion failed in ") \
-        << __FILE__ << "\nLine " << __LINE__ << ": " << #expression, exit(-1), 0))
+#define ASSERT(expression) (void)((!!(expression)) || (throw AGI::Error(__FILE__, __LINE__, #expression), 0))
 
 
 
@@ -50,10 +49,15 @@ namespace sprogar {
                 std::clog << "Artificial Intelligence Testbed:\n"
                      << "Conducting tests on temporal sequences of " << temporal_sequence_length << " patterns\n\n";
 
-                for (const auto& test : testbed)
-                    test(temporal_sequence_length);
+                try {
+                    for (const auto& test : testbed)
+                        test(temporal_sequence_length);
 
-                std::clog << green("PASS") << std::endl << std::endl;
+                    std::clog << green("PASS") << std::endl << std::endl;
+                }
+                catch (const Error& err) {
+                    std::clog << red("Assertion failed") << err.what() << std::endl;
+                }
             }
             static time_t achievable_sequence_length()
             {
@@ -132,14 +136,15 @@ namespace sprogar {
                 [](time_t temporal_sequence_length) {
                     std::clog << "#7 Scalability (The system can adapt to predict also longer sequences.)\n";
                     
-                    ASSERT(!util::learnable_random_sequence(temporal_sequence_length + 1).empty());
+                    util::learnable_random_sequence(temporal_sequence_length + 1);  // throw
+                    
+                    ASSERT(true);   // nothrow
                 },
                 [](time_t temporal_sequence_length) {
                     std::clog << "#8 Stagnation (You can't teach an old dog new tricks.)\n";
                     auto indefinitely_adaptable = [&](Cortex& dog) -> bool {
                         for (time_t time = 0; time < SimulatedInfinity; ++time) {
                             vector<Pattern> new_trick = util::learnable_random_sequence(temporal_sequence_length);
-                            ASSERT(!new_trick.empty());
                             if (not util::adapt(dog, new_trick))
                                 return false;
                         }
@@ -173,7 +178,6 @@ namespace sprogar {
                     // Null Hypothesis: Learning time is independent of the state of the cortex
                     auto learning_time_can_differ_across_cortices = [&]() -> bool {
                         const vector<Pattern> target_sequence = util::learnable_random_sequence(temporal_sequence_length);
-                        ASSERT(!target_sequence.empty());
 
                         Cortex D;
                         const time_t default_time = util::time_to_repeat(D, target_sequence);
@@ -196,7 +200,6 @@ namespace sprogar {
 
                         for (time_t time = 0; time < SimulatedInfinity; ++time) {
                             const vector<Pattern> target_behaviour = util::learnable_random_sequence(nontrivial_problem_size);
-                            ASSERT(!target_behaviour.empty());
                             
                             Cortex C, R = util::random_cortex(temporal_sequence_length);
                             util::adapt(C, target_behaviour);
@@ -217,7 +220,6 @@ namespace sprogar {
                     size_t average_adapted_score = 0, average_unadapted_score = 0;
                     for (time_t time = 0; time < SimulatedInfinity; ++time) {
                         const vector<Pattern> facts = util::learnable_random_sequence(temporal_sequence_length);
-                        ASSERT(!facts.empty());
                         const Pattern disruption = util::random_pattern();
                         const Pattern expectation = facts[0];
 
