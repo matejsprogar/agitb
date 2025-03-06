@@ -218,7 +218,7 @@ namespace sprogar {
                 [](time_t temporal_sequence_length) {
                     std::clog << "#12 Advantage (Adapted models predict more accurately.)\n";
                     
-                    size_t average_adapted_score = 0, average_unadapted_score = 0;
+                    size_t total_adapted_score = 0, total_unadapted_score = 0;
                     for (time_t time = 0; time < SimulatedInfinity; ++time) {
                         const vector<Pattern> facts = util::learnable_random_sequence(temporal_sequence_length);
                         const Pattern disruption = util::random_pattern();
@@ -227,14 +227,14 @@ namespace sprogar {
                         Cortex A;
                         util::adapt(A, facts);
                         A << disruption << facts;
-                        average_adapted_score += util::count_matches(A.predict(), expectation);
+                        total_adapted_score += util::count_matches(A.predict(), expectation);
 
                         Cortex U;
                         U << disruption << facts;
-                        average_unadapted_score += util::count_matches(U.predict(), expectation);
+                        total_unadapted_score += util::count_matches(U.predict(), expectation);
                     }
 
-                    ASSERT(average_adapted_score > average_unadapted_score);
+                    ASSERT(total_adapted_score > total_unadapted_score);
                 }            
             };
         };
