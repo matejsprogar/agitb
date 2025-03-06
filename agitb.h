@@ -57,6 +57,7 @@ namespace sprogar {
                 }
                 catch (const Error& err) {
                     std::clog << red("Assertion failed") << err.what() << std::endl;
+                    exit(-1);
                 }
             }
             static time_t achievable_sequence_length()
@@ -110,7 +111,7 @@ namespace sprogar {
                     ASSERT(C != D);
                 },
                 [](time_t) {
-                    std::clog << "#5 Sensitivity (The cortex behaves as a chaotic system.)\n";
+                    std::clog << "#5 Sensitivity (The cortex exhibits chaos-like sensitivity to initial conditions.)\n";
                     const Pattern initial_condition = util::random_pattern();
                     const Pattern mutated_condition = util::mutate(initial_condition);
                     const vector<Pattern> life = util::random_sequence(SimulatedInfinity);
