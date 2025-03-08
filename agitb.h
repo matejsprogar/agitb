@@ -100,18 +100,7 @@ namespace sprogar {
                     ASSERT(C == D);
                 },
                 [](time_t) {
-                    std::clog << "#4 Time (The input order is inherently temporal and crucial to the process.)\n";
-                    const Pattern pattern = util::random_pattern();
-                    const Pattern patteRn = util::mutate(pattern);
-
-                    Cortex C, D;
-                    C << pattern << patteRn;
-                    D << patteRn << pattern;
-
-                    ASSERT(C != D);
-                },
-                [](time_t) {
-                    std::clog << "#5 Sensitivity (The cortex exhibits chaos-like sensitivity to initial conditions.)\n";
+                    std::clog << "#4 Sensitivity (The cortex exhibits chaos-like sensitivity to initial conditions.)\n";
                     const Pattern initial_condition = util::random_pattern();
                     const Pattern mutated_condition = util::mutate(initial_condition);
                     const vector<Pattern> life = util::random_sequence(SimulatedInfinity);
@@ -119,6 +108,17 @@ namespace sprogar {
                     Cortex C, D;
                     C << initial_condition << life;
                     D << mutated_condition << life;
+
+                    ASSERT(C != D);
+                },
+                [](time_t) {
+                    std::clog << "#5 Time (The input order is inherently temporal and crucial to the process.)\n";
+                    const Pattern pattern = util::random_pattern();
+                    const Pattern patteRn = util::mutate(pattern);
+
+                    Cortex C, D;
+                    C << pattern << patteRn;
+                    D << patteRn << pattern;
 
                     ASSERT(C != D);
                 },
@@ -179,7 +179,6 @@ namespace sprogar {
                     // Null Hypothesis: Learning time is independent of the state of the cortex
                     auto learning_time_can_differ_across_cortices = [&]() -> bool {
                         const vector<Pattern> target_sequence = util::learnable_random_sequence(temporal_sequence_length);
-
                         Cortex D;
                         const time_t default_time = util::time_to_repeat(D, target_sequence);
                         for (time_t time = 0; time < SimulatedInfinity; ++time) {
@@ -197,12 +196,11 @@ namespace sprogar {
                     std::clog << "#11 Unobservability (Different internal states can produce identical behaviour.)\n";
                     // Null Hypothesis: "Different cortices cannot produce identical behavior."
                     auto behaviour_can_be_identical_across_cortices = [&]() -> bool {
-                        const time_t nontrivial_problem_size = 2;
-
+                        const time_t nontrivial_problem_length = 2;
                         for (time_t time = 0; time < SimulatedInfinity; ++time) {
-                            const vector<Pattern> target_behaviour = util::learnable_random_sequence(nontrivial_problem_size);
+                            const vector<Pattern> target_behaviour = util::learnable_random_sequence(nontrivial_problem_length);
                             
-                            Cortex C, R = util::random_cortex(temporal_sequence_length);
+                            Cortex C{}, R = util::random_cortex(temporal_sequence_length);
                             util::adapt(C, target_behaviour);
                             util::adapt(R, target_behaviour);
 

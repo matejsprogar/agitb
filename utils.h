@@ -164,19 +164,19 @@ namespace sprogar {
             }
             
             // Adapts the cortex to the given input sequence and returns the time required to achieve perfect prediction.
-            static time_t time_to_repeat(Cortex& C, const vector<Pattern>& sequence)
+            static time_t time_to_repeat(Cortex& C, const vector<Pattern>& inputs)
             {
-                for (time_t time = 0; time < SimulatedInfinity; time += sequence.size()) {
-                    if (predict(C, sequence) == sequence)
+                for (time_t time = 0; time < SimulatedInfinity; time += inputs.size()) {
+                    if (predict(C, inputs) == inputs)
                         return time;
                 }
                 return SimulatedInfinity;
             }
             
             // Adapts the cortex to the given input sequence and returns true if it achieves 100% accurate prediction.
-            static bool adapt(Cortex& C, const vector<Pattern>& sequence)
+            static bool adapt(Cortex& C, const vector<Pattern>& inputs)
             {
-                return time_to_repeat(C, sequence) < SimulatedInfinity;
+                return time_to_repeat(C, inputs) < SimulatedInfinity;
             }
 
         private:
