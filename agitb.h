@@ -205,7 +205,7 @@ namespace sprogar {
                             util::adapt(R, target_behaviour);
 
                             ASSERT(C != R);
-                            if (util::equal_behaviour(C, R))
+                            if (util::behaviour(C) == util::behaviour(R))
                                 return true;    // C != R && behaviour(C) == behaviour(R)
                         }
                         return false;
