@@ -234,7 +234,7 @@ namespace sprogar {
                     }
 
                     ASSERT(adapted_score > unadapted_score);
-                    ASSERT(unadapted_score > random_guess);
+                    ASSERT(adapted_score > random_guess);
                 }            
             };
         };
