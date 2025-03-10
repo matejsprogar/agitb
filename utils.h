@@ -137,17 +137,17 @@ namespace sprogar {
                 return C;
             }
 
-            // Modifies the cortex by processing the given inputs and returns its predictions over the specified timeframe.
-            static vector<Pattern> behaviour(Cortex& C, time_t timeframe = SimulatedInfinity)
+            // Feeds both cortices their own predictions for a simulated infinite duration and returns true only if all predictions remain identical.
+            static bool equal_behaviour(Cortex& A, Cortex& B)
             {
-                vector<Pattern> predictions;
-                predictions.reserve(timeframe);
-
-                while (predictions.size() < timeframe) {
-                    predictions.push_back(C.predict());
-                    C << predictions.back();
+                for (time_t time = 0; time < SimulatedInfinity; ++time) {
+                    const Pattern prediction = A.predict();
+                    if (prediction != B.predict())
+                        return false;
+                    A << prediction;
+                    B << prediction;
                 }
-                return predictions;
+                return true;
             }
             
             // Modifies the cortex by processing the given inputs and returns its corresponding predictions.

@@ -205,8 +205,8 @@ namespace sprogar {
                             util::adapt(R, target_behaviour);
 
                             ASSERT(C != R);
-                            if (util::behaviour(C) == util::behaviour(R))
-                                return true;    // C != R && util::behaviour(C) == util::behaviour(R)
+                            if (util::equal_behaviour(C, R))
+                                return true;    // C != R && behaviour(C) == behaviour(R)
                         }
                         return false;
                     };
@@ -216,7 +216,8 @@ namespace sprogar {
                 [](time_t temporal_sequence_length) {
                     std::clog << "#12 Advantage (Adapted models predict more accurately.)\n";
                     
-                    size_t total_adapted_score = 0, total_unadapted_score = 0;
+                    const size_t random_guess_score = SimulatedInfinity * Pattern::size() / 2;
+                    size_t adapted_score = 0, unadapted_score = 0;
                     for (time_t time = 0; time < SimulatedInfinity; ++time) {
                         const vector<Pattern> facts = util::learnable_random_sequence(temporal_sequence_length);
                         const Pattern disruption = util::random_pattern();
@@ -225,14 +226,15 @@ namespace sprogar {
                         Cortex A;
                         util::adapt(A, facts);
                         A << disruption << facts;
-                        total_adapted_score += util::count_matches(A.predict(), expectation);
+                        adapted_score += util::count_matches(A.predict(), expectation);
 
                         Cortex U;
                         U << disruption << facts;
-                        total_unadapted_score += util::count_matches(U.predict(), expectation);
+                        unadapted_score += util::count_matches(U.predict(), expectation);
                     }
 
-                    ASSERT(total_adapted_score > total_unadapted_score);
+                    ASSERT(adapted_score > unadapted_score);
+                    ASSERT(adapted_score > random_guess_score);
                 }            
             };
         };
