@@ -216,7 +216,7 @@ namespace sprogar {
                 [](time_t temporal_sequence_length) {
                     std::clog << "#12 Advantage (Adapted models predict more accurately.)\n";
                     
-                    const size_t random_guess_score = SimulatedInfinity * Pattern::size() / 2;
+                    const size_t random_guess = SimulatedInfinity * Pattern::size() / 2;
                     size_t adapted_score = 0, unadapted_score = 0;
                     for (time_t time = 0; time < SimulatedInfinity; ++time) {
                         const vector<Pattern> facts = util::learnable_random_sequence(temporal_sequence_length);
@@ -234,7 +234,7 @@ namespace sprogar {
                     }
 
                     ASSERT(adapted_score > unadapted_score);
-                    ASSERT(adapted_score > random_guess_score);
+                    ASSERT(adapted_score > random_guess);
                 }            
             };
         };
