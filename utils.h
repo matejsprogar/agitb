@@ -36,7 +36,8 @@ namespace sprogar {
         using std::string;
         
         const int impossible_task = 42;
-    
+
+        // Sequentially feeds each element of the range to the target.
         template <typename T, std::ranges::range Range>
             requires InputPredictor<T, std::ranges::range_value_t<Range>>
         T& operator << (T& target, Range&& range) {
@@ -44,7 +45,7 @@ namespace sprogar {
                 target << elt;
             return target;
         }
-        
+
         class Error : public std::runtime_error
         {
         public:
@@ -73,6 +74,15 @@ namespace sprogar {
                 return pattern;
             }
 
+            // Returns a pattern with all bits inverted (flipped).
+            static Pattern invert(const Pattern& pattern)
+            {
+                Pattern inverted{};
+                for (size_t i = 0; i < Pattern::size(); ++i)
+                    inverted[i] = !pattern[i];
+                return inverted;
+            }
+        
             // Returns a pattern where each bit is set randomly unless explicitly required to remain off.
             template<std::same_as<Pattern>... Patterns>
             static Pattern random_pattern(const Patterns&... off)

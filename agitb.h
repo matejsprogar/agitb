@@ -102,12 +102,12 @@ namespace sprogar {
                 [](time_t) {
                     std::clog << "#4 Sensitivity (The cortex exhibits chaos-like sensitivity to initial conditions.)\n";
                     const Pattern initial_condition = util::random_pattern();
-                    const Pattern mutated_condition = util::mutate(initial_condition);
+                    const Pattern inverted_condition = util::invert(initial_condition);
                     const vector<Pattern> life = util::random_sequence(SimulatedInfinity);
 
                     Cortex C, D;
                     C << initial_condition << life;
-                    D << mutated_condition << life;
+                    D << inverted_condition << life;
 
                     ASSERT(C != D);
                 },
