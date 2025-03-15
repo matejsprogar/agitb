@@ -44,16 +44,23 @@ namespace sprogar {
         public:
             static void run()
             {
-                const time_t temporal_sequence_length = achievable_sequence_length();
+                std::clog << "Artificial General Intelligence Testbed:\n\n";
 
-                std::clog << "Artificial Intelligence Testbed:\n"
-                     << "Conducting tests on temporal sequences of " << temporal_sequence_length << " patterns\n\n";
+                for (time_t t = 1; t <= SimulatedInfinity; ++t) {
+                    const time_t temporal_sequence_length = achievable_sequence_length();
+                    std::clog << "\nRunning " << t << '/' << SimulatedInfinity
+                        << " with temporal sequences of " << temporal_sequence_length << " patterns\n";
 
+                    run(temporal_sequence_length);
+                }
+                std::clog << green("PASS") << std::endl << std::endl;
+            }
+        private:
+            static void run(const time_t temporal_sequence_length)
+            {
                 try {
                     for (const auto& test : testbed)
                         test(temporal_sequence_length);
-
-                    std::clog << green("PASS") << std::endl << std::endl;
                 }
                 catch (const Error& err) {
                     std::clog << red("Assertion failed") << err.what() << std::endl;
@@ -71,7 +78,6 @@ namespace sprogar {
                 return SimulatedInfinity;
             }
 
-        private:
             static inline const vector<void (*)(time_t)> testbed =
             {
                 [](time_t) {
@@ -79,7 +85,7 @@ namespace sprogar {
 
                     Cortex C;
 
-                    ASSERT(C == Cortex{});  // Requires deep comparison in operator==
+                    ASSERT(C == Cortex{});      // All initial states are the same.
                 },
                 [](time_t) {
                     std::clog << "#2 Knowledge (Bias emerges from the inputs.)\n";
