@@ -64,13 +64,14 @@ namespace sprogar {
                 return std::ranges::count_if(std::views::iota(0ul, Pattern::size()), [&](size_t i) { return a[i] == b[i]; });
             }
             
-            // Mutate a pattern by randomly flipping a single bit.
-            static Pattern mutate(Pattern pattern)
+            // Returns a pattern with a single randomly activated bit.
+            static Pattern random_spike()
             {
                 static std::uniform_int_distribution<size_t> dist(0, Pattern::size() - 1);
-
                 const size_t random_index = dist(rng);
-                pattern[random_index] = !pattern[random_index];
+
+                Pattern pattern{};
+                pattern[random_index] = true;
                 return pattern;
             }
 
@@ -126,24 +127,26 @@ namespace sprogar {
                 return sequence;
             }
             
-            // Returns a learnable random sequence of patterns with a specified length.
-            static vector<Pattern> learnable_random_sequence(time_t temporal_sequence_length)
+            // Returns an adaptable random sequence of patterns with a specified length.
+            static vector<Pattern> adaptable_random_sequence(time_t temporal_sequence_length)
             {
                 for (time_t time = 0; time < SimulatedInfinity; ++time) {
                     Cortex C;
                     vector<Pattern> sequence = circular_random_sequence(temporal_sequence_length);
                     
-                    if (adapt(C, sequence)) // not every circular sequence is inherently learnable.
+                    if (adapt(C, sequence)) // not every circular sequence is inherently adaptable.
                         return sequence;
                 }
-                throw Error(__FILE__, __LINE__, std::format("Unable to find a learnable sequence of {} patterns.", temporal_sequence_length));
+                throw Error(__FILE__, __LINE__, std::format("Unable to find a {}-pattern sequence for adaptation.", temporal_sequence_length));
             }
             
             // Creates a randomly initialized cortex object.
-            static Cortex random_cortex(time_t random_strength)
+            static Cortex random_cortex()
             {
+                const time_t arbitrary_random_strength = 50;
+
                 Cortex C;
-                C << random_sequence(random_strength);
+                C << random_sequence(arbitrary_random_strength);
                 return C;
             }
 
