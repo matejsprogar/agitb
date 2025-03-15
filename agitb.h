@@ -65,7 +65,7 @@ private:
 			for (time_t t = 1; t <= SimulatedInfinity; ++t) {
 				std::clog<< t << '/' << SimulatedInfinity << back ;
 
-				const time_t temporal_sequence_length = arbitrary_test_difficulty();
+				const time_t temporal_sequence_length = estimate_test_difficulty();
 				test(temporal_sequence_length);
 			}
 		}
@@ -74,7 +74,7 @@ private:
 			exit(-1);
 		}
 	}
-	static time_t arbitrary_test_difficulty()
+	static time_t estimate_test_difficulty()
 	{
 		for (time_t difficulty = 2; difficulty < SimulatedInfinity; ++difficulty) {
 			Cortex C;
@@ -107,13 +107,13 @@ private:
 			}
 		},
 		{
-			"#3 Determinism (Identical life results in identical state.)",
+			"#3 Determinism (Identical experiences produce an identical state.)",
 			[](time_t) {
-				const vector<Pattern> life = util::random_sequence(SimulatedInfinity);
+				const vector<Pattern> experience = util::random_sequence(SimulatedInfinity);
 
 				Cortex C, D;
-				C << life;
-				D << life;
+				C << experience;
+				D << experience;
 
 				ASSERT(C == D);
 			}
