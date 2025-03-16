@@ -35,6 +35,7 @@
 namespace sprogar {
 namespace AGI {
 using std::vector;
+using std::string;
 
 template <typename Cortex, typename Pattern, size_t SimulatedInfinity = 500>
 	requires InputPredictor<Cortex, Pattern>and BitProvider<Pattern>
@@ -59,7 +60,7 @@ public:
 private:
 	static void repeat(void (*test)(time_t), const time_t temporal_sequence_length)
 	{
-		const std::string go_back(50, '\b');
+		const string go_back(50, '\b');
 
 		try {
 			for (time_t t = 1; t <= SimulatedInfinity; ++t) {
@@ -74,7 +75,7 @@ private:
 		}
 	}
 
-	static inline const std::vector<std::pair<std::string, void(*)(time_t)>> testbed =
+	static inline const std::vector<std::pair<string, void(*)(time_t)>> testbed =
 	{
 		{
 			"#1 Genesis (All cortices begin in a completely blank, bias-free state.)",

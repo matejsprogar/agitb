@@ -35,12 +35,10 @@ namespace sprogar {
         using std::vector;
         using std::string;
 
-        const int impossible_task = 42;
-
         // Sequentially feeds each element of the range to the target.
         template <typename T, std::ranges::range Range>
-        requires InputPredictor<T, std::ranges::range_value_t<Range>>
-            T& operator << (T& target, Range&& range)
+            requires InputPredictor<T, std::ranges::range_value_t<Range>>
+        T& operator << (T& target, Range&& range)
         {
             for (auto&& elt : range)
                 target << elt;
@@ -48,8 +46,8 @@ namespace sprogar {
         }
 
         template <BitProvider Pattern>
-        requires NoUnaryTilde<Pattern>
-            Pattern operator ~(const Pattern& pattern)
+            requires NoUnaryTilde<Pattern>
+        Pattern operator ~(const Pattern& pattern)
         {
             Pattern bitwise_not{};
             for (size_t i = 0; i < Pattern::size(); ++i)
@@ -64,10 +62,9 @@ namespace sprogar {
         };
 
         template <typename Cortex, typename Pattern, size_t SimulatedInfinity>
-        requires InputPredictor<Cortex, Pattern>and BitProvider<Pattern>
-            class TestbedUtils
+            requires InputPredictor<Cortex, Pattern>and BitProvider<Pattern>
+        class TestbedUtils
         {
-
         public:
             // Count the number of matching bits between two patterns.
             static size_t count_matches(const Pattern& a, const Pattern& b)
