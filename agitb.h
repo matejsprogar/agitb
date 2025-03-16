@@ -38,32 +38,32 @@ using std::vector;
 using std::string;
 
 template <typename Cortex, typename Pattern, size_t SimulatedInfinity = 500>
-	requires InputPredictor<Cortex, Pattern>and BitProvider<Pattern>
+	requires InputPredictor<Cortex, Pattern> and BitProvider<Pattern>
 class Testbed
 {
 	using util = TestbedUtils<Cortex, Pattern, SimulatedInfinity>;
 
 public:
-	static void run(time_t temporal_sequence_length)
+	static void run(time_t temporal_sequence_length, size_t repeats = 100)
 	{
 		std::clog << "Artificial General Intelligence Testbed\n\n";
 		std::clog << "Testing with temporal sequences of " << temporal_sequence_length << " patterns:\n";
 
 		for (const auto& [info, test] : testbed) {
 			std::clog << info << std::endl;
-			repeat(test, temporal_sequence_length);
+			repeat(test, temporal_sequence_length, repeats);
 		}
 				
 		std::clog << green("\nPASS\n");
 	}
 
 private:
-	static void repeat(void (*test)(time_t), const time_t temporal_sequence_length)
+	static void repeat(void (*test)(time_t), const time_t temporal_sequence_length, size_t repeats)
 	{
 		const string go_back(50, '\b');
 
 		try {
-			for (time_t t = 1; t <= SimulatedInfinity; ++t) {
+			for (time_t t = 1; t <= repeats; ++t) {
 				std::clog<< t << '/' << SimulatedInfinity << go_back;
 
 				test(temporal_sequence_length);
@@ -110,7 +110,7 @@ private:
 			}
 		},
 		{
-			"#4 Sensitivity(The cortex exhibits chaos-like sensitivity to initial input.)",
+			"#4 Sensitivity (The cortex exhibits chaos-like sensitivity to initial input.)",
 			[](time_t) {
 				const Pattern p = util::random_pattern();
 				const vector<Pattern> life = util::random_sequence(SimulatedInfinity);
