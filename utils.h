@@ -79,12 +79,13 @@ namespace sprogar {
             static Pattern invert(const Pattern& pattern)
             {
                 Pattern inverted{};
-                for (size_t i = 0; i < Pattern::size(); ++i)
-                    inverted[i] = !pattern[i];
+                for (size_t pos=0; pos<Pattern::size(); ++pos)
+                    inverted[pos] = !pattern[pos];
+
                 return inverted;
             }
         
-            // Returns a pattern where each bit is set randomly unless explicitly required to remain off.
+            // Returns a pattern with spikes at random positions, except where explicitly required to have none.
             template<std::same_as<Pattern>... Patterns>
             static Pattern random_pattern(const Patterns&... off)
             {

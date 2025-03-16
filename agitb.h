@@ -22,6 +22,7 @@
 #include <cassert>
 #include <random>
 #include <vector>
+#include <map>
 #include <functional>
 
 #include "concepts.h"
@@ -42,30 +43,28 @@ class Testbed
 	using util = TestbedUtils<Cortex, Pattern, SimulatedInfinity>;
 
 public:
-	static void run()
+	static void run(time_t temporal_sequence_length)
 	{
 		std::clog << "Artificial General Intelligence Testbed\n\n";
+		std::clog << "Using temporal sequences with " << temporal_sequence_length << " patterns.\n";
 
-		testbed[5].second(0);
-
-		for (const auto& test : testbed) {
-			std::clog << test.first << std::endl;
-			repeat(test.second);
+		for (const auto& [info, test] : testbed) {
+			std::clog << info << std::endl;
+			repeat(test, temporal_sequence_length);
 		}
 				
 		std::clog << green("\nPASS\n");
 	}
 
 private:
-	static void repeat(void (*test)(time_t))
+	static void repeat(void (*test)(time_t), const time_t temporal_sequence_length)
 	{
-		const std::string back(50, '\b');
+		const std::string go_back(50, '\b');
 
 		try {
 			for (time_t t = 1; t <= SimulatedInfinity; ++t) {
-				std::clog<< t << '/' << SimulatedInfinity << back ;
+				std::clog<< t << '/' << SimulatedInfinity << go_back;
 
-				const time_t temporal_sequence_length = estimate_test_difficulty();
 				test(temporal_sequence_length);
 			}
 		}
@@ -74,25 +73,16 @@ private:
 			exit(-1);
 		}
 	}
-	static time_t estimate_test_difficulty()
-	{
-		for (time_t difficulty = 2; difficulty < SimulatedInfinity; ++difficulty) {
-			Cortex C;
-			const vector<Pattern> input = util::circular_random_sequence(difficulty);
-			if (!util::adapt(C, input))
-				return difficulty - 1;
-		}
-		return SimulatedInfinity;
-	}
 
-	static inline const vector<std::pair<const char*, void(*)(time_t)>> testbed =
+	static inline const std::vector<std::pair<std::string, void(*)(time_t)>> testbed =
 	{
 		{
 			"#1 Genesis (All cortices begin in a completely blank, bias-free state.)",
 			[](time_t) {
 				Cortex C;
 
-				ASSERT(C == Cortex{});	// unbiased start
+				ASSERT(C == Cortex{});
+				ASSERT(C.predict() == Pattern{});	// no spikes == unbiased prediction
 			}
 		},
 		{
@@ -119,15 +109,15 @@ private:
 			}
 		},
 		{
-			"#4 Sensitivity(The cortex exhibits chaos-like sensitivity to initial conditions.)",
+			"#4 Sensitivity(The cortex exhibits chaos-like sensitivity to initial input.)",
 			[](time_t) {
-				const Pattern initial_condition = util::random_pattern();
-				const Pattern inverted_condition = util::invert(initial_condition);
 				const vector<Pattern> life = util::random_sequence(SimulatedInfinity);
+				const Pattern initial_input = util::random_pattern();
+				const Pattern inverted_input = util::invert(initial_input);
 
 				Cortex C, D;
-				C << initial_condition << life;
-				D << inverted_condition << life;
+				C << initial_input << life;
+				D << inverted_input << life;
 
 				ASSERT(C != D);
 			}
@@ -169,6 +159,7 @@ private:
 		{
 			"#8 Stagnation (You can't teach an old dog new tricks.)",
 			[](time_t temporal_sequence_length) {
+				// temporal_sequence_length >= 4
 				auto indefinitely_adaptable = [&](Cortex& dog) -> bool {
 					for (time_t time = 0; time < SimulatedInfinity; ++time) {
 						vector<Pattern> new_trick = util::adaptable_random_sequence(temporal_sequence_length);
