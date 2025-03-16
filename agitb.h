@@ -46,7 +46,7 @@ public:
 	static void run(time_t temporal_sequence_length)
 	{
 		std::clog << "Artificial General Intelligence Testbed\n\n";
-		std::clog << "Using temporal sequences with " << temporal_sequence_length << " patterns.\n";
+		std::clog << "Testing with temporal sequences of " << temporal_sequence_length << " patterns:\n";
 
 		for (const auto& [info, test] : testbed) {
 			std::clog << info << std::endl;
@@ -81,17 +81,17 @@ private:
 			[](time_t) {
 				Cortex C;
 
-				ASSERT(C == Cortex{});
-				ASSERT(C.predict() == Pattern{});	// no spikes == unbiased prediction
+				ASSERT(C == Cortex{});				// The initial state represents absence of bias.
+				ASSERT(C.predict() == Pattern{});	// No spikes indicate an unbiased initial prediction.
 			}
 		},
 		{
 			"#2 Knowledge (A change in state indicates bias.)",
 			[](time_t) {
-				const Pattern bias = util::random_pattern();
+				const Pattern p = util::random_pattern();
 
 				Cortex C;
-				C << bias;
+				C << p;
 
 				ASSERT(C != Cortex{});
 			}
@@ -111,13 +111,12 @@ private:
 		{
 			"#4 Sensitivity(The cortex exhibits chaos-like sensitivity to initial input.)",
 			[](time_t) {
+				const Pattern p = util::random_pattern();
 				const vector<Pattern> life = util::random_sequence(SimulatedInfinity);
-				const Pattern initial_input = util::random_pattern();
-				const Pattern inverted_input = util::invert(initial_input);
 
 				Cortex C, D;
-				C << initial_input << life;
-				D << inverted_input << life;
+				C << p << life;
+				D << ~p << life;
 
 				ASSERT(C != D);
 			}
@@ -125,33 +124,32 @@ private:
 		{
 			"#5 Time (The input order is inherently temporal and crucial to the process.)",
 			[](time_t) {
-				const vector<Pattern> two_patterns = util::random_sequence(2);
+				const vector<Pattern> seq = util::circular_random_sequence(2);
 
 				Cortex C, D;
-				C << two_patterns[0] << two_patterns[1];
-				D << two_patterns[1] << two_patterns[0];
+				C << seq[0] << seq[1];
+				D << seq[1] << seq[0];
 
-				ASSERT(C != D);
+				ASSERT(C != D || seq[0] == seq[1]);
 			}
 		},
 		{
 			"#6 RefractoryPeriod (Each spike (1) must be followed by a no-spike (0).)",
 			[](time_t) {
-				const Pattern no_spikes;
-				const Pattern single_spike = util::random_spike();
-				const vector<Pattern> no_consecutive_spikes = { single_spike, no_spikes };
-				const vector<Pattern> consecutive_spikes = { single_spike, single_spike };
+				const Pattern p = util::random_pattern();
+				const vector<Pattern> no_consecutive_spikes = { p, util::random_pattern(p) };
+				const vector<Pattern> consecutive_spikes = { p, p };
 
 				Cortex C, D;
 
 				ASSERT(util::adapt(C, no_consecutive_spikes));
-				ASSERT(not util::adapt(D, consecutive_spikes));
+				ASSERT(not util::adapt(D, consecutive_spikes) || p == Pattern{});
 			}
 		},
 		{
 			"#7 Scalability (The system can adapt to predict also longer sequences.)",
 			[](time_t temporal_sequence_length) {
-				util::adaptable_random_sequence(temporal_sequence_length + 1);  // throw
+				util::adaptable_random_sequence(temporal_sequence_length + 1);  // throw?
 
 				ASSERT(true);   // nothrow
 			}
@@ -159,7 +157,6 @@ private:
 		{
 			"#8 Stagnation (You can't teach an old dog new tricks.)",
 			[](time_t temporal_sequence_length) {
-				// temporal_sequence_length >= 4
 				auto indefinitely_adaptable = [&](Cortex& dog) -> bool {
 					for (time_t time = 0; time < SimulatedInfinity; ++time) {
 						vector<Pattern> new_trick = util::adaptable_random_sequence(temporal_sequence_length);
@@ -198,27 +195,27 @@ private:
 			"#10 Experience (Adaptation time depends on the state of the cortex.)",
 			[](time_t temporal_sequence_length) {
 				// Null Hypothesis: Adaptation time is independent of the state of the cortex
-				auto adaptation_time_can_differ_across_cortices = [&]() -> bool {
+				auto adaptation_time_depends_on_state = [&]() -> bool {
 					const vector<Pattern> target_sequence = util::adaptable_random_sequence(temporal_sequence_length);
 					Cortex C;
 					const time_t default_time = util::time_to_repeat(C, target_sequence);
 					for (time_t time = 0; time < SimulatedInfinity; ++time) {
 						Cortex D = util::random_cortex();
-						time_t random_time = util::time_to_repeat(D, target_sequence);
-						if (default_time != random_time)
+						time_t other_time = util::time_to_repeat(D, target_sequence);
+						if (default_time != other_time)
 							return true;
 					}
 					return false;
 				};
 
-				ASSERT(adaptation_time_can_differ_across_cortices());   // rejects the null hypothesis
+				ASSERT(adaptation_time_depends_on_state());   // rejects the null hypothesis
 			}
 		},
 		{
 			"#11 Unobservability (Different internal states can produce identical behaviour.)",
 			[](time_t temporal_sequence_length) {
 				// Null Hypothesis: "Different cortices cannot produce identical behavior."
-				auto behaviour_can_be_identical_across_cortices = [&]() -> bool {
+				auto cortices_can_match_behavior = [&]() -> bool {
 					const time_t nontrivial_problem_length = 2;
 					for (time_t time = 0; time < SimulatedInfinity; ++time) {
 						const vector<Pattern> target_behaviour = util::adaptable_random_sequence(nontrivial_problem_length);
@@ -234,7 +231,7 @@ private:
 					return false;
 				};
 
-				ASSERT(behaviour_can_be_identical_across_cortices());   // rejects the null hypothesis
+				ASSERT(cortices_can_match_behavior());   // rejects the null hypothesis
 			}
 		},
 		{
