@@ -64,7 +64,7 @@ private:
 
 		try {
 			for (size_t r = 1; r <= repetitions; ++r) {
-				std::clog<< r << '/' << SimulatedInfinity << go_back;
+				std::clog<< r << '/' << repetitions << go_back;
 
 				test(temporal_sequence_length);
 			}
