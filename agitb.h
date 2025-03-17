@@ -44,27 +44,27 @@ class Testbed
 	using util = TestbedUtils<Cortex, Pattern, SimulatedInfinity>;
 
 public:
-	static void run(time_t temporal_sequence_length, size_t repeats = 100)
+	static void run(time_t temporal_sequence_length, size_t repetitions = 100)
 	{
 		std::clog << "Artificial General Intelligence Testbed\n\n";
 		std::clog << "Testing with temporal sequences of " << temporal_sequence_length << " patterns:\n";
 
 		for (const auto& [info, test] : testbed) {
 			std::clog << info << std::endl;
-			repeat(test, temporal_sequence_length, repeats);
+			repeat(test, temporal_sequence_length, repetitions);
 		}
 				
 		std::clog << green("\nPASS\n");
 	}
 
 private:
-	static void repeat(void (*test)(time_t), const time_t temporal_sequence_length, size_t repeats)
+	static void repeat(void (*test)(time_t), const time_t temporal_sequence_length, size_t repetitions)
 	{
 		const string go_back(50, '\b');
 
 		try {
-			for (time_t t = 1; t <= repeats; ++t) {
-				std::clog<< t << '/' << SimulatedInfinity << go_back;
+			for (size_t r = 1; r <= repetitions; ++r) {
+				std::clog<< r << '/' << SimulatedInfinity << go_back;
 
 				test(temporal_sequence_length);
 			}
