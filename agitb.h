@@ -37,7 +37,7 @@ namespace AGI {
 using std::vector;
 using std::string;
 
-template <typename Cortex, typename Pattern, size_t SimulatedInfinity = 5000>
+template <typename Cortex, typename Pattern, size_t SimulatedInfinity = 1000>
 	requires InputPredictor<Cortex, Pattern> and BitProvider<Pattern>
 class Testbed
 {
