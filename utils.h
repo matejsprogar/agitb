@@ -90,7 +90,8 @@ namespace sprogar {
             // Returns a random sequence of patterns with a specified length.
             static vector<Pattern> random_sequence(time_t temporal_sequence_length)
             {
-                assert(temporal_sequence_length > 0);
+                if (0 == temporal_sequence_length)
+                    return vector<Pattern>{};
 
                 vector<Pattern> sequence;
                 sequence.reserve(temporal_sequence_length);
@@ -106,7 +107,8 @@ namespace sprogar {
             // where the first pattern incorporates refractory periods for the last pattern in the sequence.
             static vector<Pattern> circular_random_sequence(time_t circle_length)
             {
-                assert(circle_length > 1);
+                if (circle_length < 2)
+                    return vector<Pattern>{circle_length, Pattern{}};
 
                 vector<Pattern> sequence = random_sequence(circle_length);
 
@@ -116,12 +118,15 @@ namespace sprogar {
                 return sequence;
             }
 
-            // Returns an adaptable random sequence of patterns with a specified length.
+            // Returns an adaptable non-empty random sequence of patterns with a specified length.
             static vector<Pattern> adaptable_random_sequence(time_t temporal_sequence_length)
             {
+                const vector<Pattern> empty_sequence{ temporal_sequence_length, Pattern{} };
                 for (time_t time = 0; time < SimulatedInfinity; ++time) {
                     Cortex C;
                     vector<Pattern> sequence = circular_random_sequence(temporal_sequence_length);
+                    if (sequence == empty_sequence)
+                        continue;
 
                     if (adapt(C, sequence)) // not every circular sequence is inherently adaptable.
                         return sequence;

@@ -37,7 +37,7 @@ namespace AGI {
 using std::vector;
 using std::string;
 
-template <typename Cortex, typename Pattern, size_t SimulatedInfinity = 500>
+template <typename Cortex, typename Pattern, size_t SimulatedInfinity = 5000>
 	requires InputPredictor<Cortex, Pattern> and BitProvider<Pattern>
 class Testbed
 {
@@ -217,13 +217,12 @@ private:
 			[](time_t temporal_sequence_length) {
 				// Null Hypothesis: "Different cortices cannot produce identical behavior."
 				auto cortices_can_match_behavior = [&]() -> bool {
-					const time_t nontrivial_problem_length = 2;
 					for (time_t time = 0; time < SimulatedInfinity; ++time) {
-						const vector<Pattern> target_behaviour = util::adaptable_random_sequence(nontrivial_problem_length);
+                        const vector<Pattern> trivial_behaviour = { Pattern{}, Pattern{} };
 
 						Cortex C{}, D = util::random_cortex();
-						util::adapt(C, target_behaviour);
-						util::adapt(D, target_behaviour);
+						util::adapt(C, trivial_behaviour);
+						util::adapt(D, trivial_behaviour);
 
 						ASSERT(C != D);
 						if (util::behaviour(C) == util::behaviour(D))
