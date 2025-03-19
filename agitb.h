@@ -181,8 +181,8 @@ private:
 					const time_t default_time = util::time_to_repeat(D, util::circular_random_sequence(temporal_sequence_length));
 					for (time_t time = 0; time < SimulatedInfinity; ++time) {
 						vector<Pattern> random_sequence = util::circular_random_sequence(temporal_sequence_length);
-						Cortex C;
-						time_t random_time = util::time_to_repeat(C, random_sequence);
+						Cortex R;
+						time_t random_time = util::time_to_repeat(R, random_sequence);
 						if (default_time != random_time)
 							return true;
 					}
@@ -198,11 +198,11 @@ private:
 				// Null Hypothesis: Adaptation time is independent of the state of the cortex
 				auto adaptation_time_depends_on_state = [&]() -> bool {
 					const vector<Pattern> target_sequence = util::adaptable_random_sequence(temporal_sequence_length);
-					Cortex C;
-					const time_t default_time = util::time_to_repeat(C, target_sequence);
+					Cortex D;
+					const time_t default_time = util::time_to_repeat(D, target_sequence);
 					for (time_t time = 0; time < SimulatedInfinity; ++time) {
-						Cortex D = util::random_cortex();
-						time_t other_time = util::time_to_repeat(D, target_sequence);
+						Cortex R = util::random_cortex();
+						time_t other_time = util::time_to_repeat(R, target_sequence);
 						if (default_time != other_time)
 							return true;
 					}
