@@ -19,11 +19,8 @@
 #pragma once
 
 #include <iostream>
-#include <cassert>
-#include <random>
 #include <vector>
-#include <map>
-#include <functional>
+
 
 #include "concepts.h"
 #include "utils.h"
@@ -34,14 +31,16 @@
 
 namespace sprogar {
 namespace AGI {
-using std::vector;
 using std::string;
 
-template <typename Cortex, typename Pattern, size_t SimulatedInfinity = 1000>
-	requires InputPredictor<Cortex, Pattern> and BitProvider<Pattern>
+template <typename XCortex, typename XPattern, size_t SimulatedInfinity = 1000>
+	requires InputPredictor<XCortex, XPattern> && Indexable<XPattern>
 class Testbed
 {
-	using util = TestbedUtils<Cortex, Pattern, SimulatedInfinity>;
+	using Pattern = utils::Pattern<XPattern>;
+	using Sequence = utils::Sequence<Pattern>;
+	using Cortex = utils::Cortex<XCortex, Pattern, Sequence, SimulatedInfinity>;
+	using Misc = utils::Misc<Cortex, Pattern, Sequence, SimulatedInfinity>;
 
 public:
 	static void run(time_t temporal_sequence_length, size_t repetitions = 100)
@@ -89,10 +88,8 @@ private:
 		{
 			"#2 Knowledge (A change in state indicates bias.)",
 			[](time_t) {
-				const Pattern p = util::random_pattern();
-
 				Cortex C;
-				C << p;
+				C << Pattern::random();
 
 				ASSERT(C != Cortex{});
 			}
@@ -100,7 +97,7 @@ private:
 		{
 			"#3 Determinism (Identical experiences produce an identical state.)",
 			[](time_t) {
-				const vector<Pattern> experience = util::random_sequence(SimulatedInfinity);
+				const Sequence experience = Sequence::random(SimulatedInfinity);
 
 				Cortex C, D;
 				C << experience;
@@ -112,8 +109,8 @@ private:
 		{
 			"#4 Sensitivity (The cortex exhibits chaos-like sensitivity to initial input.)",
 			[](time_t) {
-				const Pattern p = util::random_pattern();
-				const vector<Pattern> life = util::random_sequence(SimulatedInfinity);
+				const Pattern p = Pattern::random();
+				const Sequence life = Sequence::random(SimulatedInfinity);
 
 				Cortex C, D;
 				C << p << life;
@@ -125,7 +122,7 @@ private:
 		{
 			"#5 Time (The input order is inherently temporal and crucial to the process.)",
 			[](time_t) {
-				const vector<Pattern> seq = util::circular_random_sequence(2);
+				const Sequence seq = Sequence::circular_random(2);
 
 				Cortex C, D;
 				C << seq[0] << seq[1];
@@ -137,20 +134,20 @@ private:
 		{
 			"#6 RefractoryPeriod (Each spike (1) must be followed by a no-spike (0).)",
 			[](time_t) {
-				const Pattern p = util::random_pattern();
-				const vector<Pattern> no_consecutive_spikes = { p, util::random_pattern(p) };
-				const vector<Pattern> consecutive_spikes = { p, p };
+				const Pattern p = Pattern::random();
+				const Sequence no_consecutive_spikes = { p, Pattern::random(p) };
+				const Sequence consecutive_spikes = { p, p };
 
 				Cortex C, D;
 
-				ASSERT(util::adapt(C, no_consecutive_spikes));
-				ASSERT(not util::adapt(D, consecutive_spikes) || p == Pattern{});
+				ASSERT(C.adapt(no_consecutive_spikes));
+				ASSERT(not D.adapt(consecutive_spikes) || p == Pattern{});
 			}
 		},
 		{
 			"#7 Scalability (The system can adapt to predict also longer sequences.)",
 			[](time_t temporal_sequence_length) {
-				util::adaptable_random_sequence(temporal_sequence_length + 1);  // throw?
+				Misc::adaptable_random_sequence(temporal_sequence_length + 1);  // throw?
 
 				ASSERT(true);   // nothrow
 			}
@@ -160,8 +157,8 @@ private:
 			[](time_t temporal_sequence_length) {
 				auto indefinitely_adaptable = [&](Cortex& dog) -> bool {
 					for (time_t time = 0; time < SimulatedInfinity; ++time) {
-						vector<Pattern> new_trick = util::adaptable_random_sequence(temporal_sequence_length);
-						if (not util::adapt(dog, new_trick))
+						Sequence new_trick = Misc::adaptable_random_sequence(temporal_sequence_length);
+						if (not dog.adapt(new_trick))
 							return false;
 					}
 					return true;
@@ -178,11 +175,11 @@ private:
 				// Null Hypothesis: Adaptation time is independent of the input sequence
 				auto adaptation_time_can_differ_across_sequences = [=]() -> bool {
 					Cortex D;
-					const time_t default_time = util::time_to_repeat(D, util::circular_random_sequence(temporal_sequence_length));
+					const time_t default_time = D.time_to_repeat(Sequence::circular_random(temporal_sequence_length));
 					for (time_t time = 0; time < SimulatedInfinity; ++time) {
-						vector<Pattern> random_sequence = util::circular_random_sequence(temporal_sequence_length);
+						Sequence random = Sequence::circular_random(temporal_sequence_length);
 						Cortex R;
-						time_t random_time = util::time_to_repeat(R, random_sequence);
+						time_t random_time = R.time_to_repeat(random);
 						if (default_time != random_time)
 							return true;
 					}
@@ -197,12 +194,12 @@ private:
 			[](time_t temporal_sequence_length) {
 				// Null Hypothesis: Adaptation time is independent of the state of the cortex
 				auto adaptation_time_depends_on_state = [&]() -> bool {
-					const vector<Pattern> target_sequence = util::adaptable_random_sequence(temporal_sequence_length);
+					const Sequence target_sequence = Misc::adaptable_random_sequence(temporal_sequence_length);
 					Cortex D;
-					const time_t default_time = util::time_to_repeat(D, target_sequence);
+					const time_t default_time = D.time_to_repeat(target_sequence);
 					for (time_t time = 0; time < SimulatedInfinity; ++time) {
-						Cortex R = util::random_cortex();
-						time_t other_time = util::time_to_repeat(R, target_sequence);
+						Cortex O = Cortex::random();
+						time_t other_time = O.time_to_repeat(target_sequence);
 						if (default_time != other_time)
 							return true;
 					}
@@ -213,19 +210,19 @@ private:
 			}
 		},
 		{
-			"#11 Unobservability (Different internal states can produce identical behaviour.)",
+			"#11 Unobservability (Different internal states can produce identical Cortex::behaviour.)",
 			[](time_t temporal_sequence_length) {
 				// Null Hypothesis: "Different cortices cannot produce identical behavior."
 				auto cortices_can_match_behavior = [&]() -> bool {
 					for (time_t time = 0; time < SimulatedInfinity; ++time) {
-                        const vector<Pattern> trivial_behaviour = { Pattern{}, Pattern{} };
+                        const Sequence trivial_behaviour = { Pattern{}, Pattern{} };
 
-						Cortex C{}, D = util::random_cortex();
-						util::adapt(C, trivial_behaviour);
-						util::adapt(D, trivial_behaviour);
+						Cortex C{}, D = Cortex::random();
+						C.adapt(trivial_behaviour);
+						D.adapt(trivial_behaviour);
 
-						bool counterexample = C != D && util::behaviour(C) == util::behaviour(D);
-						if (counterexample)
+						bool counterexample_found = C != D && C.behaviour() == D.behaviour();
+						if (counterexample_found)
 							return true;
 					}
 					return false;
@@ -240,18 +237,18 @@ private:
 				const size_t random_guess = SimulatedInfinity * Pattern::size() / 2;
 				size_t adapted_score = 0, unadapted_score = 0;
 				for (time_t time = 0; time < SimulatedInfinity; ++time) {
-					const vector<Pattern> facts = util::adaptable_random_sequence(temporal_sequence_length);
-					const Pattern disruption = util::random_pattern();
+					const Sequence facts = Misc::adaptable_random_sequence(temporal_sequence_length);
+					const Pattern disruption = Pattern::random();
 					const Pattern expectation = facts[0];
 
 					Cortex A;
-					util::adapt(A, facts);
+					A.adapt(facts);
 					A << disruption << facts;
-					adapted_score += util::count_matches(A.predict(), expectation);
+					adapted_score += Pattern::count_matches(A.predict(), expectation);
 
 					Cortex U;
 					U << disruption << facts;
-					unadapted_score += util::count_matches(U.predict(), expectation);
+					unadapted_score += Pattern::count_matches(U.predict(), expectation);
 				}
 
 				ASSERT(adapted_score > unadapted_score);

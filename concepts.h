@@ -21,22 +21,22 @@
 namespace sprogar {
     namespace AGI {
 
-        template <typename Cortex, typename Pattern>
-        concept InputPredictor = std::regular<Cortex> and requires(Cortex cortex, const Cortex ccortex, Pattern pattern)
-        {
-            { cortex << pattern } -> std::convertible_to<Cortex&>;
-            { ccortex.predict() } -> std::convertible_to<Pattern>;
-        };
-
         template <typename Pattern>
-        concept BitProvider = std::equality_comparable<Pattern> and requires(Pattern pattern, const Pattern cpattern)
+        concept Indexable = std::equality_comparable<Pattern> && requires(Pattern pattern, const Pattern cpattern)
         {
             { pattern[size_t{}] } -> std::convertible_to<typename Pattern::reference>;
             { cpattern[size_t{}] } -> std::convertible_to<bool>;
             { Pattern::size() } -> std::convertible_to<size_t>;
         };
 
+        template <typename Cortex, typename Pattern>
+        concept InputPredictor = std::regular<Cortex> && requires(Cortex cortex, const Cortex ccortex, Pattern pattern)
+        {
+            { cortex << pattern } -> std::convertible_to<Cortex&>;
+            { ccortex.predict() } -> std::convertible_to<Pattern>;
+        };
+
         template <typename T>
-        concept NoUnaryTilde = requires(T t) { ~t; } == false;
+        concept HasUnaryTilde = requires(T t) { ~t; } == true;
     }
 }
