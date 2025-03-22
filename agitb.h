@@ -224,9 +224,9 @@ private:
 						util::adapt(C, trivial_behaviour);
 						util::adapt(D, trivial_behaviour);
 
-						ASSERT(C != D);
-						if (util::behaviour(C) == util::behaviour(D))
-							return true;    // C != D && behaviour(C) == behaviour(D)
+						bool counterexample = C != D && util::behaviour(C) == util::behaviour(D);
+						if (counterexample)
+							return true;
 					}
 					return false;
 				};
