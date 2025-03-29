@@ -1,6 +1,6 @@
 # AGITB – Artificial General Intelligence Test Bed
 
-This repository contains a C++ implementation of the **Artificial General Intelligence Test Bed (AGITB)**, as described in [this paper](https://arxiv.org/...).
+This repository contains a C++ implementation of the **Artificial General Intelligence Test Bed (AGITB)**, as described in [this paper](doc/AGITB.pdf).
 
 ---
 
@@ -43,7 +43,7 @@ Your cortex class must:
 ### `InputSample`
 Your input class must:
 - Satisfy the `std::regular` concept.
-- Provide methods to access to the input size and bit-level access via:
+- Provide methods to access the input size and enable bit-level access through:
   ```cpp
   static size_t InputSample::size();                  // Returns number of input bits
   bool InputSample::operator[](size_t i) const;       // Read-only access to the i-th bit
