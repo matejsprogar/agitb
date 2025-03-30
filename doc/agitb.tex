@@ -90,10 +90,11 @@ Before running AGITB, the user must specify a single parameter: the temporal pat
 \emph{Assertion}: Models that have received no input are considered empty and thus equal.\\
 \emph{Assertion}: An empty model predicts an empty input.
 
-Brains do not inherit an innate understanding of external inputs; instead, they acquire it through experience. Each brain must independently interpret the world, constructing meaning from raw sensory input. While certain reflexes may be genetically inherited, they do not constitute true understanding. In this respect, all (human) cortices begin from the same unbiased starting point.
+Brains do not inherit an innate understanding of external inputs; rather, they acquire it through experience. Each brain must independently interpret the world, constructing meaning from raw sensory data. While certain reflexes may be genetically inherited, they do not constitute true understanding. In this sense, all cortices begin from the same unbiased starting point.
 
-If an unbiased model were to predict anything other than an empty input (i.e., an input with no spikes), it would imply that its initial state contains assumptions—biasing it toward some arbitrary or unfounded future scenario. To avoid this, models must be initialized to predict spike-free inputs, maintaining an unbiased state until actual input begins to shape their internal representations.
+If an unbiased model were to predict anything other than an empty input—that is, an input containing no spikes—it would imply that its initial state encodes assumptions, introducing a bias toward an arbitrary or unjustified future. To preserve neutrality, such models must be initialized to predict spike-free patterns, maintaining an unbiased state until actual input begins shaping their internal representations.
 
+Importantly, "empty" refers to the absence of learned content, not to the absence of structure. A Cortex must possess an intrinsic organizational architecture that enables learning, even before it has processed any input.
 }
 \agitbtest{Bias}{
 \emph{Assertion}: Any model that has processed input can no longer be considered unbiased.
