@@ -34,13 +34,13 @@ namespace sprogar {
 namespace AGI {
     using std::string;
 
-    template <typename CortexType, typename InputSample, size_t SimulatedInfinity = 1000, size_t Repetitions = 100>
-    requires InputPredictor<CortexType, InputSample> && Indexable<InputSample>
+    template <typename TCortex, typename TInput, size_t SimulatedInfinity = 1000, size_t Repetitions = 100>
+    requires InputPredictor<TCortex, TInput> && Indexable<TInput>
         class TestBed
     {
-        using Input = utils::Input<InputSample>;
+        using Input = utils::Input<TInput>;
         using Sequence = utils::Sequence<Input>;
-        using Cortex = utils::Cortex<CortexType, Input, Sequence, SimulatedInfinity>;
+        using Cortex = utils::Cortex<TCortex, Input, Sequence, SimulatedInfinity>;
         using Misc = utils::Misc<Cortex, Input, Sequence, SimulatedInfinity>;
 
     public:
@@ -225,7 +225,7 @@ namespace AGI {
                 }
             },
             {
-                "#12 Generalisation (Adapted models predict more accurately.)",
+                "#12 Generalisation (On average, adapted models exhibit the strongest generalisation.)",
                 [](time_t temporal_pattern_length) {
                     const size_t random_guess = SimulatedInfinity * Input::size() / 2;
                     size_t adapted_score = 0, unadapted_score = 0;

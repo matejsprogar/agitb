@@ -24,43 +24,43 @@ The goal is to support the **development**, **evaluation**, and **recognition** 
 
 This implementation defines a templated `AGI::TestBed` class, which requires the user to provide two interacting component types:
 
-- **`CortexType`** – The core model under test. It accumulates internal state from past inputs and generates predictions of future inputs.
-- **`InputSample`** – A binary-encoded input sample representing signals from virtual sensors or actuators. Each input consists of multiple parallel 1-bit signals (channels) at a single point in time.
+- **`Cortex`** – The core model under test. It accumulates internal state from past inputs and generates predictions of future inputs.
+- **`Input`** – A binary-encoded input sample representing signals from virtual sensors or actuators. Each input consists of multiple parallel 1-bit signals (channels) at a single point in time.
 
 ---
 
 ## API Requirements
 
-### `CortexType`
-Your cortex class must:
-- Satisfy the `std::regular` concept.
-- Provide methods to accept inputs and generate predictions using the following interface:
-  ```cpp
-  CortexType& CortexType::operator << (const InputSample&); // Process input p
-  InputSample CortexType::predict() const;                  // Returns predicted next input
-  ```
-
-### `InputSample`
+### `Input`
 Your input class must:
 - Satisfy the `std::regular` concept.
 - Provide methods to access the input size and enable bit-level access through:
   ```cpp
-  static size_t InputSample::size();                  // Returns number of input bits
-  bool InputSample::operator[](size_t i) const;       // Read-only access to the i-th bit
-  InputSample::reference InputSample::operator[](size_t i); // Write access to the i-th bit
+  static size_t Input::size();                  // Returns number of input bits
+  bool Input::operator[](size_t i) const;       // Read-only access to the i-th bit
+  Input::reference Input::operator[](size_t i); // Write access to the i-th bit
+  ```
+
+### `Cortex`
+Your cortex class must:
+- Satisfy the `std::regular` concept.
+- Provide methods to accept inputs and generate predictions using the following interface:
+  ```cpp
+  Cortex& Cortex::operator << (const Input& p); // Process input p
+  Input Cortex::predict() const;                // Returns predicted next input
   ```
 
 ---
 
 ## Configuration Parameters
 
-AGITB requires one problem-specific and two system-level parameters:
+AGITB requires one solution-specific and two system-level template parameters:
 
-- **`temporal_pattern_length`** (*runtime parameter*) – This is passed to `Testbed::run(...)` and defines the length of repeating input sequences. Longer patterns increase test complexity. Choose a value that balances the cortex’s learning ability and the spatial size of the input.
+- **`temporal_pattern_length`** – A required parameter passed to the TestBed::run() method. It defines the length of the repeating input sequences. Longer patterns increase test difficulty, so this value should be chosen to balance the Cortex’s learning ability with the spatial size of the input.
 
-- **`SimulatedInfinity`** (*compile-time parameter*) – Defined as a template argument to the `Testbed` class. It sets a practical upper bound on the number of timesteps available for learning. This simulates an "infinite" time window in a finite setting. Default: `1000`.
+- **`SimulatedInfinity`** – An optional template parameter of the TestBed class. It defines a practical upper bound on the number of timesteps available for learning, simulating an "infinite" time window within a finite setting. Default: 1000.
 
-- **`Repetitions`** (*compile-time parameter*) – Also defined as a template argument to the `Testbed` class. It sets the number of times each of the 12 tests is repeated to increase statistical robustness. Default: `100`.
+- **`Repetitions`** – An optional template parameter of the TestBed class. It specifies how many times each of the 12 tests is repeated to improve statistical robustness. Default: 100.
 
 ---
 
@@ -69,11 +69,11 @@ AGITB requires one problem-specific and two system-level parameters:
 ```cpp
 #include "agitb.h"
 
-class MyInput { ... };
-class MyCortex { ... };
+class Input { ... };
+class Cortex { ... };
 
 int main() {
-    using AGITB = sprogar::AGI::TestBed<MyCortex, MyInput, 1000 /* SimulatedInfinity */, 100 /* Repetitions */>;
+    using AGITB = sprogar::AGI::TestBed<Cortex, Input>;
     
     AGITB::run(5 /* temporal_pattern_length */);
     return 0;

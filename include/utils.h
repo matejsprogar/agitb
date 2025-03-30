@@ -37,13 +37,13 @@ namespace sprogar {
 			using std::vector;
 			using std::string;
 
-			template <Indexable InputSample>
-			class Input : public InputSample
+			template <Indexable TInput>
+			class Input : public TInput
 			{
 			public:
-				Input() : InputSample() {}
-				Input(const InputSample& src) : InputSample(src) {}
-				Input(InputSample&& src) : InputSample(std::move(src)) {}
+				Input() : TInput() {}
+				Input(const TInput& src) : TInput(src) {}
+				Input(TInput&& src) : TInput(std::move(src)) {}
 
 				// Count the number of matching bits between two inputs.
 				static size_t count_matches(const Input& a, const Input& b)
@@ -67,12 +67,12 @@ namespace sprogar {
 				}
 			};
 
-			template <Indexable InputSample>
-				requires (!HasUnaryTilde<InputSample>)
-			auto operator ~(const Input<InputSample>& input)
+			template <Indexable TInput>
+				requires (!HasUnaryTilde<TInput>)
+			auto operator ~(const Input<TInput>& input)
 			{
-				Input<InputSample> bitwise_not{};
-				for (size_t i = 0; i < InputSample::size(); ++i) 
+				Input<TInput> bitwise_not{};
+				for (size_t i = 0; i < TInput::size(); ++i) 
                     bitwise_not[i] = !input[i];
 				return bitwise_not;
 			}
@@ -119,13 +119,13 @@ namespace sprogar {
 				}
 			};
 
-			template <typename CortexType, Indexable Input, typename Sequence, size_t SimulatedInfinity>
-				requires InputPredictor<CortexType, Input>
-			class Cortex : public CortexType
+			template <typename TCortex, Indexable Input, typename Sequence, size_t SimulatedInfinity>
+				requires InputPredictor<TCortex, Input>
+			class Cortex : public TCortex
 			{
 			public:
 				template<typename... Args>
-				Cortex(Args&&... args) : CortexType(std::forward<Args>(args)...) {}
+				Cortex(Args&&... args) : TCortex(std::forward<Args>(args)...) {}
 
 				// Creates a randomly initialized cortex object.
 				static Cortex random()
@@ -166,9 +166,9 @@ namespace sprogar {
 					return time_to_repeat(inputs) < SimulatedInfinity;
 				}
 
-				Input predict() const { return CortexType::predict(); }
-				// Cortex& operator << (const Input& p) { (CortexType&)(*this) << (p); return *this; }
-				friend Cortex& operator << (Cortex& C, const Input& p) { (CortexType&)C << p; return C; }
+				Input predict() const { return TCortex::predict(); }
+				// Cortex& operator << (const Input& p) { (TCortex&)(*this) << (p); return *this; }
+				friend Cortex& operator << (Cortex& C, const Input& p) { (TCortex&)C << p; return C; }
 
 				// Sequentially feeds each element of the range to the target.
 				template <std::ranges::range Range>
