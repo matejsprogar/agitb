@@ -82,6 +82,15 @@ int main() {
 
 ---
 
+## Requirements
+
+To build and run this project, you will need a **C++20-compatible compiler** 
+
+> 💡 Make sure your build environment is configured to enable C++20 support  
+> (e.g., use `-std=c++20` with `g++` or `clang++`).
+
+---
+
 ## License
 
 This implementation is released as **free software** under the **GNU General Public License v3.0 (GPL-3.0)**. You are free to run, study, modify, and share this software under the terms of the license.
