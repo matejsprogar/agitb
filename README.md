@@ -72,7 +72,7 @@ AGITB requires one solution-specific and two system-level template parameters:
 class Input
 {
 public:
-	bool operator==(const Input& rhs) const { return false; }
+    bool operator==(const Input& rhs) const { return false; }
     
     struct reference{
         reference& operator = (bool b) { return *this; }
@@ -85,10 +85,9 @@ public:
 class Cortex
 {
 public:
-	bool operator==(const Cortex& rhs) const = default;
-	Cortex& operator << (const Input& p) {                  // Process input p
-        return *this; 
-    }
+    bool operator==(const Cortex& rhs) const = default;
+
+    Cortex& operator << (const Input& p) { return *this; }  // Process input p
     Input predict() const { return Input{}; }               // Returns predicted next input
 };
 
