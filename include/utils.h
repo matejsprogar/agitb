@@ -43,7 +43,9 @@ namespace sprogar {
 			public:
 				Input() : TInput() {}
 				Input(const TInput& src) : TInput(src) {}
-				Input(TInput&& src) : TInput(std::move(src)) {}
+				Input(const Input& src) : TInput(src) {}
+				Input(Input&& src) : TInput(std::move(src)) {}
+				Input& operator=(const Input& src) { if (this != &src) TInput::operator=(src); return *this; }
 
 				// Count the number of matching bits between two inputs.
 				static size_t count_matches(const Input& a, const Input& b)
@@ -124,6 +126,11 @@ namespace sprogar {
 			class Cortex : public TCortex
 			{
 			public:
+                Cortex() : TCortex() {}
+				Cortex(Cortex&& src) : TCortex(std::move(src)) {}
+				Cortex(const TCortex& src) : TCortex(src) {}
+				Cortex& operator=(const Cortex& src) { if (this != &src) TCortex::operator=(src); return *this; }
+            
 				template<typename... Args>
 				Cortex(Args&&... args) : TCortex(std::forward<Args>(args)...) {}
 
@@ -167,8 +174,7 @@ namespace sprogar {
 				}
 
 				Input predict() const { return TCortex::predict(); }
-				// Cortex& operator << (const Input& p) { (TCortex&)(*this) << (p); return *this; }
-				friend Cortex& operator << (Cortex& C, const Input& p) { (TCortex&)C << p; return C; }
+				Cortex& operator << (const Input& p) { (TCortex&)(*this) << (p); return *this; }
 
 				// Sequentially feeds each element of the range to the target.
 				template <std::ranges::range Range>

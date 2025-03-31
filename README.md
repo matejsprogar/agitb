@@ -64,13 +64,33 @@ AGITB requires one solution-specific and two system-level template parameters:
 
 ---
 
-## Example: Main Program
+## Stub Implementation of Input and Cortex Classes for AGI TestBed
 
 ```cpp
 #include "agitb.h"
 
-class Input { ... };
-class Cortex { ... };
+class Input
+{
+public:
+	bool operator==(const Input& rhs) const { return false; }
+    
+    struct reference{
+        reference& operator = (bool b) { return *this; }
+    };
+    static size_t size() { return 0; }                      // Returns number of input bits
+    bool operator[](size_t i) const { return false; }       // Read-only access to the i-th bit
+    reference operator[](size_t i) { return reference{}; }  // Write access to the i-th bit    
+};
+
+class Cortex
+{
+public:
+	bool operator==(const Cortex& rhs) const = default;
+	Cortex& operator << (const Input& p) {                  // Process input p
+        return *this; 
+    }
+    Input predict() const { return Input{}; }               // Returns predicted next input
+};
 
 int main() {
     using AGITB = sprogar::AGI::TestBed<Cortex, Input>;
