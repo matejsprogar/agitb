@@ -72,23 +72,24 @@ AGITB requires one solution-specific and two system-level template parameters:
 class Input
 {
 public:
-    bool operator==(const Input& rhs) const { return false; }
+    bool operator==(const Input& rhs) const { return false; }   // TODO: Full member-wise comparison
     
     struct reference{
-        reference& operator = (bool b) { return *this; }
+        reference& operator = (bool x) { return *this; }             // TODO: Assigns a value to the referenced bit
+        reference& operator = (const reference& x) { return *this; } // TODO: Assigns a value
     };
-    static size_t size() { return 0; }                      // Returns number of input bits
-    bool operator[](size_t i) const { return false; }       // Read-only access to the i-th bit
-    reference operator[](size_t i) { return reference{}; }  // Write access to the i-th bit    
+    static size_t size() { return 0; }                          // TODO: Returns number of input bits
+    bool operator[](size_t i) const { return false; }           // TODO: Read-only access to the i-th bit
+    reference operator[](size_t i) { return reference{}; }      // TODO: Write access to the i-th bit    
 };
 
 class Cortex
 {
 public:
-    bool operator==(const Cortex& rhs) const = default;
+    bool operator==(const Cortex& rhs) const { return false; }	// TODO: Full member-wise comparison
 
-    Cortex& operator << (const Input& p) { return *this; }  // Process input p
-    Input predict() const { return Input{}; }               // Returns predicted next input
+    Cortex& operator << (const Input& p) { return *this; }  // TODO: Process input p
+    Input predict() const { return Input{}; }               // TODO: Returns predicted next input
 };
 
 int main() {

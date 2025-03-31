@@ -41,11 +41,11 @@ namespace sprogar {
 			class Input : public TInput
 			{
 			public:
-				Input() : TInput() {}
+                Input() = default;
+                Input(const Input& src) = default;
+                Input(Input&& src) = default;
+                Input& operator=(const Input& src) = default;
 				Input(const TInput& src) : TInput(src) {}
-				Input(const Input& src) : TInput(src) {}
-				Input(Input&& src) : TInput(std::move(src)) {}
-				Input& operator=(const Input& src) { if (this != &src) TInput::operator=(src); return *this; }
 
 				// Count the number of matching bits between two inputs.
 				static size_t count_matches(const Input& a, const Input& b)
@@ -126,10 +126,11 @@ namespace sprogar {
 			class Cortex : public TCortex
 			{
 			public:
-                Cortex() : TCortex() {}
-				Cortex(Cortex&& src) : TCortex(std::move(src)) {}
+                Cortex() = default;
+                Cortex(const Cortex& src) = default;
+                Cortex(Cortex&& src) = default;
+                Cortex& operator=(const Cortex& src) = default;
 				Cortex(const TCortex& src) : TCortex(src) {}
-				Cortex& operator=(const Cortex& src) { if (this != &src) TCortex::operator=(src); return *this; }
             
 				template<typename... Args>
 				Cortex(Args&&... args) : TCortex(std::forward<Args>(args)...) {}
@@ -178,6 +179,7 @@ namespace sprogar {
 
 				// Sequentially feeds each element of the range to the target.
 				template <std::ranges::range Range>
+                    requires std::same_as<std::ranges::range_value_t<Range>, Input>
 				Cortex& operator << (Range&& range)
 				{
 					for (auto&& elt : range)
