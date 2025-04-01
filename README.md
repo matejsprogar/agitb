@@ -22,7 +22,7 @@ The goal is to support the **development**, **evaluation**, and **recognition** 
 
 ## C++ Implementation
 
-This implementation defines a templated `AGI::TestBed` class, which requires the user to provide two interacting component types:
+AGITB is implemented as a **header-only** library. It defines a templated `AGI::TestBed` class, which requires the user to provide two interacting component types:
 
 - **`Cortex`** – The core model under test. It accumulates internal state from past inputs and generates predictions of future inputs.
 - **`Input`** – A binary-encoded input sample representing signals from virtual sensors or actuators. Each input consists of multiple parallel 1-bit signals (channels) at a single point in time.
@@ -32,7 +32,7 @@ This implementation defines a templated `AGI::TestBed` class, which requires the
 ## API Requirements
 
 ### `Input`
-Your input class must:
+Your Input class must:
 - Satisfy the `std::regular` concept.
 - Provide methods to access the input size and enable bit-level access through:
   ```cpp
@@ -42,7 +42,7 @@ Your input class must:
   ```
 
 ### `Cortex`
-Your cortex class must:
+Your Cortex class must:
 - Satisfy the `std::regular` concept.
 - Provide methods to accept inputs and generate predictions using the following interface:
   ```cpp
@@ -67,15 +67,14 @@ AGITB requires one solution-specific and two system-level template parameters:
 ## Stub Implementation of Input and Cortex Classes for AGI TestBed
 
 ```cpp
-#include "agitb.h"
 
 class Input
 {
 public:
-    bool operator==(const Input& rhs) const { return false; }   // TODO: Full member-wise comparison
+    bool operator==(const Input& rhs) const { return true; }    // TODO: Full member-wise comparison
     
     struct reference{
-        reference& operator = (bool x) { return *this; }             // TODO: Assigns a value to the referenced bit
+        reference& operator = (bool x) { return *this; }   // TODO: Assigns a value to the referenced bit
         reference& operator = (const reference& x) { return *this; } // TODO: Assigns a value
     };
     static size_t size() { return 0; }                          // TODO: Returns number of input bits
@@ -86,11 +85,24 @@ public:
 class Cortex
 {
 public:
-    bool operator==(const Cortex& rhs) const { return false; }	// TODO: Full member-wise comparison
+    bool operator==(const Cortex& rhs) const { return true; }   // TODO: Full member-wise comparison
 
-    Cortex& operator << (const Input& p) { return *this; }  // TODO: Process input p
-    Input predict() const { return Input{}; }               // TODO: Returns predicted next input
+    Cortex& operator << (const Input& p) { return *this; }      // TODO: Process input p
+    Input predict() const { return Input{}; }                   // TODO: Returns predicted next input
 };
+
+```
+
+---
+
+## Usage
+
+To use the AGITB testbed, include the main header file and call the static `run()` method of the `TestBed&lt;Cortex, Input&gt;` class, providing your `Cortex` and `Input` types as template parameters, and specifying the required `temporal_pattern_length` as a runtime argument.
+
+### Example
+
+```cpp
+#include "agitb.h"
 
 int main() {
     using AGITB = sprogar::AGI::TestBed<Cortex, Input>;
@@ -99,7 +111,6 @@ int main() {
     return 0;
 }
 ```
-
 ---
 
 ## Requirements
