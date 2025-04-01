@@ -40,7 +40,6 @@ Your Input class must:
   bool Input::operator[](size_t i) const;       // Read-only access to the i-th bit
   Input::reference Input::operator[](size_t i); // Write access to the i-th bit
   ```
-
 ### `Cortex`
 Your Cortex class must:
 - Satisfy the `std::regular` concept.
@@ -50,21 +49,7 @@ Your Cortex class must:
   Input Cortex::predict() const;                // Returns predicted next input
   ```
 
----
-
-## Configuration Parameters
-
-AGITB requires one solution-specific and two system-level template parameters:
-
-- **`temporal_pattern_length`** – A required parameter passed to the TestBed::run() method. It defines the length of the repeating input sequences. Longer patterns increase test difficulty, so this value should be chosen to balance the Cortex’s learning ability with the spatial size of the input.
-
-- **`SimulatedInfinity`** – An optional template parameter of the TestBed class. It defines a practical upper bound on the number of timesteps available for learning, simulating an "infinite" time window within a finite setting. Default: 1000.
-
-- **`Repetitions`** – An optional template parameter of the TestBed class. It specifies how many times each of the 12 tests is repeated to improve statistical robustness. Default: 100.
-
----
-
-## Stub Implementation of Input and Cortex Classes for AGI TestBed
+### Stub Implementation of Input and Cortex Classes for AGI TestBed
 
 ```cpp
 
@@ -92,6 +77,17 @@ public:
 };
 
 ```
+---
+
+## Configuration Parameters
+
+AGITB requires one solution-specific and two system-level template parameters:
+
+- **`temporal_pattern_length`** – A required parameter passed to the TestBed::run() method. It defines the length of the repeating input sequences. Longer patterns increase test difficulty, so this value should be chosen to balance the Cortex’s learning ability with the spatial size of the input.
+
+- **`SimulatedInfinity`** – An optional template parameter of the TestBed class. It defines a practical upper bound on the number of timesteps available for learning, simulating an "infinite" time window within a finite setting. Default: 1000.
+
+- **`Repetitions`** – An optional template parameter of the TestBed class. It specifies how many times each of the 12 tests is repeated to improve statistical robustness. Default: 100.
 
 ---
 
