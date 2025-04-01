@@ -97,7 +97,7 @@ public:
 
 ## Usage
 
-To use the AGITB testbed, include the main header file and call the static `run()` method of the `TestBed&lt;Cortex, Input&gt;` class, providing your `Cortex` and `Input` types as template parameters, and specifying the required `temporal_pattern_length` as a runtime argument.
+To use the AGITB testbed, include the main header file and call the static `run()` method of the `TestBed<Cortex, Input>` class, providing your `Cortex` and `Input` types as template parameters, and specifying the required `temporal_pattern_length` as a runtime argument.
 
 ### Example
 
