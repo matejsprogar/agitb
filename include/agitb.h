@@ -35,13 +35,12 @@ namespace AGI {
     using std::string;
 
     template <typename TCortex, typename TInput, size_t SimulatedInfinity = 1000, size_t Repetitions = 100>
-    requires InputPredictor<TCortex, TInput> && Indexable<TInput>
-        class TestBed
+    class TestBed
     {
-        using Input = utils::Input<TInput>;
-        using Sequence = utils::Sequence<Input>;
-        using Cortex = utils::Cortex<TCortex, Input, Sequence, SimulatedInfinity>;
-        using Misc = utils::Misc<Cortex, Input, Sequence, SimulatedInfinity>;
+        using Cortex = utils::Cortex<TCortex, TInput, SimulatedInfinity>;
+        using Input = Cortex::Input;
+        using Sequence = Cortex::Sequence;
+        using Misc = utils::Misc<Cortex, SimulatedInfinity>;
 
     public:
         static void run(time_t temporal_pattern_length)

@@ -121,11 +121,14 @@ inline namespace utils {
         }
     };
 
-    template <typename TCortex, Indexable Input, typename Sequence, size_t SimulatedInfinity>
-        requires InputPredictor<TCortex, Input>
+    template <typename TCortex, Indexable TInput, size_t SimulatedInfinity>
+    requires InputPredictor<TCortex, TInput>
     class Cortex : public TCortex
     {
     public:
+        using Input = utils::Input<TInput>;
+        using Sequence = utils::Sequence<Input>;
+
         Cortex() = default;
         Cortex(const Cortex& src) = default;
         Cortex(Cortex&& src) = default;
@@ -202,24 +205,39 @@ inline namespace utils {
         }
     };
 
-    template <typename Cortex, typename Input, typename Sequence, size_t SimulatedInfinity>
+    template <typename Cortex, size_t SimulatedInfinity>
     class Misc {
     public:
-        // Returns an adaptable random sequence of non-empty inputs with a specified length.
+        using Sequence = Cortex::Sequence;
+        // Returns an adaptable non-periodic random sequence with a specified length.
         static Sequence adaptable_random_pattern(time_t temporal_pattern_length)
         {
-            const Sequence empty_sequence{temporal_pattern_length, Input{}};
             for (time_t time = 0; time < SimulatedInfinity; ++time) {
-                Cortex C{};
                 Sequence sequence = Sequence::circular_random(temporal_pattern_length);
-                if (sequence == empty_sequence)
+                if (is_periodic(sequence))
                     continue;
 
+                Cortex C{};
                 if (C.adapt(sequence)) // not every circular sequence is inherently adaptable.
                     return sequence;
             }
-            std::cerr << std::format("\n{} No temporal pattern spanning {} inputs was found.\n\n", red("Error:"), temporal_pattern_length);
-            exit(-1);
+            return Sequence{};
+        }
+    private:
+        static bool is_periodic(const Sequence& sequence)
+        {
+            const auto n = sequence.size();
+            for (size_t period = 1; period <= n / 2; ++period) {
+                bool isPeriodic = true;
+                for (size_t i = period; i < n; ++i) {
+                    if (sequence[i] != sequence[i - period]) {
+                        isPeriodic = false;
+                        break;
+                    }
+                }
+                if (isPeriodic) return true;
+            }
+            return false;
         }
     };
 }
