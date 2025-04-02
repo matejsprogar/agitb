@@ -77,7 +77,7 @@ AGITB requires the user to provide implementations of two interacting component 
 
 Each input sample consists of a fixed number of bits, with each bit representing the signal from a separate input channel, such as a pixel, microphone band, or actuator feedback line. In other words, a single input encodes multiple parallel signals, one bit per channel, at a given point in time. For example, a 10-bit input might encode spatial input from a 2×3 camera and a 4-bit microphone. Inputs capture spatial information, while their temporal sequences represent the unfolding of data over time. Spatial and temporal dimensions are orthogonal in structure, but their interplay encodes richer semantics than either alone. 
 
-Since AGITB operates at the level of neural signal processing, all temporal sequences of input signals must exhibit refractory-phase behaviour, simulating the biological constraint that a neuron cannot fire immediately after activation. Beyond this requirement, AGITB remains agnostic to the syntactic and semantic encoding of signals. 
+Since AGITB operates at the level of neural signal processing, all temporal sequences of inputs must exhibit refractory-phase behaviour, simulating the biological constraint that a neuron cannot fire immediately after activation. Beyond this requirement, AGITB remains agnostic to the syntactic and semantic encoding of signals. 
 
 \subsection{Operation}
 
@@ -85,7 +85,7 @@ A cortex object takes an input $p_t$ and predicts the subsequent input $p_{t+1}$
 
 AGITB asserts expectations about the resulting state and behavioural dynamics of cortex models in specific scenarios, using randomly generated test inputs. The tests are designed without fixed thresholds; no evaluation depends on surpassing an arbitrary performance score. Instead, AGITB evaluates cortex models through relative comparisons, using a user-specified equality criterion, since the internal state of a cortex object is inaccessible to the test system.
 
-Before running AGITB, the user must specify a single parameter: the temporal pattern length. This parameter determines the length of the generated repeating inputs that the cortex may need to adapt to. Increasing the pattern length significantly raises the complexity of the recognition task. Because overly long temporal patterns may exceed the capabilities of a given cortex model, the user must choose a value that balances the model’s learning capacity with the complexity introduced by the spatial size of the input.
+Before running AGITB, the user must specify a single parameter: the input period. This parameter defines the number of time steps in the repeating input sequence that the cortex must learn to recognize and adapt to. A longer input period increases the temporal complexity of the task, making it more difficult for the model to capture and generalize the temporal pattern. Since excessively long input periods may exceed the cortex’s learning capacity—especially in combination with high-dimensional inputs—the user should choose a value that balances temporal complexity with the spatial size of each input sample.
 
 \subsection{The 12 Essential Tests}
 
@@ -127,10 +127,10 @@ The cortex is sensitive to the order of inputs over time, as each new input bias
 Adaptation is possible only to sequences that incorporate refractory period behaviour in their signals. Neural signals consist of spike trains that encode and transfer information between neurons. AGITB assumes that spiking plays a fundamental role in neural processing, as adaptation depends on dynamic variations in spike signals. Continuous, unmodulated spiking (where signals remain at 1) fails to support learning, as it lacks the variability required for synaptic adaptation \cite{Gerstner2002}. 
 }
 \agitbtest{Temporal Flexibility}{
-\emph{Assertion}: The cortex can successfully adapt to patterns of the specified length.\\
-\emph{Assertion}: The cortex can successfully adapt to patterns longer than the specified length.\\
+\emph{Assertion}:  The cortex can successfully adapt to input sequences with the specified input period.\\
+\emph{Assertion}: The cortex can successfully adapt to input sequences with an input period longer than the specified value.\\
 
-This AGITB test evaluates a model’s flexibility in adapting to patterns of varying lengths. In contrast to rigid pattern processing, human cognition exhibits inherent adaptability, recognizing and responding to patterns across multiple timescales.
+This AGITB test evaluates a model’s flexibility in adapting to input sequences with varying input periods. In contrast to rigid pattern processing, human cognition exhibits inherent adaptability, recognizing and responding to temporal structures across multiple timescales.
 }
 \agitbtest{Stagnation}{
 \emph{Assertion}: There exists a limit beyond which the Cortex can no longer adapt, even to input sequences that would otherwise be predictable.

@@ -90,16 +90,16 @@ inline namespace utils {
         bool operator !() const { return std::vector<Input>::empty(); }
 
         // Returns a random sequence of inputs with a specified length.
-        static Sequence random(time_t temporal_pattern_length)
+        static Sequence random(time_t length)
         {
-            if (0 == temporal_pattern_length)
+            if (0 == length)
                 return Sequence{};
 
             Sequence sequence{};
-            sequence.reserve(temporal_pattern_length);
+            sequence.reserve(length);
 
             sequence.push_back(Input::random());
-            while (sequence.size() < temporal_pattern_length)
+            while (sequence.size() < length)
                 sequence.push_back(Input::random(sequence.back()));
 
             return sequence;
@@ -107,12 +107,12 @@ inline namespace utils {
 
         // Returns a random sequence of inputs with a specified length, exhibiting a circular property 
         // where the first input incorporates refractory periods for the last input in the sequence.
-        static Sequence circular_random(time_t circle_length)
+        static Sequence circular_random(time_t length)
         {
-            if (circle_length < 2)
-                return Sequence{ circle_length, Input{} };
+            if (length < 2)
+                return Sequence{ length, Input{} };
 
-            Sequence sequence = Sequence::random(circle_length);
+            Sequence sequence = Sequence::random(length);
 
             sequence.pop_back();
             sequence.push_back(Input::random(sequence.back(), sequence.front()));
@@ -209,12 +209,12 @@ inline namespace utils {
     class Misc {
     public:
         using Sequence = Cortex::Sequence;
-        // Returns an adaptable non-periodic random sequence with a specified length.
-        static Sequence adaptable_random_pattern(time_t temporal_pattern_length)
+        // Returns a random, adaptable sequence with the specified period.
+        static Sequence adaptable_random_pattern(time_t input_period)
         {
             for (time_t time = 0; time < SimulatedInfinity; ++time) {
-                Sequence sequence = Sequence::circular_random(temporal_pattern_length);
-                if (is_periodic(sequence))
+                Sequence sequence = Sequence::circular_random(input_period);
+                if (period(sequence) != input_period)
                     continue;
 
                 Cortex C{};
@@ -224,20 +224,20 @@ inline namespace utils {
             return Sequence{};
         }
     private:
-        static bool is_periodic(const Sequence& sequence)
+        static size_t period(const Sequence& sequence)
         {
-            const auto n = sequence.size();
+            const size_t n = sequence.size();
             for (size_t period = 1; period <= n / 2; ++period) {
-                bool isPeriodic = true;
+                bool is_periodic = true;
                 for (size_t i = period; i < n; ++i) {
                     if (sequence[i] != sequence[i - period]) {
-                        isPeriodic = false;
+                        is_periodic = false;
                         break;
                     }
                 }
-                if (isPeriodic) return true;
+                if (is_periodic) return period;
             }
-            return false;
+            return n;
         }
     };
 }
