@@ -165,18 +165,21 @@ Average performance is used in these assertions because even unadapted models or
 
 \end{agitblist}
 
-\subsection{Human Performance}
-Humans are assumed to pass the AGITB by design: the biological architecture of the human cortex inherently satisfies all 12 tests at the low level of binary signal processing. The final six tests are also reflected at the conscious level, making their effects observable through explicit reasoning and introspection.
-
-Human performance on AGITB can be verified empirically by instructing a subject to predict the next binary input in a sequence. Due to prior experience and cognitive expectations, a human may appear to "fail" the first test—since their cortex is no longer in an empty state and thus produces a biased, non-empty prediction. In contrast, a fetal cortex receiving its first-ever input would be truly empty and predict nothing.
-
-Once an adult human understands the task, they can reliably pass the remaining tests—provided the input sequences are not excessively long and the signal dimensionality remains within cognitively manageable limits, such as those constrained by working memory or attentional span.
-
 \subsection{LLM Performance}
 
 To evaluate whether Large Language Models exhibit AGI-like behaviour, we tested ChatGPT-4o using a structured prompt (see Appendix A) that instructs it to simulate two prediction-capable models for state comparisons.
 
 ChatGPT successfully completed the first five AGITB tests, demonstrating sensitivity to inputs, time, and bias. However, it failed at Test \#6 (Refractory Period). The failure did not stem from a violation of refractory period constraints, but rather from an inability to generalize even a simple alternating input sequence—e.g., alternating between `100` and `000`. Instead of inferring the pattern, the model consistently predicted that the next input would repeat the last one, suggesting a lack of internal memory or adaptive prediction in this context.
+
+\subsection{Human Performance}
+
+Humans are assumed to pass the AGITB by design: the biological architecture of the human cortex inherently satisfies all 12 tests at the low level of binary signal processing. The final six tests are also reflected at the conscious level, making their effects observable through explicit reasoning and introspection.
+
+Human performance on AGITB was verified empirically by instructing participants to predict the next binary input in a sequence. The instructions given to human subjects mirrored those used for ChatGPT-4o (see Appendix A), ensuring a fair and consistent evaluation protocol across both human and artificial systems.
+
+Due to prior experience and cognitive expectations, a human may appear to "fail" the first test—since their cortex is no longer in an empty state and thus produces a biased, non-empty prediction. In contrast, a fetal cortex receiving its first-ever input would be truly empty and predict no spikes.
+
+Once an adult human understands the task, they can reliably pass the remaining tests—provided the input sequences are not excessively long and the signal dimensionality remains within cognitively manageable limits, such as those constrained by working memory or attentional span.
 
 \subsection{Remarks}
 While individual AGITB tests may be trivial to solve in isolation, the true challenge lies in developing a universal AGI architecture capable of mastering all tasks within a unified framework. In principle, the existence of a classical imperative solution to AGITB would call the benchmark’s adequacy into question—yet no such solution has emerged. History has repeatedly shown that hand-coded, task-specific systems are a dead end for achieving general intelligence.
