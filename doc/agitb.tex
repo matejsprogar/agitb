@@ -2,6 +2,8 @@
 
 \usepackage{url}
 \usepackage{enumitem}
+\usepackage[T1]{fontenc}
+
 
 \newlist{agitblist}{enumerate}{1}
 \setlist[agitblist,1]{
@@ -170,6 +172,12 @@ Human performance on AGITB can be verified empirically by instructing a subject 
 
 Once an adult human understands the task, they can reliably pass the remaining tests—provided the input sequences are not excessively long and the signal dimensionality remains within cognitively manageable limits, such as those constrained by working memory or attentional span.
 
+\subsection{LLM Performance}
+
+To evaluate whether Large Language Models exhibit AGI-like behaviour, we tested ChatGPT-4o using a structured prompt (see Appendix A) that instructs it to simulate two prediction-capable models for state comparisons.
+
+ChatGPT successfully completed the first five AGITB tests, demonstrating sensitivity to inputs, time, and bias. However, it failed at Test \#6 (Refractory Period). The failure did not stem from a violation of refractory period constraints, but rather from an inability to generalize even a simple alternating input sequence—e.g., alternating between `100` and `000`. Instead of inferring the pattern, the model consistently predicted that the next input would repeat the last one, suggesting a lack of internal memory or adaptive prediction in this context.
+
 \subsection{Remarks}
 While individual AGITB tests may be trivial to solve in isolation, the true challenge lies in developing a universal AGI architecture capable of mastering all tasks within a unified framework. In principle, the existence of a classical imperative solution to AGITB would call the benchmark’s adequacy into question—yet no such solution has emerged. History has repeatedly shown that hand-coded, task-specific systems are a dead end for achieving general intelligence.
 
@@ -186,6 +194,50 @@ The proposed AGI test bed provides a systematic approach to AGI evaluation throu
 
 AGITB can be solved by humans but remains unsolvable by classical algorithms and current state-of-the-art AI. This gap between human and machine performance serves as strong empirical evidence that AGITB is a meaningful benchmark for evaluating AGI capabilities. While no known computational system—including deterministic algorithms and advanced neural networks—has successfully solved it, this alone does not constitute formal proof of its fundamental difficulty. However, the fact that humans can solve AGITB while all existing AI systems fail, suggests that it captures a crucial aspect of general intelligence.
 
+\section*{acknowledgments}
+The author acknowledges the financial support from the Slovenian Research Agency (research core funding No. P2-0057).
+
+\newpage
+
+\appendix
+\section*{Appendix A - LLM prompt}
+\begin{quote}
+You are managing two binary-pattern prediction models, 'A' and 'B', participating in a signal-level AGI test.
+
+You will receive 3-bit binary strings prefixed with the model name (e.g., \texttt{A010}, \texttt{B111}). Each string represents a sensory input to the corresponding model.
+
+Your task is to design a model that **{predicts the next 3-bit input}**. Each model has an internal state that only updates after receiving an input. Models' predictions must always be exactly 3 bits long, and their states can handle hundreds of inputs without losing information.
+
+\subsection*{Rules}
+
+\begin{enumerate}
+    \item Upon receiving a 3-bit binary input (e.g., \texttt{A101}): 
+    \begin{itemize}
+        \item[--] Update the corresponding model's internal state.
+        \item[--] Make a 3-bit prediction based on the model's state.
+        \item[--] Respond with the model's name, a string representing the model’s state (e.g., a hash or fingerprint), an arrow " -> ", and the model’s 3-bit prediction.
+    \end{itemize}
+    \item **{State updates only occur with input}**.
+    \item **{Models A and B follow the same principles}**.
+    \item **Correct predictions are critical**:
+    \begin{itemize}
+        \item[--] Incorrect predictions will alter the model's operation principles.
+        \item[--] Models learn and adapt continuously.
+    \end{itemize}    
+    \item Response format:
+    \begin{itemize}
+        \item[--] Each model’s response is a single line:\\  
+        ModelName State -> Prediction
+        \item[--] Example: \texttt{A 00000000 -> 000}
+    \end{itemize}
+    \item Formatting: Keep responses clean and minimal, without extra explanations or punctuation.
+    \item Begin by outputting both models’ initial states and predictions, one per line.
+\end{enumerate}
+
+We begin now.
+\end{quote}
+
+\newpage
 
 \begin{thebibliography}{99}
 
