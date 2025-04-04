@@ -167,13 +167,16 @@ namespace AGI {
                     // Null Hypothesis: Adaptation time is independent of the input sequence
                     auto adaptation_time_depends_on_the_content_of_the_input_sequence = [=]() -> bool {
                         Cortex B;
-                        const time_t base_pattern_time = B.time_to_repeat(Sequence::circular_random(input_period));
+                        const Sequence base_pattern = Sequence::circular_random(input_period);
+                        const time_t base_time = B.time_to_repeat(base_pattern);
                         for (time_t time = 0; time < SimulatedInfinity; ++time) {
-                            Sequence another = Sequence::circular_random(input_period);
-                            Cortex R;
-                            time_t another_pattern_time = R.time_to_repeat(another);
-                            if (base_pattern_time != another_pattern_time)
-                                return true;
+                            const Sequence new_pattern = Sequence::circular_random(input_period);
+                            if (new_pattern != base_pattern) {
+                                Cortex R;
+                                time_t new_time = R.time_to_repeat(new_pattern);
+                                if (base_time != new_time)
+                                    return true;
+                            }
                         }
                         return false;
                     };
@@ -190,10 +193,12 @@ namespace AGI {
                         Cortex B;
                         const time_t base_time = B.time_to_repeat(target_pattern);
                         for (time_t time = 0; time < SimulatedInfinity; ++time) {
-                            Cortex O = Cortex::random();
-                            time_t other_cortex_time = O.time_to_repeat(target_pattern);
-                            if (base_time != other_cortex_time)
-                                return true;
+                            Cortex N = Cortex::random();
+                            if (N != Cortex{}) {
+                                time_t new_time = N.time_to_repeat(target_pattern);
+                                if (base_time != new_time)
+                                    return true;
+                            }
                         }
                         return false;
                     };
@@ -213,20 +218,19 @@ namespace AGI {
                             C.adapt(trivial_behaviour);
                             D.adapt(trivial_behaviour);
 
-                            bool counterexample_found = C != D && C.behaviour() == D.behaviour();
-                            if (counterexample_found)
+                            bool counterexample = C != D && C.behaviour() == D.behaviour();
+                            if (counterexample)             // rejects the null hypothesis
                                 return true;
                         }
                         return false;
                     };
 
-                    ASSERT(different_cortex_instances_can_produce_identical_behaviour());   // rejects the null hypothesis
+                    ASSERT(different_cortex_instances_can_produce_identical_behaviour());
                 }
             },
             {
                 "#12 Generalisation (On average, adapted models exhibit the strongest generalisation.)",
                 [](time_t input_period) {
-                    const size_t random_guess = SimulatedInfinity * Input::size() / 2;
                     size_t adapted_score = 0, unadapted_score = 0;
                     for (time_t time = 0; time < SimulatedInfinity; ++time) {
                         const Sequence facts = Misc::adaptable_random_pattern(input_period);
@@ -242,6 +246,7 @@ namespace AGI {
                         U << disruption << facts;
                         unadapted_score += Input::count_matches(U.predict(), expectation);
                     }
+                    const size_t random_guess = SimulatedInfinity * Input::size() / 2;
 
                     ASSERT(adapted_score > unadapted_score);
                     ASSERT(adapted_score > random_guess);
