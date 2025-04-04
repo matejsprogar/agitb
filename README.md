@@ -7,7 +7,7 @@ This repository contains a C++ implementation of the **Artificial General Intell
 ## Thesis
 
 > **AGI needs a metric.**
-While Large Language Models (LLMs) may be able to pass certain versions of the Turing Test, they do so without grounded understanding and cannot be considered genuine Artificial General Intelligence (AGI). If we are to determine whether a system is truly intelligent—or meaningfully progressing toward general intelligence—we need a clear, rigorous, and actionable metric that goes beyond surface-level imitation.
+<p>While Large Language Models (LLMs) may be able to pass certain versions of the Turing Test, they do so without grounded understanding and cannot be considered genuine Artificial General Intelligence (AGI). If we are to determine whether a system is truly intelligent—or meaningfully progressing toward general intelligence—we need a clear, rigorous, and actionable metric that goes beyond surface-level imitation.</p>
 ---
 
 ## AGITB Goal
