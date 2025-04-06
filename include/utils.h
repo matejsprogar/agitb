@@ -210,11 +210,11 @@ inline namespace utils {
     public:
         using Sequence = Cortex::Sequence;
         // Returns a random, adaptable sequence with the specified period.
-        static Sequence adaptable_random_pattern(time_t input_period)
+        static Sequence adaptable_random_pattern(time_t pattern_period)
         {
             for (time_t time = 0; time < SimulatedInfinity; ++time) {
-                Sequence sequence = Sequence::circular_random(input_period);
-                if (period(sequence) != input_period)
+                Sequence sequence = Sequence::circular_random(pattern_period);
+                if (period(sequence) != pattern_period)
                     continue;
 
                 Cortex C{};

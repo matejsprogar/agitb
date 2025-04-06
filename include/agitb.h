@@ -43,27 +43,27 @@ namespace AGI {
         using Misc = utils::Misc<Cortex, SimulatedInfinity>;
 
     public:
-        static void run(time_t input_period)
+        static void run(time_t pattern_period)
         {
             std::clog << "Artificial General Intelligence Test Bed\n\n";
-            std::clog << "Testing with input period of " << input_period << ":\n";
+            std::clog << "Testing with pattern period of " << pattern_period << ":\n";
 
             for (const auto& [info, test] : testbed) {
                 std::clog << info << std::endl;
-                repeat(test, input_period);
+                repeat(test, pattern_period);
             }
             std::clog << green("\nPASS\n");
         }
 
     private:
-        static void repeat(void (*test)(time_t), const time_t input_period)
+        static void repeat(void (*test)(time_t), const time_t pattern_period)
         {
             const string go_back(50, '\b');
 
             for (size_t r = 1; r <= Repetitions; ++r) {
                 std::clog << r << '/' << Repetitions << go_back;
 
-                test(input_period);
+                test(pattern_period);
             }
         }
 
@@ -139,17 +139,17 @@ namespace AGI {
             },
             {
                 "#7 TemporalFlexibility (The model can adapt to and predict patterns of varying lengths.)",
-                [](time_t input_period) {
-                    ASSERT(Misc::adaptable_random_pattern(input_period)); 
-                    ASSERT(Misc::adaptable_random_pattern(input_period + 1)); 
+                [](time_t pattern_period) {
+                    ASSERT(Misc::adaptable_random_pattern(pattern_period)); 
+                    ASSERT(Misc::adaptable_random_pattern(pattern_period + 1)); 
                 }
             },
             {
                 "#8 Stagnation (You can't teach an old dog new tricks.)",
-                [](time_t input_period) {
+                [](time_t pattern_period) {
                     auto indefinitely_adaptable = [&](Cortex& dog) -> bool {
                         for (time_t time = 0; time < SimulatedInfinity; ++time) {
-                            Sequence new_trick = Misc::adaptable_random_pattern(input_period);
+                            Sequence new_trick = Misc::adaptable_random_pattern(pattern_period);
                             if (not dog.adapt(new_trick))
                                 return false;
                         }
@@ -163,14 +163,14 @@ namespace AGI {
             },
             {
                 "#9 Unsupervised (Adaptation time depends on the content of the input sequence.)",
-                [](time_t input_period) {
+                [](time_t pattern_period) {
                     // Null Hypothesis: Adaptation time is independent of the input sequence
                     auto adaptation_time_depends_on_the_content_of_the_input_sequence = [=]() -> bool {
                         Cortex B;
-                        const Sequence base_pattern = Sequence::circular_random(input_period);
+                        const Sequence base_pattern = Sequence::circular_random(pattern_period);
                         const time_t base_time = B.time_to_repeat(base_pattern);
                         for (time_t time = 0; time < SimulatedInfinity; ++time) {
-                            const Sequence new_pattern = Sequence::circular_random(input_period);
+                            const Sequence new_pattern = Sequence::circular_random(pattern_period);
                             if (new_pattern != base_pattern) {
                                 Cortex R;
                                 time_t new_time = R.time_to_repeat(new_pattern);
@@ -186,10 +186,10 @@ namespace AGI {
             },
             {
                 "#10 Knowledge (Adaptation time depends on the state of the cortex.)",
-                [](time_t input_period) {
+                [](time_t pattern_period) {
                     // Null Hypothesis: Adaptation time is independent of the state of the cortex
                     auto adaptation_time_depends_on_state_of_the_cortex = [&]() -> bool {
-                        const Sequence target_pattern = Misc::adaptable_random_pattern(input_period);
+                        const Sequence target_pattern = Misc::adaptable_random_pattern(pattern_period);
                         Cortex B;
                         const time_t base_time = B.time_to_repeat(target_pattern);
                         for (time_t time = 0; time < SimulatedInfinity; ++time) {
@@ -230,10 +230,10 @@ namespace AGI {
             },
             {
                 "#12 Generalisation (On average, adapted models exhibit the strongest generalisation.)",
-                [](time_t input_period) {
+                [](time_t pattern_period) {
                     size_t adapted_score = 0, unadapted_score = 0;
                     for (time_t time = 0; time < SimulatedInfinity; ++time) {
-                        const Sequence facts = Misc::adaptable_random_pattern(input_period);
+                        const Sequence facts = Misc::adaptable_random_pattern(pattern_period);
                         const Input disruption = Input::random();
                         const Input expectation = facts[0];
 
