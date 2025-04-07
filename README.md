@@ -8,6 +8,7 @@ This repository contains a C++ implementation of the **Artificial General Intell
 
 > **AGI needs a metric.**
 <p>While Large Language Models (LLMs) may be able to pass certain versions of the Turing Test, they do so without grounded understanding and cannot be considered genuine Artificial General Intelligence (AGI). If we are to determine whether a system is truly intelligent—or meaningfully progressing toward general intelligence—we need a clear, rigorous, and actionable metric that goes beyond surface-level imitation.</p>
+
 ---
 
 ## AGITB Goal
@@ -81,7 +82,7 @@ public:
 
 AGITB requires one solution-specific and two system-level template parameters:
 
-- **`input_period`** – A required parameter passed to the TestBed::run() method. It defines the number of time steps in the repeating input sequence that the cortex must learn to recognize and adapt to. A longer input period increases the temporal complexity of the task, making it more difficult for the model to capture and generalize the pattern. Since excessively long input periods may exceed the cortex’s learning capacity—especially in combination with high-dimensional inputs—the user should choose a value that balances temporal complexity with the spatial size of each input sample.
+- **`pattern_period`** – A required parameter passed to the TestBed::run() method. It defines the number of time steps in the repeating input sequence that the cortex must learn to recognize and adapt to. A longer pattern period increases the temporal complexity of the task, making it more difficult for the model to capture and generalize the pattern. Since excessively long pattern periods may exceed the cortex’s learning capacity—especially in combination with high-dimensional inputs—the user should choose a value that balances temporal complexity with the spatial size of each input sample.
 
 - **`SimulatedInfinity`** – An optional template parameter of the TestBed class. It defines a practical upper bound on the number of timesteps available for learning, simulating an "infinite" time window within a finite setting. Default: 1000.
 
@@ -91,7 +92,7 @@ AGITB requires one solution-specific and two system-level template parameters:
 
 ## Usage
 
-To use the AGITB testbed, include the main header file and call the static `run()` method of the `TestBed<Cortex, Input>` class, providing your `Cortex` and `Input` types as template parameters, and specifying the required `input_period` as a runtime argument.
+To use the AGITB testbed, include the main header file and call the static `run()` method of the `TestBed<Cortex, Input>` class, providing your `Cortex` and `Input` types as template parameters, and specifying the required `pattern_period` as a runtime argument.
 
 ### Example
 
@@ -101,7 +102,7 @@ To use the AGITB testbed, include the main header file and call the static `run(
 int main() {
     using AGITB = sprogar::AGI::TestBed<Cortex, Input>;
     
-    AGITB::run(5 /* input_period */);
+    AGITB::run(5 /* pattern_period */);
     return 0;
 }
 ```
