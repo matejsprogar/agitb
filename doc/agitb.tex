@@ -177,7 +177,15 @@ Average performance is used in these assertions because even unadapted models or
 
 \end{agitblist}
 
-\subsection{Human Performance}
+\subsection{Performance}
+
+Prior to evaluating AGITB’s utility, one must recognize that—much like the Turing Test, which Harnad characterized as an empirical criterion rather than a mere trick \cite{Harnad1992}—AGITB serves as a pragmatic benchmark rather than a final objective. The objective remains AGI itself, not simply passing the test.
+
+To ensure meaningful evaluation, developers must carefully and transparently align their systems with AGITB's assumptions. Misinterpretation—such as the varied ways in which an "empty" initial state might be defined—can lead to misleading results.
+
+AGITB provides a framework for empirically evaluating the AGI potential of diverse approaches, including classical programming, artificial neural networks, and large language models. Before evaluating these systems, however, we must first consider the performance of humans.
+
+\subsubsection{Human Performance}
 
 AGITB assumes that humans pass all 12 tests by design, given that the biological architecture of the cortex inherently supports low-level binary signal processing. Some tests are also reflected at the conscious level, making their effects observable through explicit reasoning and introspection.
 
@@ -187,17 +195,33 @@ Due to prior experience and cognitive expectations, a human may appear to "fail"
 
 Once an adult human understands the task, they can reliably pass the AGITB tests—so long as the input patterns are not too long and the signal complexity stays within natural cognitive limits.
 
-\subsection{LLM Performance}
 
-As with human testing, Large Language Models must be evaluated against AGITB at a higher-than-intended cognitive level, rather than at the low-level binary signal processing the benchmark was originally designed to assess.
+\subsubsection{Classical Programming Performance}
 
-In principle, LLMs could be tested at the signal-processing level if full access to their internal weights and parameters were available, allowing for direct comparison of internal states across instances. However, Test~\#1 of AGITB requires the model to start in an unbiased, knowledge-free state—an assumption fundamentally at odds with the nature of pretrained language models. Once stripped of their training, such models would be incapable of producing meaningful output or predictions, rendering the evaluation impractical.
+All AGI approaches based on classical programming ultimately suffer from the Symbol Grounding Problem. While such systems may exhibit weak AI capabilities—producing behaviour that appears intelligent—they fundamentally lack grounded understanding and therefore cannot qualify as true AGI.
 
-To evaluate whether Large Language Models exhibit AGI-like behaviour, we tested ChatGPT-4o using a structured prompt (see Appendix) designed to simulate not one but two prediction-capable models, allowing comparison of their externally declared states.
+AGITB exposes this limitation immediately through its very first assertion. In classical systems, the initial state of the Cortex model necessarily includes its program. As a result, Test~\#1 poses a paradoxical challenge: “There must be no program.” In other words, the system must begin in a completely unbiased, knowledge-free state. Yet a classical machine cannot operate without predefined instructions; without a program, it halts. This presents a contradiction: the system either does nothing, or it starts with embedded bias—violating the test and reintroducing the Symbol Grounding Problem.
 
-ChatGPT successfully completed the first five AGITB tests, demonstrating sensitivity to inputs, time, and bias. However, it failed at Test \#6 (Refractory Period). The failure did not stem from a violation of refractory period constraints, but rather from an inability to generalize even a simple alternating input sequence—e.g., alternating between `111 000` and `000 000`. Instead of inferring the period-2 pattern, the model consistently predicted that the next input would repeat the last one, suggesting a lack adaptive prediction.
+
+\subsubsection{ANN Performance}
+
+Artificial neural networks (ANN), in contrast to classical programs, do not suffer from the same initialization paradox. Perceptron-based architectures are inherently robust in this regard: they always operate, as neurons never halt. Each neuron continuously performs its computation, even if its output is consistently neutral—such as when the activation function returns zero.
+
+However, the requirement that a model begin in a completely unbiased, knowledge-free state is fundamentally at odds with the philosophy of modern deep learning. Contemporary approaches rely on pretraining—adjusting a network’s weights in advance through exposure to structured or labelled data. What remains missing is a mechanism that allows an uninitialized network to begin learning autonomously, without external supervision or prior semantic grounding.
+
+An empty network may technically function, but in the absence of any internal excitation, no learning dynamics are activated. The neurons are not halted—they are dormant, passively awaiting meaningful input. This exposes a critical limitation of current ANN designs: they lack the intrinsic capacity to initiate unbiased learning from scratch in an arbitrary environment.
+ 
+\subsubsection{LLM Performance}
+
+Although they are basically ANNs, Large Language Models should not be evaluated at the signal-processing level. While full access to their internal weights and parameters may allow for direct comparison of internal states, AGITB’s first test requires the model to begin in an unbiased, knowledge-free state—an assumption fundamentally incompatible with the nature of pretrained systems. Without pretraining, LLMs are unable to generate meaningful predictions, rendering such low-level evaluation impractical.
+
+As with human testing, LLMs must be evaluated at a higher-than-intended cognitive level, rather than at the low-level binary signal processing the benchmark was originally designed to assess. To investigate whether these models exhibit AGI-like behaviour, we tested ChatGPT-4o using a structured prompt (see Appendix) designed to simulate not one but two prediction-capable models, enabling comparison of their externally declared states.
+
+ChatGPT successfully completed the first five AGITB tests, demonstrating sensitivity to inputs, temporal ordering, and bias. However, it failed Test~\#6 (Refractory Period). This failure did not result from a violation of the refractory period constraint, but from an inability to generalize even a simple period-2 alternating pattern—e.g., switching between 111 000 and 000 000. Rather than inferring the alternation, the model consistently predicted a repetition of the last input, suggesting a lack of adaptive prediction.
+
 
 \subsection{Remarks}
+
 While individual AGITB tests are trivial to solve in isolation, the true challenge lies in developing a universal AGI architecture capable of mastering all tasks within a unified framework. Since AGITB is a newly proposed benchmark, no classical imperative solution has yet emerged—nor can we rule out that one might. If a classical symbolic system were able to satisfy all AGITB conditions, this would call into question AGITB’s adequacy as a test for genuine AGI. Following Searle’s argument, such a result would only demonstrate weak AI—mere rule-following without understanding—rather than strong AI, which entails grounded cognition and true intelligence. However, history consistently suggests that hand-coded, task-specific systems struggle to scale toward general intelligence, reinforcing the need for adaptive, learning-based architectures.
 
 In contrast, neural network-based models offer a more promising path toward satisfying the AGITB criteria. Because state-of-the-art artificial neural networks rely on pretraining with symbolic or structured data—wh\-ich inherently introduces bias and circumvents the need to ground meaning in raw signals—how such models might begin learning directly from unstructured input remains an open question critical to their ability to pass AGITB.
@@ -259,16 +283,31 @@ We begin now.
 
 \begin{thebibliography}{99}
 
+\bibitem{Turing1950}
+A. M. Turing, 
+``Computing machinery and intelligence,'' 
+\textit{Mind}, vol. 59, no. 236, pp. 433--460, 1950. Available: \url{https://doi.org/10.1093/mind/LIX.236.433}
+
 \bibitem{Sprogar2018}
 M. Šprogar, 
 ``Ladder to Human-Comparable Intelligence: an empirical metric,'', 
 \textit{Journal of Experimental \& Theoretical Artificial Intelligence},
 vol. 30, no. 6, pp. 1037--1050, 2018. Available: \url{https://doi.org/10.1080/0952813X.2018.1509897}
 
-\bibitem{Turing1950}
-A. M. Turing, 
-``Computing machinery and intelligence,'' 
-\textit{Mind}, vol. 59, no. 236, pp. 433--460, 1950. Available: \url{https://doi.org/10.1093/mind/LIX.236.433}
+\bibitem{Maass1997}
+W. Maass, 
+``Networks of spiking neurons: The third generation of neural network models,'' 
+\textit{Neural Networks}, vol. 10, no. 9, pp. 1659--1671, 1997. Available: \url{https://doi.org/10.1016/S0893-6080(97)00011-7}
+
+\bibitem{Harnad1990}
+S. Harnad, 
+``The Symbol Grounding Problem,'' 
+\textit{Physica D: Nonlinear Phenomena}, vol. 42, no. 1--3, pp. 335--346, 1990. Available: \url{https://doi.org/10.1016/0167-2789(90)90087-6}
+
+\bibitem{Hawkins2004}
+J. Hawkins and S. Blakeslee,
+``On Intelligence,'' 
+\textit{Times Books}, 2004. Available: \url{https://doi.org/10.1016/j.artint.2005.10.011}
 
 \bibitem{Searle1980}
 J. R. Searle, 
@@ -281,26 +320,16 @@ S. Cave,
 \textit{The Atlantic},
 2016. Available: \url{https://www.theatlantic.com/magazine/archive/2016/06/theres-no-such-thing-as-free-will/480750/}
 
-\bibitem{Harnad1990}
-S. Harnad, 
-``The Symbol Grounding Problem,'' 
-\textit{Physica D: Nonlinear Phenomena}, vol. 42, no. 1--3, pp. 335--346, 1990. Available: \url{https://doi.org/10.1016/0167-2789(90)90087-6}
-
-\bibitem{Maass1997}
-W. Maass, 
-``Networks of spiking neurons: The third generation of neural network models,'' 
-\textit{Neural Networks}, vol. 10, no. 9, pp. 1659--1671, 1997. Available: \url{https://doi.org/10.1016/S0893-6080(97)00011-7}
-
-\bibitem{Hawkins2004}
-J. Hawkins and S. Blakeslee,
-``On Intelligence,'' 
-\textit{Times Books}, 2004. Available: \url{https://doi.org/10.1016/j.artint.2005.10.011}
-
 \bibitem{Gerstner2002}
 W. Gerstner and W.~M. Kistler,
 ``Spiking Neuron Models: Single Neurons, Populations, Plasticity'',
 \textit{Cambridge University Press}, 2002. Available:
 \url{https://doi.org/10.1017/cbo9780511815706}
+
+\bibitem{Harnad1992}
+S. Harnad,
+``The Turing Test is Not a Trick: Turing Indistinguishability is a Scientific Criterion'',
+\textit{SIGART Bulletin}, vol. 3, no. 4, pp. 9--10, 1992. Available: \url{https://web-archive.southampton.ac.uk/cogprints.org/1584/}
 
 
 \end{thebibliography}
