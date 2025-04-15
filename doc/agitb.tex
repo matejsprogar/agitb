@@ -106,8 +106,8 @@ A C++ reference implementation of AGITB is freely available under the GPL-3 lice
 \begin{agitblist}
 \agitbtest{Genesis}{
 \emph{Assertion}: Models that have received no input are considered empty and thus equal.\\
-\emph{Assertion}: An empty model predicts an empty input.
-
+\emph{Assertion}: An empty model predicts an empty input.\\
+\\
 Brains do not inherit an innate understanding of external inputs; rather, they acquire it through experience. Each brain must independently interpret the world, constructing meaning from raw sensory data. While certain reflexes may be genetically inherited, they do not constitute true understanding. In this sense, all cortices begin from the same unbiased starting point.
 
 If an unbiased model were to predict anything other than an empty input—that is, an input containing no spikes—it would imply that its initial state encodes assumptions, introducing a bias toward an arbitrary or unjustified future. To preserve neutrality, such models must be initialized to predict spike-free patterns, maintaining an unbiased state until actual input begins shaping their internal representations.
@@ -115,61 +115,61 @@ If an unbiased model were to predict anything other than an empty input—that i
 Importantly, "empty" refers to the absence of learned content, not to the absence of structure. A Cortex must possess an intrinsic organizational architecture that enables learning, even before it has processed any input.
 }
 \agitbtest{Bias}{
-\emph{Assertion}: Any model that has processed input can no longer be considered unbiased.
-
+\emph{Assertion}: Any model that has processed input can no longer be considered unbiased.\\
+\\
 Each input biases the cortex, continuously shaping its state based on past experiences. A change in state indicates bias, as every new input alters the cortex's processing dynamics.
 }
 \agitbtest{Determinism}{
-\emph{Assertion}: If two cortices are equal, they must have received the same inputs.
-
+\emph{Assertion}: If two cortices are equal, they must have received the same inputs.\\
+\\
 Biological neurons operate in a functionally deterministic manner, as their performance must remain stable to ensure reliable brain function. While small stochastic elements exist, they do not override the structured predictability of neural processing. Thus, the brain's actions are effectively deterministic, though often perceived otherwise due to their immense complexity \cite{AtlanticFreeWill}.
 }
 \agitbtest{Sensitivity}{
-\emph{Assertion}: Two different cortices remain different, even if they experience long exposure to identical inputs.
-
+\emph{Assertion}: Two different cortices remain different, even if they experience long exposure to identical inputs.\\
+\\
 The chaotic nature of cortical processes makes them highly sensitive to initial conditions. Even subtle differences in brain state or past experience can amplify over time, ultimately leading to divergent outcomes in lives that are otherwise identical. This deterministic unpredictability fosters the illusion of free choice, even though decisions emerge from structured and lawful neural dynamics.
 }
 \agitbtest{Time}{
-\emph{Assertion}: Changing the input order results in a different cortex state.
-
+\emph{Assertion}: Changing the input order results in a different cortex state.\\
+\\
 The cortex is sensitive to the order of inputs over time, as each new input biases processing based on prior experiences. This history-dependent adaptation implicitly drives the brain to recognize temporal structures, making time an intrinsic component of cognition.
 }
 \agitbtest{Refractory Period}{
 \emph{Assertion}: The cortex must be able to adapt to any minimal-length input sequence that respects proper refractory periods.\\
-\emph{Assertion}: The cortex cannot adapt to an input sequence that repeats a neural spike in violation of refractory-period constraints.
-
+\emph{Assertion}: The cortex cannot adapt to an input sequence that repeats a neural spike in violation of refractory-period constraints.\\
+\\
 Adaptation is possible only to sequences that incorporate refractory period behaviour in their signals. Neural signals consist of spike trains that encode and transfer information between neurons. AGITB assumes that spiking plays a fundamental role in neural processing, as adaptation depends on dynamic variations in spike signals. Continuous, unmodulated spiking (where signals remain at 1) fails to support learning, as it lacks the variability required for synaptic adaptation \cite{Gerstner2002}. 
 }
 \agitbtest{Temporal Flexibility}{
 \emph{Assertion}: The cortex can successfully adapt to input sequences that repeat with the user-specified pattern period.\\
 \emph{Assertion}: The cortex can also adapt to input sequences with a pattern period longer than the specified value.\\
-
+\\
 This AGITB test evaluates a model’s flexibility in adapting to input sequences with varying pattern periods. In contrast to rigid pattern processing, human cognition exhibits inherent adaptability, recognizing and responding to temporal structures across multiple timescales.
 }
 \agitbtest{Stagnation}{
-\emph{Assertion}: There exists a limit beyond which the Cortex can no longer adapt, even to patterns that would otherwise be predictable.
-
+\emph{Assertion}: There exists a limit beyond which the Cortex can no longer adapt, even to patterns that would otherwise be predictable.\\
+\\
 Over time, the ability to process and internalize new patterns may decline, reflecting biological constraints such as resource saturation or adaptation fatigue. This test evaluates whether such stagnation arises despite the continued presentation of learnable input.
 }
 \agitbtest{Unsupervised}{
-\emph{Assertion}: Adaptation time depends on the content of the input sequence.
-
+\emph{Assertion}: Adaptation time depends on the content of the input sequence.\\
+\\
 This test determines if variations in input structure influence the time required for adaptation. Sequences with simpler or more internally consistent patterns may lead to faster adaptation, while inputs with higher complexity or irregularity typically require more time. 
 }
 \agitbtest{Knowledge}{
-\emph{Assertion}: Adaptation time depends on the state of the cortex.
-
+\emph{Assertion}: Adaptation time depends on the state of the cortex.\\
+\\
 Adaptation efficiency is shaped by prior experience, as new input is interpreted in relation to existing internal representations. A well-structured cortical state—primed with relevant priors—can accelerate adaptation by facilitating rapid pattern recognition and integration. In contrast, an unstructured or conflicting state may require prolonged adaptation, as the model must undergo more extensive internal reorganization.
 }
 \agitbtest{Unobservability}{
-\emph{Assertion}: Different Cortex instances can produce identical behaviour.
-
+\emph{Assertion}: Different Cortex instances can produce identical behaviour.\\
+\\
 Individuals may exhibit identical behaviour under similar conditions, yet the internal cortical states that generate these outputs can differ significantly. Distinct neural pathways and synaptic configurations may converge on the same observable action. This many-to-one mapping illustrates that external behaviour does not necessarily reveal the underlying computational processes that produced it.
 }
 \agitbtest{Generalisation}{
 \emph{Assertion}: On average, adapted models achieve higher predictive accuracy than unadapted models after input disruption.\\
-\emph{Assertion}: On average, adapted models achieve higher predictive accuracy than random guessing after input disruption.
-
+\emph{Assertion}: On average, adapted models achieve higher predictive accuracy than random guessing after input disruption.\\
+\\
 Pre-existing knowledge acquired through adaptation provides a predictive advantage by enabling pattern recognition even after disruption. When presented with stimuli that should be familiar, adapted models must be able to generalise from prior experience, resulting in improved predictive performance.
 
 Average performance is used in these assertions because even unadapted models or random guessing may occasionally produce outputs that coincidentally align with the task—despite lacking genuine adaptation.
@@ -224,7 +224,7 @@ ChatGPT successfully completed the first five AGITB tests, demonstrating sensiti
 
 While individual AGITB tests are trivial to solve in isolation, the true challenge lies in developing a universal AGI architecture capable of mastering all tasks within a unified framework. Since AGITB is a newly proposed benchmark, no classical imperative solution has yet emerged—nor can we rule out that one might. If a classical symbolic system were able to satisfy all AGITB conditions, this would call into question AGITB’s adequacy as a test for genuine AGI. Following Searle’s argument, such a result would only demonstrate weak AI—mere rule-following without understanding—rather than strong AI, which entails grounded cognition and true intelligence. However, history consistently suggests that hand-coded, task-specific systems struggle to scale toward general intelligence, reinforcing the need for adaptive, learning-based architectures.
 
-In contrast, neural network-based models offer a more promising path toward satisfying the AGITB criteria. Because state-of-the-art artificial neural networks rely on pretraining with symbolic or structured data—wh\-ich inherently introduces bias and circumvents the need to ground meaning in raw signals—how such models might begin learning directly from unstructured input remains an open question critical to their ability to pass AGITB.
+In contrast, neural network-based models offer a more promising path toward satisfying the AGITB criteria. Because state-of-the-art artificial neural networks rely on pretraining with symbolic or structured data—which inherently introduces bias and circumvents the need to ground meaning in raw signals—how such models might begin learning directly from unstructured input remains an open question critical to their ability to pass AGITB.
 
 
 \section{Conclusion}
