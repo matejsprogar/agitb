@@ -1,6 +1,6 @@
-# AGITB – Artificial General Intelligence Test Bed
+# AGITB – Artificial General Intelligence Testbed
 
-This repository contains the official C++ reference implementation of the **Artificial General Intelligence Test Bed (AGITB)**, as described in [this paper](doc/AGITB.pdf), which is also available on [arXiv](https://arxiv.org/abs/2504.04430).
+This repository contains the official C++ reference implementation of the **Artificial General Intelligence Testbed (AGITB)**, as described in [this paper](doc/AGITB.pdf), which is also available on [arXiv](https://arxiv.org/abs/2504.04430).
 
 ---
 
