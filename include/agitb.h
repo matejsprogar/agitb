@@ -34,13 +34,13 @@ namespace sprogar {
 namespace AGI {
     using std::string;
 
-    template <typename TCortex, typename TInput, size_t SimulatedInfinity = 1000, size_t Repetitions = 100>
+    template <typename TCortex, typename TInput, size_t SimulatedInfinity = 5000, size_t MaxAdaptationTime = 500, size_t Repetitions = 100>
     class TestBed
     {
-        using Cortex = utils::Cortex<TCortex, TInput, SimulatedInfinity>;
+        using Cortex = utils::Cortex<TCortex, TInput, SimulatedInfinity, MaxAdaptationTime>;
         using Input = Cortex::Input;
         using Sequence = Cortex::Sequence;
-        using Misc = utils::Misc<Cortex, SimulatedInfinity>;
+        using Misc = utils::Misc<Cortex, MaxAdaptationTime>;
 
     public:
         static void run(time_t pattern_period)
