@@ -207,7 +207,7 @@ namespace AGI {
                 }
             },
             {
-                "#11 Unobservability (Different cortex instances can produce identical behaviour.)",
+                "#11 Unobservability (Distinct cortices may exhibit the same observable behaviour.)",
                 [](time_t) {
                     // Null Hypothesis: "Different cortices cannot produce identical behavior."
                     auto different_cortex_instances_can_produce_identical_behaviour = [&]() -> bool {

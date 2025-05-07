@@ -44,16 +44,16 @@ University of Maribor\\
 \maketitle
 
 \abstract{
-Despite remarkable progress in machine learning, current AI systems continue to fall short of true human-like intelligence. While Large Language Models (LLMs) excel in pattern recognition and response generation, they lack genuine understanding—an essential hallmark of Artificial General Intelligence (AGI). Existing AGI evaluation methods fail to offer a practical, gradual, and informative metric. This paper introduces the Artificial General Intelligence Testbed (AGITB), comprising twelve rigorous tests that form a signal-processing-level foundation for the potential emergence of cognitive capabilities. AGITB evaluates intelligence through a model's ability to predict binary signals across time without relying on symbolic representations or pretraining. Unlike high-level tests grounded in language or perception, AGITB focuses on core computational invariants reflective of biological intelligence, such as determinism, sensitivity, and generalisation. The testbed assumes no prior bias, operates independently of semantic meaning, and ensures unsolvability through brute force or memorization. While humans pass AGITB by design, no current AI system has met its criteria, making AGITB a compelling benchmark for guiding and recognizing progress toward AGI.
+Despite remarkable progress in machine learning, current AI systems continue to fall short of true human-like intelligence. While Large Language Models (LLMs) excel in pattern recognition and response generation, they lack genuine understanding—an essential hallmark of Artificial General Intelligence (AGI) \cite{Marcus2020}. Existing AGI evaluation methods fail to offer a practical, gradual, and informative metric. This paper introduces the Artificial General Intelligence Testbed (AGITB), comprising twelve automatable tests that form a signal-processing-level foundation for the potential emergence of cognitive capabilities. AGITB evaluates intelligence through a model's ability to predict binary signals across time without relying on symbolic representations or pretraining. Unlike high-level tests grounded in language or perception, AGITB focuses on core computational invariants reflective of biological intelligence, such as determinism, sensitivity, and generalisation. The testbed assumes no prior bias, operates independently of semantic meaning, and ensures unsolvability through brute force or memorization. While humans pass AGITB by design, no current AI system has met its criteria, making AGITB a compelling benchmark for guiding and recognizing progress toward AGI.
 }
 
 
 
 \section{Introduction}
 
-Despite rapid advancements in machine learning and neural networks, current Artificial Intelligence (AI) systems fail to demonstrate the robust, adaptive intelligence associated with human cognition. Large Language Models (LLMs) can produce compelling outputs, but they do so without true understanding. Their responses are generated through statistical pattern matching rather than grounded reasoning. In contrast, true understanding—as associated with Artificial General Intelligence (AGI)—requires the capacity to generalise, reason, and adapt across domains in a meaningful, intentional way. Whether AI is close to AGI remains unknown, even though AI's increasing abilities suggest that AGI is just around the corner. However, without a proper AGI metric, we cannot know.
+Despite rapid advancements in machine learning and neural networks, current Artificial Intelligence (AI) systems fail to demonstrate the robust, adaptive intelligence associated with human cognition. Large Language Models (LLMs) can produce compelling outputs, but they do so without true understanding \cite{Marcus2020}. Their responses are generated through statistical pattern matching rather than grounded reasoning. In contrast, true understanding—as associated with Artificial General Intelligence (AGI)—requires the capacity to generalise, reason, and adapt across domains in a meaningful, intentional way. Whether AI is close to AGI remains unknown, even though AI's increasing abilities suggest that AGI is just around the corner. However, without a proper AGI metric, we cannot know.
 
-There have been many attempts at creating a usable AGI test, the most notable being the Turing test \cite{Turing1950}. However, none provides what AGI researchers need: a gradual, informative, and fast metric to guide the development process and evaluate its result. Building upon and upgrading the ideas of the Ladder to human comparable intelligence \cite{Sprogar2018}, this paper proposes a practical AGI testbed - AGITB - consisting of 12 straightforward criteria that a thinking system must be able to satisfy. Although the testbed does not warrant consciousness, it helps separate AI from AGI.
+There have been many attempts at creating a usable AGI test, the most notable being the Turing test \cite{Turing1950}. However, none offers what AGI researchers require: a gradual, informative, and automatable metric to guide development and assess outcomes. AGITB is not structured as a stepwise metric but builds on core principles introduced in the Ladder to Human-Comparable Intelligence \cite{Sprogar2018}, extending them into a unified testbed comprising 12 essential criteria for evaluating general intelligence. Although the testbed does not warrant consciousness, it helps separate AI from AGI.
 
 
 \section{Background}
@@ -64,9 +64,9 @@ Consequently, as AI systems have mastered tasks once thought to require human in
 
 We expect AGI to match human cognitive abilities across all domains. However, due to the lack of a definitive AGI evaluation standard, researchers often focus on achieving superhuman performance in specific tasks, as this provides clearer metrics for progress. As a result, the specialized benchmarks prefer AI over AGI by focusing on a particular subdomain of general intelligence instead of the ability to adapt and reason in general. Superhuman benchmarks are beginning to prevail, although humans cannot reliably pass them.
 
-\subsection{A Test That Humans Pass but Machines Fail}
+\subsection{A test that humans pass but machines fail}
 
-An ideal AGI test should be short and simple, intuitive, always solvable by humans and never solvable for non-AGI machines. This means that brute force, statistical learning, pretraining, memorization, or any other trickery should not suffice to pass the test. What is required is true reasoning, adaptability, and generalisation.
+An ideal AGI test should be short and intuitively solvable by humans, yet never solvable by non-AGI machines. This means that brute force, statistical learning, pretraining, memorization, or any other trickery should not suffice to pass the test. What is required is true reasoning, adaptability, and generalisation.
 
 A valid AGI test must either expose a fundamental cognitive gap between humans and machines or define a behavioural capability rooted in human-like processing that current non-biological systems cannot replicate. The former approach is increasingly fragile, as AI systems can bypass genuine understanding through extensive pretraining and data saturation. The latter suggests that AGI may require a more faithful emulation of human cortical processing, calling for a paradigm shift—from abstract statistical models to neuromorphic computing architectures such as Spiking Neural Networks, which more closely replicate the brain's time-sensitive, event-driven dynamics \cite{Maass1997}.
 
@@ -79,11 +79,11 @@ In line with the second alternative, AGITB seeks to evaluate AGI not by its abil
 The testbed's primary goal is to support the development and recognition of AGI by defining a clear set of assertions that specify essential characteristics an AGI model must possess. A solution must pass all tests to qualify as AGI. Unless a conventional, symbolic software system—what Searle \cite{Searle1980} would call weak AI—can satisfy all the conditions, these assertions may be treated as necessary (though not necessarily sufficient) criteria for genuine intelligence.
 
 \subsection{Components}
-AGITB requires the user to provide implementations of two interacting component types: the Cortex and the Input. Cortex objects operate based on their accumulated internal state and generate predictions about the external signals they expect to receive. These expected signals are represented by input samples, which carry binary-encoded information from virtual sensors and actuators to the cortex.
 
-Each input sample consists of a fixed number of bits, with each bit representing the signal from a separate input channel, such as a pixel, microphone band, or actuator feedback line. In other words, a single input encodes multiple parallel signals, one bit per channel, at a given point in time. For example, a 10-bit input might encode spatial input from a 2×3 camera and a 4-bit microphone. Inputs capture spatial information, while their temporal sequences represent the unfolding of data over time. Spatial and temporal dimensions are orthogonal in structure, but their interplay encodes richer semantics than either alone. 
+AGITB requires the implementation of two interacting components: the \texttt{Cortex}, which models the AGI system under test, and the \texttt{Input}, which encodes individual data samples presented to the cortex. The cortex updates its internal state over time and generates predictions of future inputs based on the accumulated history of past signals.
 
-Biological intelligence relies on spiking signals for real-time communication and learning \cite{Gerstner2002}. Reflecting this, AGITB requires all temporal input sequences to exhibit refractory-phase behavior—mirroring the biological constraint that a neuron cannot fire immediately after activation. Beyond enforcing this spiking dynamic, AGITB remains agnostic to the syntactic and semantic encoding of signals.
+Each input sample carries binary-encoded information from (virtual) sensors and actuators, serving as the external stimuli that drive cortical adaptation and prediction. It consists of a fixed number of bits, with each bit representing the signal from a separate input channel, such as a pixel, microphone band, or actuator feedback line. In other words, a single input encodes multiple parallel signals, one bit per channel, at a given point in time. For example, a 10-bit input might encode spatial input from a 2×3 camera and a 4-bit microphone. Inputs capture spatial information, while their temporal sequences represent the unfolding of data over time. Spatial and temporal dimensions are orthogonal in structure, but their interplay encodes richer semantics than either alone. 
+
 
 \subsection{Operation}
 
@@ -91,7 +91,7 @@ A cortex object takes an input $p_t$ and predicts the subsequent input $p_{t+1}$
 
 AGITB asserts expectations about the resulting state and behavioural dynamics of cortex models in specific scenarios, using randomly generated test inputs. The tests are designed without fixed thresholds; no evaluation depends on surpassing an arbitrary performance score. Instead, AGITB evaluates cortex models through relative comparisons, using a user-specified equality criterion, since the internal state of a cortex object is inaccessible to the test system.
 
-Before running AGITB, the user must specify a single parameter: the pattern period. This parameter defines the number of time steps in the repeating input sequence that the cortex must learn to recognize and adapt to. A longer pattern period increases the temporal complexity of the task, making it more difficult for the model to capture and generalize the temporal pattern. Since excessively long pattern periods may exceed the cortex’s learning capacity—especially in combination with high-dimensional inputs—the user should choose a value that balances temporal complexity with the spatial size of each input sample.
+To run AGITB, the user must specify a single parameter: the pattern period. This value determines the number of time steps in the repeating input sequence that the cortex is expected to recognize and adapt to. Longer pattern periods increase the temporal complexity of the task, making it more challenging for the model to capture and generalize the full sequence. As excessively long periods may exceed the cortex’s learning capacity—particularly when combined with high-dimensional inputs—the period should be chosen to balance temporal complexity with input dimensionality, ensuring a run that is both feasible and meaningful.
 
 \subsection{The 12 Essential Tests}
 
@@ -103,11 +103,14 @@ A reference implementation of AGITB in C++ is freely available under the GPL-3 l
     {An empty model predicts an empty input.}
 \end{two_assertions}
 
-Brains do not inherit an innate understanding of external inputs; rather, they acquire it through experience. Each brain must independently interpret the world, constructing meaning from raw sensory data. While certain reflexes may be genetically inherited, they do not constitute true understanding. In this sense, all cortices begin from the same unbiased starting point.
+AGITB is grounded in the foundational assumption that the brain, as a general-purpose learning system, does not possess innate understanding of external inputs. Instead, it develops such understanding through experience-driven interaction with its environment. Each brain must independently construct meaning from raw sensory data, without relying on pre-established semantic associations. Although some reflexive behaviors may be genetically encoded, these do not constitute genuine understanding. In this respect, all cortical systems begin from the same unbiased initial state, shaped entirely by the input they receive over time.
 
-If an unbiased model were to predict anything other than an empty input—that is, an input containing no spikes—it would imply that its initial state encodes assumptions, introducing a bias toward an arbitrary or unjustified future. To preserve neutrality, such models must be initialized to predict spike-free patterns, maintaining an unbiased state until actual input begins shaping their internal representations.
+If an unbiased model were to predict anything other than an empty input—that is, one containing no spikes—it would suggest that its initial state encodes implicit assumptions, thereby introducing bias toward an arbitrary or unwarranted future. To preserve neutrality, such models must be initialized to predict spike-free patterns, remaining unbiased until shaped by actual input.
 
-Importantly, "empty" refers to the absence of learned content, not to the absence of structure. A Cortex must possess an intrinsic organizational architecture that enables learning, even before it has processed any input.
+Importantly, “empty” refers to the absence of content, not the absence of structural capacity. A cortex must possess an intrinsic organizational architecture that enables learning, even before it has received any input. Paradoxically, if treated as a concrete configuration, an “empty” state is also biased. Therefore, an empty cortex should not be regarded as a system with an initialized but untrained state, but rather as one with no internal state at all—analogous to a neural network without instantiated neurons. In this sense, two empty cortex instances should compare equal, as neither has been shaped or biased by input. In the case of the Chinese room argument, Searle's ledger would be empty - no instructions on how to handle the chinese writings.
+
+Importantly, “empty” refers to the absence of content, not the absence of structural capacity. A cortex must possess an intrinsic organizational architecture that enables learning, even before receiving any input. Paradoxically, if an empty state is treated as a concrete configuration, it too introduces bias. Accordingly, an empty cortex must be understood as a system with no internal state at all—analogous to a neural network prior to neuron instantiation. In this sense, two independent and empty cortex instances should compare equal, as neither has been shaped or influenced by any input. In the context of Searle’s Chinese Room argument, an empty model corresponds to a blank ledger—one devoid of prior instructions for interpreting Chinese symbols \cite{Sprogar2018}.
+
 
 \subsubsection*{\#2 Bias}
 \begin{one_assertion}
@@ -144,7 +147,9 @@ The cortex is sensitive to the order of inputs over time, as each new input bias
     {The cortex cannot adapt to an input sequence that repeats a neural spike in violation of refractory-period constraints.}
 \end{two_assertions}
 
-Adaptation is possible only to sequences that incorporate refractory period behaviour in their signals. Neural signals consist of spike trains that encode and transfer information between neurons. AGITB assumes that spiking plays a fundamental role in neural processing, as adaptation depends on dynamic variations in spike signals. Continuous, unmodulated spiking (where signals remain at 1) fails to support learning, as it lacks the variability required for synaptic adaptation. 
+Biological intelligence relies on spiking signals for real-time communication and learning. Reflecting this, AGITB requires all temporal input sequences to exhibit refractory-phase behavior, mirroring the biological constraint that a neuron cannot fire immediately after activation.
+
+Spike trains serve as the primary mechanism for encoding and transmitting information between neurons. AGITB assumes that spiking is fundamental to neural processing, as effective adaptation depends on dynamic variations in spike patterns. Consequently, adaptation is only possible for sequences that respect refractory-phase constraints. Continuous, unmodulated spiking—in which signals remain constantly active—fails to support learning, as it lacks the variability required for synaptic adaptation \cite{Gerstner2002}. Beyond enforcing this biologically grounded constraint, AGITB remains agnostic to the syntactic or semantic encoding of signals.
 
 \subsubsection*{\#7 Temporal Flexibility}
 \begin{two_assertions}
@@ -159,14 +164,14 @@ This AGITB test evaluates a model’s flexibility in adapting to input sequences
     {There exists a limit beyond which the Cortex can no longer adapt, even to patterns that would otherwise be predictable.}
 \end{one_assertion}
 
-Over time, the ability to process and internalize new patterns may decline, reflecting biological constraints such as resource saturation or adaptation fatigue. This test evaluates whether such stagnation arises despite the continued presentation of learnable input.
+Over time, the ability to process and internalize new patterns will decline, reflecting biological constraints such as resource saturation or adaptation fatigue. This test evaluates whether such stagnation arises despite the continued presentation of learnable input.
 
 \subsubsection*{\#9 Unsupervised}
 \begin{one_assertion}
     {Adaptation time depends on the content of the input sequence.}
 \end{one_assertion}
 
-This test determines if variations in input structure influence the time required for adaptation. Sequences with simpler or more internally consistent patterns may lead to faster adaptation, while inputs with higher complexity or irregularity typically require more time. 
+This test assesses whether structural differences in input sequences influence the time required for adaptation. Sequences with simpler or more internally consistent patterns may lead to faster adaptation, while more complex or irregular inputs typically demand longer periods of adjustment.
 
 \subsubsection*{\#10 Knowledge}
 \begin{one_assertion}
@@ -177,7 +182,7 @@ Adaptation efficiency is shaped by prior experience, as new input is interpreted
 
 \subsubsection*{\#11 Unobservability}
 \begin{one_assertion}
-    {Different Cortex instances can produce identical behaviour.}
+    {Distinct cortices may exhibit the same observable behaviour.}
 \end{one_assertion}
 
 Individuals may exhibit identical behaviour under similar conditions, yet the internal cortical states that generate these outputs can differ significantly. Distinct neural pathways and synaptic configurations may converge on the same observable action. This many-to-one mapping illustrates that external behaviour does not necessarily reveal the underlying computational processes that produced it.
@@ -216,7 +221,7 @@ Once an adult human understands the task, they can reliably pass the AGITB tests
 
 All AGI approaches based on classical programming ultimately suffer from the Symbol Grounding Problem. While such systems may exhibit weak AI capabilities—producing behaviour that appears intelligent—they fundamentally lack grounded understanding and therefore cannot qualify as true AGI.
 
-AGITB exposes this limitation immediately through its very first assertion. In classical systems, the initial state of the Cortex model necessarily includes its program. As a result, Test~\#1 poses a paradoxical challenge: “There must be no program.” In other words, the system must begin in a completely unbiased, knowledge-free state. Yet a classical machine cannot operate without predefined instructions; without a program, it halts. This presents a contradiction: the system either does nothing, or it starts with embedded bias—violating the test and reintroducing the Symbol Grounding Problem.
+AGITB exposes this limitation immediately through its very first assertion. In classical systems, the initial state of the cortex model necessarily includes its program. As a result, Test~\#1 poses a paradoxical challenge: “There must be no program.” In other words, the system must begin in a completely unbiased, knowledge-free state. Yet a classical machine cannot operate without predefined instructions; without a program, it halts. This presents a contradiction: the system either does nothing, or it starts with embedded bias—violating the test and reintroducing the Symbol Grounding Problem.
 
 
 \subsubsection{ANN Performance}
@@ -233,7 +238,7 @@ Although they are basically ANNs, Large Language Models should not be evaluated 
 
 As with human testing, LLMs must be evaluated at a higher-than-intended cognitive level, rather than at the low-level binary signal processing the benchmark was originally designed to assess. To investigate whether these models exhibit AGI-like behaviour, we tested ChatGPT-4o using a structured prompt (see Appendix) designed to simulate not one but two prediction-capable models, enabling comparison of their externally declared states.
 
-ChatGPT successfully completed the first five AGITB tests, demonstrating sensitivity to inputs, temporal ordering, and bias. However, it failed Test~\#6 (Refractory Period). This failure did not result from a violation of the refractory period constraint, but from an inability to generalize even a simple period-2 alternating pattern—e.g., switching between 111 000 and 000 000. Rather than inferring the alternation, the model consistently predicted a repetition of the last input, suggesting a lack of adaptive prediction.
+ChatGPT successfully completed the first five AGITB tests, demonstrating sensitivity to inputs, temporal ordering, and bias. However, it failed Test~\#6 (Refractory Period). This failure did not result from a violation of the refractory period constraint, but from an inability to generalize even a simple period-2 alternating pattern—e.g., switching between 111000 and 000000. Rather than inferring the alternation, the model consistently predicted a repetition of the last input, suggesting a lack of adaptive prediction.
 
 
 
@@ -245,13 +250,14 @@ Operating at the binary signal level makes AGITB particularly well-suited for ev
 
 While individual AGITB tests are trivial to solve in isolation, the true challenge lies in developing a universal AGI architecture capable of mastering all tasks within a unified framework. Since AGITB is a newly proposed benchmark, no classical imperative solution has yet emerged—nor can we rule out that one might. If a classical symbolic system were able to satisfy all AGITB conditions, it would serve as definitive proof that AGITB is inadequate as a test for genuine AGI.
 
-History shows that hand-coded, task-specific systems struggle to scale toward general intelligence, highlighting the need for adaptive, learning-based architectures such as artificial neural networks. However, because state-of-the-art networks depend on pretraining with symbolic or structured data—which inevitably introduces bias and bypasses the grounding of meaning in raw signals—it remains an open and critical question how such models might begin learning directly from unstructured input, as required to pass AGITB.
+History shows that hand-coded, task-specific systems struggle to scale toward general intelligence, highlighting the need for adaptive, learning-based architectures such as artificial neural networks. However, because state-of-the-art networks depend on pretraining with symbolic or structured data—which inevitably introduces bias and bypasses the grounding of meaning in raw signals—it remains an open and critical question how such models might begin learning directly from unstructured input, as required to pass the AGITB.
 
 \section{Conclusion}
 
+Unlike conventional benchmarks that evaluate high-level task performance such as question answering or language translation, AGITB assesses whether a system exhibits behaviour consistent with the core operational principles of the biological cortex. It focuses on low-level computational properties that are both biologically grounded and essential for the emergence of general intelligence. The proposed testbed introduces a systematic framework for evaluating AGI through twelve fundamental tests. By requiring models to begin from an unbiased initial state and adapt solely through exposure to structured or unstructured input, AGITB reflects key insights from contemporary neuroscience regarding input-driven learning and cortical plasticity.
+
 The cortex achieves high-level reasoning through adaptive pattern prediction of low-level cortical signals. Unlike simple pattern-matching, this process requires the development of signal-grounding knowledge, allowing the cortex to attach meaning to raw inputs. Since the cortex begins in an unbiased state, this grounding process depends on intelligent adaptation, enabling learning and abstraction over time.
 
-The proposed AGI testbed provides a systematic approach to AGI evaluation through 12 essential tests. By starting from an unbiased state and focusing on fundamental input-driven learning, this testbed aligns with contemporary neuroscience insights.
 
 AGITB can be solved by humans but remains unsolvable by classical algorithms and current state-of-the-art AI. This gap between human and machine performance serves as strong empirical evidence that AGITB is a meaningful benchmark for evaluating AGI capabilities. While no known computational system—including deterministic algorithms and advanced neural networks—has successfully solved it, this alone does not constitute formal proof of its fundamental difficulty. However, the fact that humans can solve AGITB while all existing AI systems fail, suggests that it captures a crucial aspect of general intelligence.
 
@@ -259,6 +265,12 @@ AGITB can be solved by humans but remains unsolvable by classical algorithms and
 The author acknowledges the financial support from the Slovenian Research Agency (research core funding No. P2-0057).
 
 \begin{thebibliography}{99}
+
+\bibitem{Marcus2020}
+G. Marcus and E. Davis,
+``GPT-3, Bloviator: OpenAI’s language generator has no idea what it’s talking about''
+\textit{MIT Technology Review}, 2020. Available:
+\url{https://www.technologyreview.com/2020/08/22/1007539}
 
 \bibitem{Turing1950}
 A. M. Turing, 
