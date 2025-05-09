@@ -19,6 +19,7 @@
 #pragma once
 
 #include <string>
+#include <bitset>
 #include <format>
 #include <algorithm>
 #include <ranges>
@@ -34,47 +35,35 @@ inline std::string green(const char* msg) { return std::format("\033[92m{}\033[0
 namespace AGI {
 inline namespace utils {
     using time_t = size_t;
-    using std::vector;
-    using std::string;
 
-    template <Indexable TInput>
-    class Input : public TInput
+    // Count the number of matching bits between two inputs.
+    template <typename Input>
+    size_t count_matches(const Input& a, const Input& b)
     {
-    public:
-        Input() = default;
-        Input(const Input& src) = default;
-        Input(Input&& src) = default;
-        Input& operator=(const Input& src) = default;
-        Input(const TInput& src) : TInput(src) {}
+        return std::ranges::count_if(std::views::iota(0ul, Input{}.size()), [&](size_t i) { return a[i] == b[i]; });
+    }
 
-        // Count the number of matching bits between two inputs.
-        static size_t count_matches(const Input& a, const Input& b)
-        {
-            return std::ranges::count_if(std::views::iota(0ul, Input::size()), [&](size_t i) { return a[i] == b[i]; });
-        }
-
-        // Returns an input with spikes at random positions, except where explicitly required to have none.
-        template<std::same_as<Input>... Inputs>
-        static Input random(const Inputs&... off)
-        {
-            static std::mt19937 rng{ std::random_device{}() };
-            static std::bernoulli_distribution bd(0.5);
-
-            Input input;
-            for (size_t i = 0; i < Input::size(); ++i)
-                if (!(false | ... | off[i]))
-                    input[i] = bd(rng);
-
-            return input;
-        }
-    };
-
-    template <Indexable TInput>
-        requires (!HasUnaryTilde<TInput>)
-    auto operator ~(const Input<TInput>& input)
+    // Returns an input with spikes at random positions, except where explicitly required to have none.
+    template<typename Input, typename... Inputs>
+    Input random(const Inputs&... off)
     {
-        Input<TInput> bitwise_not{};
-        for (size_t i = 0; i < TInput::size(); ++i) 
+        static std::mt19937 rng{ std::random_device{}() };
+        static std::bernoulli_distribution bd(0.5);
+
+        Input input;
+        for (size_t i = 0; i < Input{}.size(); ++i)
+            if (!(false | ... | off[i]))
+                input[i] = bd(rng);
+
+        return input;
+    }
+
+    template <Indexable Input>
+    requires (!HasUnaryTilde<Input>)
+    auto operator ~(const Input& input)
+    {
+        Input bitwise_not{};
+        for (size_t i = 0; i < Input{}.size(); ++i)
             bitwise_not[i] = !input[i];
         return bitwise_not;
     }
@@ -98,9 +87,9 @@ inline namespace utils {
             Sequence sequence{};
             sequence.reserve(length);
 
-            sequence.push_back(Input::random());
+            sequence.push_back(utils::random<Input>());
             while (sequence.size() < length)
-                sequence.push_back(Input::random(sequence.back()));
+                sequence.push_back(utils::random<Input>(sequence.back()));
 
             return sequence;
         }
@@ -115,18 +104,17 @@ inline namespace utils {
             Sequence sequence = Sequence::random(length);
 
             sequence.pop_back();
-            sequence.push_back(Input::random(sequence.back(), sequence.front()));
+            sequence.push_back(utils::random<Input>(sequence.back(), sequence.front()));
 
             return sequence;
         }
     };
 
-    template <typename TCortex, Indexable TInput, size_t SimulatedInfinity, size_t MaxAdaptationTime>
-    requires InputPredictor<TCortex, TInput>
+    template <typename TCortex, typename Input, size_t SimulatedInfinity, size_t MaxAdaptationTime>
+    requires InputPredictor<TCortex, Input> and Indexable<Input>
     class Cortex : public TCortex
     {
     public:
-        using Input = utils::Input<TInput>;
         using Sequence = utils::Sequence<Input>;
 
         Cortex() = default;

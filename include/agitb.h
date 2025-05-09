@@ -26,7 +26,7 @@
 #include "utils.h"
 
 #define ASSERT(expression) (void)((!!(expression)) || \
-                            (std::cerr << std::format("\n{} in {}:\n{}\n\n", red("\nAssertion failed"), __FILE__, #expression), \
+                            (std::cerr << std::format("\n{} in {}:{}\n{}\n\n", red("\nAssertion failed"), __FILE__, __LINE__, #expression), \
                             exit(-1), 0))
 
 
@@ -34,18 +34,17 @@ namespace sprogar {
 namespace AGI {
     using std::string;
 
-    template <typename TCortex, typename TInput, size_t SimulatedInfinity = 5000, size_t MaxAdaptationTime = 500, size_t Repetitions = 100>
+    template <typename TCortex, typename Input, size_t SimulatedInfinity = 5000, size_t MaxAdaptationTime = 500, size_t Repetitions = 100>
     class TestBed
     {
-        using Cortex = utils::Cortex<TCortex, TInput, SimulatedInfinity, MaxAdaptationTime>;
-        using Input = Cortex::Input;
+        using Cortex = utils::Cortex<TCortex, Input, SimulatedInfinity, MaxAdaptationTime>;
         using Sequence = Cortex::Sequence;
         using Misc = utils::Misc<Cortex, MaxAdaptationTime>;
 
     public:
         static void run(time_t pattern_period)
         {
-            std::clog << "Artificial General Intelligence Test Bed\n\n";
+            std::clog << "Artificial General Intelligence Testbed\n\n";
             std::clog << "Testing with pattern period of " << pattern_period << ":\n";
 
             for (const auto& [info, test] : testbed) {
@@ -82,7 +81,7 @@ namespace AGI {
                 "#2 Bias (A change in state indicates bias.)",
                 [](time_t) {
                     Cortex C;
-                    C << Input::random();
+                    C << utils::random<Input>();
 
                     ASSERT(C != Cortex{});
                 }
@@ -102,7 +101,7 @@ namespace AGI {
             {
                 "#4 Sensitivity (The cortex exhibits chaos-like sensitivity to initial input.)",
                 [](time_t) {
-                    const Input p = Input::random();
+                    const Input p = utils::random<Input>();
                     const Sequence life = Sequence::random(SimulatedInfinity);
 
                     Cortex C, D;
@@ -127,8 +126,8 @@ namespace AGI {
             {
                 "#6 RefractoryPeriod (Each spike (1) must be followed by a no-spike (0).)",
                 [](time_t) {
-                    const Input p = Input::random();
-                    const Sequence no_consecutive_spikes = { p, Input::random(p) };
+                    const Input p = utils::random<Input>();
+                    const Sequence no_consecutive_spikes = { p, utils::random<Input>(p) };
                     const Sequence consecutive_spikes = { p, p };
 
                     Cortex C, D;
@@ -234,19 +233,19 @@ namespace AGI {
                     size_t adapted_score = 0, unadapted_score = 0;
                     for (time_t time = 0; time < SimulatedInfinity; ++time) {
                         const Sequence facts = Misc::adaptable_random_pattern(pattern_period);
-                        const Input disruption = Input::random();
+                        const Input disruption = utils::random<Input>();
                         const Input expectation = facts[0];
 
                         Cortex A;
                         A.adapt(facts);
                         A << disruption << facts;
-                        adapted_score += Input::count_matches(A.predict(), expectation);
+                        adapted_score += utils::count_matches(A.predict(), expectation);
 
                         Cortex U;
                         U << disruption << facts;
-                        unadapted_score += Input::count_matches(U.predict(), expectation);
+                        unadapted_score += utils::count_matches(U.predict(), expectation);
                     }
-                    const size_t random_guess = SimulatedInfinity * Input::size() / 2;
+                    const size_t random_guess = SimulatedInfinity * Input{}.size() / 2;
 
                     ASSERT(adapted_score > unadapted_score);
                     ASSERT(adapted_score > random_guess);

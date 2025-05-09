@@ -13,7 +13,7 @@ This repository contains the official C++ reference implementation of the **Arti
 
 ## AGITB Goal
 
-AGITB provides a suite of 12 intuitive and rigorous tests that evaluate essential characteristics required of an AGI system. Unlike benchmarks focused on symbolic reasoning or language performance, AGITB operates at the level of binary signal processing, where the model must demonstrate adaptation, prediction, and generalization without relying on pretraining or memorization.
+AGITB provides a suite of 12 automated tests that evaluate essential characteristics required of an AGI system. Unlike benchmarks focused on symbolic reasoning or language performance, AGITB operates at the level of binary signal processing, where the model must demonstrate adaptation, prediction, and generalization without relying on pretraining or memorization.
 
 The goal is to support the **development**, **evaluation**, and **recognition** of AGI by offering a low-level yet biologically inspired testing framework.
 
@@ -23,15 +23,15 @@ The goal is to support the **development**, **evaluation**, and **recognition** 
 
 AGITB is implemented as a **header-only** library. It defines a templated `AGI::TestBed` class, which requires the user to provide two interacting component types:
 
-- **`Cortex`** – The core model under test. It accumulates internal state from past inputs and generates predictions of future inputs.
 - **`Input`** – A binary-encoded input sample representing signals from virtual sensors or actuators. Each input consists of multiple parallel 1-bit signals (channels) at a single point in time.
+- **`Cortex`** – The core model under test. It accumulates internal state from past inputs and generates predictions of future inputs.
 
 ---
 
 ## API Requirements
 
 ### `Input`
-Your Input class must:
+You may use the standard `std::bitset<N>` class for the `Input`, where N specifies the number of binary channels in the input sample. Alternatively, if you prefer to define a custom `Input`, your type must meet the following interface requirements:
 - Satisfy the `std::regular` concept.
 - Provide methods to access the input size and enable bit-level access through:
   ```cpp
@@ -39,6 +39,7 @@ Your Input class must:
   bool Input::operator[](size_t i) const;       // Read-only access to the i-th bit
   Input::reference Input::operator[](size_t i); // Write access to the i-th bit
   ```
+
 ### `Cortex`
 Your Cortex class must:
 - Satisfy the `std::regular` concept.
@@ -52,19 +53,22 @@ Your Cortex class must:
 
 ```cpp
 
-class Input
-{
-public:
-    bool operator==(const Input& rhs) const { return true; }    // TODO: Full member-wise comparison
-    
-    struct reference{
-        reference& operator = (bool x) { return *this; }   // TODO: Assigns a value to the referenced bit
-        reference& operator = (const reference& x) { return *this; } // TODO: Assigns a value
-    };
-    static size_t size() { return 0; }                          // TODO: Returns number of input bits
-    bool operator[](size_t i) const { return false; }           // TODO: Read-only access to the i-th bit
-    reference operator[](size_t i) { return reference{}; }      // TODO: Write access to the i-th bit    
-};
+//class CustomInput
+//{
+//public:
+//    bool operator==(const CustomInput& rhs) const { }     // TODO: Full member-wise comparison
+//
+//    struct reference {
+//        reference& operator = (bool x) { }                // TODO: Assigns a value to the referenced bit
+//    };
+//    static size_t size() { }                              // TODO: Returns number of input bits
+//    bool operator[](size_t i) const { }                   // TODO: Read-only access to the i-th bit
+//    reference operator[](size_t i) { }                    // TODO: Write access to the i-th bit    
+//};
+
+
+// using Input = CustomInput;                               // use either CustomInput or std::bitset<N>
+using Input = std::bitset<2 * 3 + 4>;                       // input sample size in bits 
 
 class Cortex
 {
