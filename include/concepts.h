@@ -24,8 +24,8 @@ namespace sprogar {
         template <typename Input>
         concept Indexable = std::regular<Input> && requires(Input input, const Input cinput)
         {
-            { input[size_t{}] } -> std::convertible_to<typename Input::reference>;
-            { cinput[size_t{}] } -> std::convertible_to<bool>;
+            //{ input[size_t{}] } -> std::convertible_to<typename Input::reference>;
+            //{ cinput[size_t{}] } -> std::convertible_to<bool>;
             { Input::size() } -> std::convertible_to<size_t>;
         };
 
@@ -37,6 +37,8 @@ namespace sprogar {
         };
 
         template <typename T>
-        concept HasUnaryTilde = requires(T t) { ~t; } == true;
+        concept HasUnaryTilde = requires(T a) {
+            { ~a } -> std::same_as<T>;
+        };
     }
 }
