@@ -51,7 +51,12 @@ namespace AGI {
                 std::clog << info << std::endl;
                 repeat(test, pattern_period);
             }
+
             std::clog << green("\nPASS\n");
+        }
+        static void run(int id, time_t pattern_period)
+        {
+            testbed[id].second(pattern_period);
         }
 
     private:
@@ -62,7 +67,7 @@ namespace AGI {
             for (size_t r = 1; r <= Repetitions; ++r) {
                 std::clog << r << '/' << Repetitions << go_back;
 
-                test(pattern_period);
+                //test(pattern_period);
             }
         }
 
@@ -166,10 +171,10 @@ namespace AGI {
                     // Null Hypothesis: Adaptation time is independent of the input sequence
                     auto adaptation_time_depends_on_the_content_of_the_input_sequence = [=]() -> bool {
                         Cortex B;
-                        const Sequence base_pattern = Sequence::circular_random(pattern_period);
+                        const Sequence base_pattern = Sequence::nontrivial_circular_random(pattern_period);
                         const time_t base_time = B.time_to_repeat(base_pattern);
                         for (time_t time = 0; time < SimulatedInfinity; ++time) {
-                            const Sequence new_pattern = Sequence::circular_random(pattern_period);
+                            const Sequence new_pattern = Sequence::nontrivial_circular_random(pattern_period);
                             if (new_pattern != base_pattern) {
                                 Cortex R;
                                 time_t new_time = R.time_to_repeat(new_pattern);
@@ -218,7 +223,7 @@ namespace AGI {
                             D.adapt(trivial_behaviour);
 
                             bool counterexample = C != D && C.behaviour() == D.behaviour();
-                            if (counterexample)             // rejects the null hypothesis
+                            if (counterexample)                         // rejects the null hypothesis
                                 return true;
                         }
                         return false;
@@ -234,7 +239,7 @@ namespace AGI {
                     for (time_t time = 0; time < SimulatedInfinity; ++time) {
                         const Sequence facts = Misc::adaptable_random_pattern(pattern_period);
                         const Input disruption = utils::random<Input>();
-                        const Input expectation = facts[0];
+                        const Input expectation = facts[0];             // #7 warrants !facts.empty()
 
                         Cortex A;
                         A.adapt(facts);

@@ -36,6 +36,17 @@ namespace AGI {
 inline namespace utils {
     using time_t = size_t;
 
+    template<typename T>
+    std::vector<T> shuffle(const std::vector<T>& vec)
+    {
+        std::vector<T> result(vec);
+
+        std::mt19937 rng{ std::random_device{}() };
+        std::ranges::shuffle(result, rng);
+
+        return result;
+    }
+
     // Count the number of matching bits between two inputs.
     template <typename Input>
     size_t count_matches(const Input& a, const Input& b)
@@ -77,6 +88,13 @@ inline namespace utils {
         Sequence(std::initializer_list<Input> il) : std::vector<Input>(il) {}
 
         bool operator !() const { return std::vector<Input>::empty(); }
+        bool is_trivial() const {
+            static const Input no_spikes;
+            for (const Input& in : *this)
+                if (in != no_spikes)
+                    return false;
+            return true;
+        }
 
         // Returns a random sequence of inputs with a specified length.
         static Sequence random(time_t length)
@@ -107,6 +125,14 @@ inline namespace utils {
             sequence.push_back(utils::random<Input>(sequence.back(), sequence.front()));
 
             return sequence;
+        }
+        static Sequence nontrivial_circular_random(time_t length)
+        {
+            while (true) {
+                auto sequence = circular_random(length);
+                if (!sequence.is_trivial())
+                    return sequence;
+            }
         }
     };
 
@@ -197,11 +223,11 @@ inline namespace utils {
     class Misc {
     public:
         using Sequence = Cortex::Sequence;
-        // Returns a random, adaptable sequence with the specified period.
+        // Returns a random, adaptable and non-trivial sequence with the specified period.
         static Sequence adaptable_random_pattern(time_t pattern_period)
         {
             for (time_t time = 0; time < MaxAdaptationTime; ++time) {
-                Sequence sequence = Sequence::circular_random(pattern_period);
+                Sequence sequence = Sequence::nontrivial_circular_random(pattern_period);
                 if (period(sequence) != pattern_period)
                     continue;
 
