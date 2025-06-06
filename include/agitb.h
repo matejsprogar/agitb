@@ -119,13 +119,14 @@ namespace AGI {
             {
                 "#5 Time (The input order is inherently temporal and crucial to the process.)",
                 [](time_t) {
-                    const Sequence seq = Sequence::random(2);
+                    const Input in_1 = utils::random<Input>();
+                    const Input in_2 = utils::random<Input>(in_1);
 
                     Cortex C, D;
-                    C << seq[0] << seq[1];
-                    D << seq[1] << seq[0];
+                    C << in_1 << in_2;
+                    D << in_2 << in_1;
 
-                    ASSERT(C != D || seq[0] == seq[1]);
+                    ASSERT(C != D || in_1 == in_2);
                 }
             },
             {
