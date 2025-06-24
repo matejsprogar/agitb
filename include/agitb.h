@@ -67,7 +67,7 @@ namespace AGI {
             for (size_t r = 1; r <= Repetitions; ++r) {
                 std::clog << r << '/' << Repetitions << go_back;
 
-                //test(pattern_period);
+                test(pattern_period);
             }
         }
 
