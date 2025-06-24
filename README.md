@@ -56,11 +56,10 @@ Your Cortex class must:
 //class CustomInput
 //{
 //public:
+//    CustomInput() {}
 //    bool operator==(const CustomInput& rhs) const { }     // TODO: Full member-wise comparison
 //
-//    struct reference {
-//        reference& operator = (bool x) { }                // TODO: Assigns a value to the referenced bit
-//    };
+//    using reference = bool&;
 //    static size_t size() { }                              // TODO: Returns number of input bits
 //    bool operator[](size_t i) const { }                   // TODO: Read-only access to the i-th bit
 //    reference operator[](size_t i) { }                    // TODO: Write access to the i-th bit    
