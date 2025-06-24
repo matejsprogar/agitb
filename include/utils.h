@@ -147,7 +147,6 @@ inline namespace utils {
         Cortex(const Cortex& src) = default;
         Cortex(Cortex&& src) = default;
         Cortex& operator=(const Cortex& src) = default;
-        Cortex(const TCortex& src) : TCortex(src) {}
     
         template<typename... Args>
         Cortex(Args&&... args) : TCortex(std::forward<Args>(args)...) {}
