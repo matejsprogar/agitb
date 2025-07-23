@@ -1,6 +1,6 @@
 # AGITB – Artificial General Intelligence Testbed
 
-This repository contains the official C++ reference implementation of the **Artificial General Intelligence testbed (AGITB)**, as described in [this paper](doc/AGITB.pdf), which is also available on [arXiv](https://arxiv.org/abs/2504.04430).
+This repository contains the official C++ reference implementation of the **Artificial General Intelligence testbed (AGITB)**, as described [here](doc/AGITB.pdf) ([arXiv](https://arxiv.org/abs/2504.04430)).
 
 ---
 
@@ -21,10 +21,10 @@ The goal is to support the **development**, **evaluation**, and **recognition** 
 
 ## C++ Implementation
 
-AGITB is implemented as a **header-only** library. It defines a templated `AGI::TestBed` class, which requires the user to provide two interacting component types:
+AGITB is implemented as a **header-only** library. It defines a templated `TestBed<Cortex, Input>` class, which requires the user to provide two interacting component types:
 
-- **`Input`** – A binary-encoded input sample representing signals from virtual sensors or actuators. Each input consists of multiple parallel 1-bit signals (channels) at a single point in time.
 - **`Cortex`** – The core model under test. It accumulates internal state from past inputs and generates predictions of future inputs.
+- **`Input`** – A binary-encoded input sample representing signals from virtual sensors or actuators. Each input consists of multiple parallel 1-bit signals (channels) at a single point in time.
 
 ---
 
