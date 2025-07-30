@@ -161,9 +161,9 @@ namespace AGI {
                 }
             },
             {
-                "#9 Unsupervised (Adaptation time depends on the content of the input sequence.)",
+                "#9 Salience (Adaptation time depends on the content of the input sequence.)",
                 [](time_t pattern_period) {
-                    // Null Hypothesis: Adaptation time is independent of the input sequence
+                    // Null Hypothesis: Adaptation time is independent of the input sequence content
                     auto adaptation_time_depends_on_the_content_of_the_input_sequence = [=]() -> bool {
                         Cortex B;
                         const Sequence base_pattern = Sequence::nontrivial_circular_random(pattern_period);
