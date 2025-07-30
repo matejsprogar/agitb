@@ -20,9 +20,12 @@
 
 #include <iostream>
 #include <vector>
+#include <algorithm>
+#include <chrono>
 
+using namespace std::literals::chrono_literals;
 
-#include "concepts.h"
+#include "requirements.h"
 #include "utils.h"
 
 #define ASSERT(expression) (void)((!!(expression)) || \
@@ -47,30 +50,21 @@ namespace AGI {
             std::clog << "Artificial General Intelligence Testbed\n\n";
             std::clog << "Testing with pattern period of " << pattern_period << ":\n";
 
+            const string go_back(50, '\b');
             for (const auto& [info, test] : testbed) {
                 std::clog << info << std::endl;
-                repeat(test, pattern_period);
+
+                for (size_t r = 1; r <= Repetitions; ++r) {
+                    std::clog << r << '/' << Repetitions << go_back;
+
+                    test(pattern_period);
+                }
             }
 
             std::clog << green("\nPASS\n");
         }
-        static void run(int id, time_t pattern_period)
-        {
-            testbed[id].second(pattern_period);
-        }
 
     private:
-        static void repeat(void (*test)(time_t), const time_t pattern_period)
-        {
-            const string go_back(50, '\b');
-
-            for (size_t r = 1; r <= Repetitions; ++r) {
-                std::clog << r << '/' << Repetitions << go_back;
-
-                test(pattern_period);
-            }
-        }
-
         static inline const std::vector<std::pair<string, void(*)(time_t)>> testbed =
         {
             {
@@ -78,8 +72,8 @@ namespace AGI {
                 [](time_t) {
                     Cortex C;
                     
-                    ASSERT(C == Cortex{});				// The initial state represents absence of bias.
-                    ASSERT(C.predict() == Input{});	    // No spikes indicate an unbiased initial prediction.
+                    ASSERT(C == Cortex{});				    // The initial state represents absence of bias.
+                    ASSERT(C.prediction() == Input{});	    // No spikes indicate an unbiased initial prediction.
                 }
             },
             {
@@ -133,13 +127,13 @@ namespace AGI {
                 "#6 RefractoryPeriod (Each spike (1) must be followed by a no-spike (0).)",
                 [](time_t) {
                     const Input p = utils::random<Input>();
-                    const Sequence no_consecutive_spikes = { p, utils::random<Input>(p) };
-                    const Sequence consecutive_spikes = { p, p };
+                    const Sequence no_consecutive_inputs = { p, utils::random<Input>(p) };
+                    const Sequence consecutive_inputs = { p, p };
 
                     Cortex C, D;
 
-                    ASSERT(C.adapt(no_consecutive_spikes));
-                    ASSERT(not D.adapt(consecutive_spikes) || p == Input{});
+                    ASSERT(C.adapt(no_consecutive_inputs));
+                    ASSERT(not D.adapt(consecutive_inputs) || p == Input{});
                 }
             },
             {
@@ -240,23 +234,23 @@ namespace AGI {
                     for (time_t time = 0; time < SimulatedInfinity; ++time) {
                         const Sequence facts = Misc::adaptable_random_pattern(pattern_period);
                         const Input disruption = utils::random<Input>();
-                        const Input expectation = facts[0];             // #7 warrants !facts.empty()
-
+                        const Input expectation = facts[0];
+            
                         Cortex A;
                         A.adapt(facts);
                         A << disruption << facts;
-                        adapted_score += utils::count_matches(A.predict(), expectation);
-
+                        adapted_score += utils::count_matches(A.prediction(), expectation);
+            
                         Cortex U;
                         U << disruption << facts;
-                        unadapted_score += utils::count_matches(U.predict(), expectation);
+                        unadapted_score += utils::count_matches(U.prediction(), expectation);
                     }
                     const size_t random_guess = SimulatedInfinity * Input{}.size() / 2;
-
+            
                     ASSERT(adapted_score > unadapted_score);
                     ASSERT(adapted_score > random_guess);
                 }
-            }
+            },
         };
     };
 }

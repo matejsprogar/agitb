@@ -33,7 +33,7 @@ namespace sprogar {
         concept InputPredictor = std::regular<Cortex> && requires(Cortex cortex, const Cortex ccortex, const Input input)
         {
             { cortex << input } -> std::convertible_to<Cortex&>;
-            { ccortex.predict() } -> std::convertible_to<Input>;
+            { ccortex.prediction() } -> std::convertible_to<Input>;
         };
 
         template <typename T>

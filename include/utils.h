@@ -25,7 +25,7 @@
 #include <ranges>
 #include <random>
 
-#include "concepts.h"
+#include "requirements.h"
 
 namespace sprogar {
 
@@ -36,19 +36,9 @@ namespace AGI {
 inline namespace utils {
     using time_t = size_t;
 
-    template<typename T>
-    std::vector<T> shuffle(const std::vector<T>& vec)
-    {
-        std::vector<T> result(vec);
-
-        std::mt19937 rng{ std::random_device{}() };
-        std::ranges::shuffle(result, rng);
-
-        return result;
-    }
-
     // Count the number of matching bits between two inputs.
     template <typename Input>
+    requires (Indexable<Input>)
     size_t count_matches(const Input& a, const Input& b)
     {
         return std::ranges::count_if(std::views::iota(0ul, Input{}.size()), [&](size_t i) { return a[i] == b[i]; });
@@ -56,6 +46,7 @@ inline namespace utils {
 
     // Returns an input with spikes at random positions, except where explicitly required to have none.
     template<typename Input, typename... Inputs>
+    requires (Indexable<Input>)
     Input random(const Inputs&... off)
     {
         static std::mt19937 rng{ std::random_device{}() };
@@ -168,7 +159,7 @@ inline namespace utils {
             predictions.reserve(timeframe);
 
             while (predictions.size() < timeframe) {
-                predictions.push_back(predict());
+                predictions.push_back(TCortex::prediction());
                 *this << predictions.back();
             }
             return predictions;
@@ -190,7 +181,6 @@ inline namespace utils {
             return time_to_repeat(inputs) < SimulatedInfinity;
         }
 
-        Input predict() const { return TCortex::predict(); }
         Cortex& operator << (const Input& p) { (TCortex&)(*this) << (p); return *this; }
 
         // Sequentially feeds each element of the range to the target.
@@ -211,7 +201,7 @@ inline namespace utils {
             predictions.reserve(inputs.size());
 
             for (const Input& in : inputs) {
-                predictions.push_back(predict());
+                predictions.push_back(TCortex::prediction());
                 *this << in;
             }
             return predictions;
@@ -222,7 +212,7 @@ inline namespace utils {
     class Misc {
     public:
         using Sequence = Cortex::Sequence;
-        // Returns a random, adaptable and non-trivial sequence with the specified period.
+        // Returns a random, adaptable and non-trivial sequence with the specified temporal pattern period.
         static Sequence adaptable_random_pattern(time_t pattern_period)
         {
             for (time_t time = 0; time < MaxAdaptationTime; ++time) {

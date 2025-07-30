@@ -23,7 +23,7 @@ The goal is to support the **development**, **evaluation**, and **recognition** 
 
 AGITB is implemented as a **header-only** library. It defines a templated `TestBed<Cortex, Input>` class, which requires the user to provide two interacting component types:
 
-- **`Cortex`** – The core model under test. It accumulates internal state from past inputs and generates predictions of future inputs.
+- **`Cortex`** – The core model under test. Upon receiving an input, it generates a prediction for the subsequent input.
 - **`Input`** – A binary-encoded input sample representing signals from virtual sensors or actuators. Each input consists of multiple parallel 1-bit signals (channels) at a single point in time.
 
 ---
@@ -43,10 +43,10 @@ You may use the standard `std::bitset<N>` class for the `Input`, where N specifi
 ### `Cortex`
 Your Cortex class must:
 - Satisfy the `std::regular` concept.
-- Provide methods to accept inputs and generate predictions using the following interface:
+- Provide methods to accept inputs and retrieve predictions using the following interface:
   ```cpp
   Cortex& Cortex::operator << (const Input& p); // Process input p
-  Input Cortex::predict() const;                // Returns predicted next input
+  Input Cortex::prediction() const;                // Returns the cached prediction for the next input
   ```
 
 ### Stub Implementation of Input and Cortex Classes for AGI TestBed
@@ -75,7 +75,7 @@ public:
     bool operator==(const Cortex& rhs) const { return true; }   // TODO: Full member-wise comparison
 
     Cortex& operator << (const Input& p) { return *this; }      // TODO: Process input p
-    Input predict() const { return Input{}; }                   // TODO: Returns predicted next input
+    Input prediction() const { return Input{}; }                // TODO: Returns the cached prediction for the next input
 };
 
 ```
