@@ -161,7 +161,7 @@ namespace AGI {
                 }
             },
             {
-                "#9 Salience (Adaptation time depends on the content of the input sequence.)",
+                "#9 Entropy (Adaptation time depends on the content of the input sequence.)",
                 [](time_t pattern_period) {
                     // Null Hypothesis: Adaptation time is independent of the input sequence content
                     auto adaptation_time_depends_on_the_content_of_the_input_sequence = [=]() -> bool {
@@ -184,7 +184,7 @@ namespace AGI {
                 }
             },
             {
-                "#10 Knowledge (Adaptation time depends on the state of the cortex.)",
+                "#10 Salience (Adaptation time depends on the state of the cortex.)",
                 [](time_t pattern_period) {
                     // Null Hypothesis: Adaptation time is independent of the state of the cortex
                     auto adaptation_time_depends_on_state_of_the_cortex = [&]() -> bool {
