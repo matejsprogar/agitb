@@ -127,7 +127,7 @@ inline namespace utils {
         }
     };
 
-    template <typename TCortex, typename Input, size_t SimulatedInfinity, size_t MaxAdaptationTime>
+    template <typename TCortex, typename Input, size_t SimulatedInfinity>
     requires InputPredictor<TCortex, Input> and Indexable<Input>
     class Cortex : public TCortex
     {
@@ -168,7 +168,7 @@ inline namespace utils {
         // Adapts the cortex to the given input sequence and returns the time required to achieve perfect prediction.
         time_t time_to_repeat(const Sequence& inputs)
         {
-            for (time_t time = 0; time < MaxAdaptationTime; time += inputs.size()) {
+            for (time_t time = 0; time < SimulatedInfinity; time += inputs.size()) {
                 if (predict(inputs) == inputs)
                     return time;
             }
@@ -208,14 +208,14 @@ inline namespace utils {
         }
     };
 
-    template <typename Cortex, size_t MaxAdaptationTime>
+    template <typename Cortex, size_t SimulatedInfinity>
     class Misc {
     public:
         using Sequence = Cortex::Sequence;
         // Returns a random, adaptable and non-trivial sequence with the specified temporal pattern period.
         static Sequence adaptable_random_pattern(time_t pattern_period)
         {
-            for (time_t time = 0; time < MaxAdaptationTime; ++time) {
+            for (time_t time = 0; time < SimulatedInfinity; ++time) {
                 Sequence sequence = Sequence::nontrivial_circular_random(pattern_period);
                 if (period(sequence) != pattern_period)
                     continue;
