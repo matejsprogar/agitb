@@ -1,11 +1,3 @@
-# UNDER CONSTRUCTION
-This repository is currently undergoing extensive maintenance to resolve issues identified in several tests. The core concept remains solid; however, the implementation needs significant refinement.
-
-Please come back shortly!
-#
-#
-
-
 # AGITB – Artificial General Intelligence Testbed
 
 This repository contains the official C++ reference implementation of the **Artificial General Intelligence testbed (AGITB)**, as described [here](doc/AGITB.pdf) ([arXiv](https://arxiv.org/abs/2504.04430)).
