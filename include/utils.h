@@ -125,13 +125,13 @@ inline namespace utils {
                     return sequence;
             }
         }
-        static Sequence trivial_pattern(time_t pattern_period)
+        static Sequence trivial_pattern(time_t temporal_pattern_length)
         {
             Sequence sequence;
-            sequence.resize( pattern_period );
+            sequence.resize( temporal_pattern_length );
             sequence.back() = ~Input{};
 
-            return sequence;    // [{0}, {0}, ..., {0}, {1}]
+            return sequence;    // [{0...0}, {0...0}, ..., {0...0}, {1...1}]
         }
         size_t period() const
         {
@@ -217,11 +217,11 @@ inline namespace utils {
             return *this;
         }
 
-        static Sequence adaptable_random_pattern(time_t pattern_period)
+        static Sequence adaptable_random_pattern(time_t temporal_pattern_length)
         {
             for (time_t time = 0; time < SimulatedInfinity; ++time) {
-                Sequence sequence = Sequence::nontrivial_circular_random(pattern_period);
-                if (sequence.period() != pattern_period)
+                Sequence sequence = Sequence::nontrivial_circular_random(temporal_pattern_length);
+                if (sequence.period() != temporal_pattern_length)
                     continue;
 
                 Cortex C;
