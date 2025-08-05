@@ -125,6 +125,30 @@ inline namespace utils {
                     return sequence;
             }
         }
+        static Sequence trivial_pattern(time_t pattern_period)
+        {
+            Sequence sequence;
+            sequence.resize( pattern_period );
+            sequence.back() = ~Input{};
+
+            return sequence;    // [{0}, {0}, ..., {0}, {1}]
+        }
+        size_t period() const
+        {
+            const Sequence& sequence = *this;
+            const size_t n = sequence.size();
+            for (size_t period = 1; period <= n / 2; ++period) {
+                bool is_periodic = true;
+                for (size_t i = period; i < n; ++i) {
+                    if (sequence[i] != sequence[i - period]) {
+                        is_periodic = false;
+                        break;
+                    }
+                }
+                if (is_periodic) return period;
+            }
+            return n;
+        }
     };
 
     template <typename TCortex, typename Input, size_t SimulatedInfinity>
@@ -193,6 +217,19 @@ inline namespace utils {
             return *this;
         }
 
+        static Sequence adaptable_random_pattern(time_t pattern_period)
+        {
+            for (time_t time = 0; time < SimulatedInfinity; ++time) {
+                Sequence sequence = Sequence::nontrivial_circular_random(pattern_period);
+                if (sequence.period() != pattern_period)
+                    continue;
+
+                Cortex C;
+                if (C.adapt(sequence)) // not every circular sequence is inherently adaptable.
+                    return sequence;
+            }
+            return Sequence{};
+        }
     private:
         // Modifies the cortex by processing the given inputs and returns its corresponding predictions.
         Sequence predict(const Sequence& inputs)
@@ -205,42 +242,6 @@ inline namespace utils {
                 *this << in;
             }
             return predictions;
-        }
-    };
-
-    template <typename Cortex, size_t SimulatedInfinity>
-    class Misc {
-    public:
-        using Sequence = Cortex::Sequence;
-        // Returns a random, adaptable and non-trivial sequence with the specified temporal pattern period.
-        static Sequence adaptable_random_pattern(time_t pattern_period)
-        {
-            for (time_t time = 0; time < SimulatedInfinity; ++time) {
-                Sequence sequence = Sequence::nontrivial_circular_random(pattern_period);
-                if (period(sequence) != pattern_period)
-                    continue;
-
-                Cortex C{};
-                if (C.adapt(sequence)) // not every circular sequence is inherently adaptable.
-                    return sequence;
-            }
-            return Sequence{};
-        }
-    private:
-        static size_t period(const Sequence& sequence)
-        {
-            const size_t n = sequence.size();
-            for (size_t period = 1; period <= n / 2; ++period) {
-                bool is_periodic = true;
-                for (size_t i = period; i < n; ++i) {
-                    if (sequence[i] != sequence[i - period]) {
-                        is_periodic = false;
-                        break;
-                    }
-                }
-                if (is_periodic) return period;
-            }
-            return n;
         }
     };
 }
