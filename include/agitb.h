@@ -37,9 +37,10 @@ namespace sprogar {
     namespace AGI {
         using std::string;
 
-        template <typename TCortex, typename Input, size_t SimulatedInfinity = 5000>
+        template <typename TCortex, typename TInput, size_t SimulatedInfinity = 5000>
         class TestBed
         {
+            using Input = utils::Input<TInput>;
             using Cortex = utils::Cortex<TCortex, Input, SimulatedInfinity>;
             using Sequence = Cortex::Sequence;
 
@@ -79,7 +80,7 @@ namespace sprogar {
                     "#2 Bias (A change in state indicates bias.)",
                     [](time_t) {
                         Cortex C;
-                        C << utils::random<Input>();
+                        C << Input::random();
 
                         ASSERT(C != Cortex{});
                     }
@@ -99,7 +100,7 @@ namespace sprogar {
                 {
                     "#4 Sensitivity (The cortex exhibits chaos-like sensitivity to initial input.)",
                     [](time_t) {
-                        const Input p = utils::random<Input>();
+                        const Input p = Input::random();
                         const Sequence life = Sequence::random(SimulatedInfinity);
 
                         Cortex C, D;
@@ -112,8 +113,8 @@ namespace sprogar {
                 {
                     "#5 Time (The input order is inherently temporal and crucial to the process.)",
                     [](time_t) {
-                        const Input in_1 = utils::random<Input>();
-                        const Input in_2 = utils::random<Input>(in_1);
+                        const Input in_1 = Input::random();
+                        const Input in_2 = Input::random(in_1);
 
                         Cortex C, D;
                         C << in_1 << in_2;
@@ -125,8 +126,8 @@ namespace sprogar {
                 {
                     "#6 RefractoryPeriod (Each spike (1) must be followed by a no-spike (0).)",
                     [](time_t) {
-                        const Input p = utils::random<Input>();
-                        const Sequence no_consecutive_inputs = { p, utils::random<Input>(p) };
+                        const Input p = Input::random();
+                        const Sequence no_consecutive_inputs = { p, Input::random(p) };
                         const Sequence consecutive_inputs = { p, p };
 
                         Cortex C, D;
@@ -233,17 +234,17 @@ namespace sprogar {
                         size_t adapted_score = 0, unadapted_score = 0;
                         for (time_t time = 0; time < SimulatedInfinity; ++time) {
                             const Sequence facts = Cortex::adaptable_random_pattern(temporal_pattern_length);
-                            const Input disruption = utils::random<Input>();
+                            const Input disruption = Input::random();
                             const Input expectation = facts[0];
 
                             Cortex A;
                             A.adapt(facts);
                             A << disruption << facts;
-                            adapted_score += utils::count_matches(A.prediction(), expectation);
+                            adapted_score += Input::count_matches(A.prediction(), expectation);
 
                             Cortex U;
                             U << disruption << facts;
-                            unadapted_score += utils::count_matches(U.prediction(), expectation);
+                            unadapted_score += Input::count_matches(U.prediction(), expectation);
                         }
                         const size_t random_guess = SimulatedInfinity * Input{}.size() / 2;
 
@@ -252,12 +253,15 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#13 Constant-time prediction (Each prediction must be made in constant time, O(1).)",
+                    "#13 Constant-time prediction (Cortex makes predictions in constant-time, O(1))",
                     [](time_t) {
-                        std::clog << red("Automated verification not supported – please verify manually.\n\n");
-                        ASSERT(true);
+                        Cortex C;
+                        C << Sequence::random(SimulatedInfinity);
+                        
+                        
+                        ASSERT(utils::predictions_in_constant_time(C));
                     }
-                }
+                },
             };
         };
     }

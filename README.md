@@ -83,13 +83,11 @@ public:
 
 ## Configuration Parameters
 
-AGITB requires one solution-specific and two system-level template parameters:
+AGITB requires one solution-specific and one system-level template parameter:
 
 - **`temporal_pattern_length`** – A required parameter passed to the TestBed::run() method. It defines the number of inputs in the repeating input sequence that the cortex must learn to recognize and adapt to. A longer pattern period increases the temporal complexity of the task, making it more difficult for the model to capture and generalize the temporal pattern. Since excessively long pattern periods may exceed the cortex’s learning capacity—especially in combination with high-dimensional inputs—the user should choose a value that balances temporal complexity with the spatial size of each input sample.
 
 - **`SimulatedInfinity`** – An optional template parameter of the TestBed class. It defines a practical upper bound on the number of timesteps available for learning, simulating an "infinite" time window within a finite setting. The parameter should be chosen to balance the difficulty of the problem—determined by the pattern period and input size—with the learning capacity of the cortex model. Default: 5000.
-
-- **`Repetitions`** – An optional template parameter of the TestBed class. It specifies how many times each of the 12 tests is repeated to improve statistical robustness. Default: 100.
 
 ---
 
@@ -105,7 +103,7 @@ To use the AGITB testbed, include the main header file and call the static `run(
 int main() {
     using AGITB = sprogar::AGI::TestBed<Cortex, Input>;
     
-    AGITB::run(27 /* temporal_pattern_length */);
+    AGITB::run(7 /* temporal_pattern_length */);
     return 0;
 }
 ```

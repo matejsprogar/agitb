@@ -37,38 +37,58 @@ inline namespace utils {
     using time_t = size_t;
 
     // Count the number of matching bits between two inputs.
-    template <typename Input>
-    requires (Indexable<Input>)
-    size_t count_matches(const Input& a, const Input& b)
-    {
-        return std::ranges::count_if(std::views::iota(0ul, Input{}.size()), [&](size_t i) { return a[i] == b[i]; });
-    }
+    template <typename TInput>
+    requires (Indexable<TInput>)
+    class Input : public TInput {
+        public:
+            using TInput::reference;
+            using TInput::operator[];
+            using TInput::size;
 
-    // Returns an input with spikes at random positions, except where explicitly required to have none.
-    template<typename Input, typename... Inputs>
-    requires (Indexable<Input>)
-    Input random(const Inputs&... off)
-    {
-        static std::mt19937 rng{ std::random_device{}() };
-        static std::bernoulli_distribution bd(0.5);
+            Input() = default;
+            Input(const TInput& src) : TInput(src) {}
+            Input(const Input&) = default;
+            Input(Input&&) = default;
+            
+            Input& operator = (const Input& oth) = default;
+            Input& operator = (Input&& oth) = default;
+            
+            friend bool operator ==(const Input& a, const Input& b) { 
+                return static_cast<const TInput&>(a) == static_cast<const TInput&>(b); 
+            }
 
-        Input input;
-        for (size_t i = 0; i < Input{}.size(); ++i)
-            if (!(false | ... | off[i]))
-                input[i] = bd(rng);
+            static size_t count_matches(const TInput& a, const Input& b)
+            {
+                return std::ranges::count_if(std::views::iota(0ul, Input{}.size()), [&](size_t i) { return a[i] == b[i]; });
+            }
 
-        return input;
-    }
+            // Returns an input with spikes at random positions, except where explicitly required to have none.
+            template<typename... Inputs>
+            static Input random(const Inputs&... off)
+            {
+                static std::mt19937 rng{ std::random_device{}() };
+                static std::bernoulli_distribution bd(0.5);
 
-    template <Indexable Input>
-    requires (!HasUnaryTilde<Input>)
-    auto operator ~(const Input& input)
-    {
-        Input bitwise_not{};
-        for (size_t i = 0; i < Input{}.size(); ++i)
-            bitwise_not[i] = !input[i];
-        return bitwise_not;
-    }
+                Input input;
+                for (size_t i = 0; i < Input{}.size(); ++i)
+                    if (!(false | ... | off[i]))
+                        input[i] = bd(rng);
+
+                return ~input;
+            }
+            
+            friend Input operator ~(const Input& self)
+            requires (!HasUnaryTilde<TInput>)
+            {
+                Input bitwise_not{};
+                for (size_t i=0; i<Input{}.size(); ++i)
+                    bitwise_not[i] = !self[i];
+                return bitwise_not;
+            }
+            
+            typename TInput::reference operator [](const size_t idx) { return TInput::operator[](idx); }
+            bool operator [](const size_t idx) const { return TInput::operator[](idx); }
+    };
 
     template <typename Input>
     class Sequence : public std::vector<Input>
@@ -96,9 +116,9 @@ inline namespace utils {
             Sequence sequence{};
             sequence.reserve(length);
 
-            sequence.push_back(utils::random<Input>());
+            sequence.push_back(Input::random());
             while (sequence.size() < length)
-                sequence.push_back(utils::random<Input>(sequence.back()));
+                sequence.push_back(Input::random(sequence.back()));
 
             return sequence;
         }
@@ -113,7 +133,7 @@ inline namespace utils {
             Sequence sequence = Sequence::random(length);
 
             sequence.pop_back();
-            sequence.push_back(utils::random<Input>(sequence.back(), sequence.front()));
+            sequence.push_back(Input::random(sequence.back(), sequence.front()));
 
             return sequence;
         }
@@ -244,6 +264,41 @@ inline namespace utils {
             return predictions;
         }
     };
-}
+    
+    template <typename Cortex>
+    bool predictions_in_constant_time(Cortex &C, const int K = 10, const double EPS = 0.15)
+    {
+        using namespace std::chrono;
+        using Input = Cortex::Sequence::value_type;
+        
+        auto time_once = [&](Cortex& C, const Input& x) {
+            auto t0 = high_resolution_clock::now(); 
+            C << x;
+            auto t1 = high_resolution_clock::now();
+            return t1 - t0;
+            
+        };
+        auto is_flat = [=](auto tm1, auto tm2) -> bool {
+            auto r = tm1 / tm2;
+            return std::fabs(r - 1.0) <= EPS;
+        };
+
+        C << Input{};
+        
+        Input x{};
+        auto prev = time_once(C, x), time0 = prev;
+        for (int i = 0; i < K; ++i) {
+            x = Input::random(x);
+            auto curr = time_once(C, x);
+            if (!is_flat(curr, prev)) 
+                return false;
+            prev = curr;
+        }
+
+        auto timeK = prev;
+        return is_flat(time0, timeK);
+    }
+
+    }
 }
 }
