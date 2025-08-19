@@ -218,7 +218,7 @@ namespace sprogar {
                                 C.adapt(trivial_behaviour);
                                 D.adapt(trivial_behaviour);
 
-                                bool counterexample = C != D && C.behaviour() == D.behaviour();
+                                bool counterexample = C != D && Cortex::identical_behaviour(C, D, SimulatedInfinity);
                                 if (counterexample)                         // rejects the null hypothesis
                                     return true;
                             }

@@ -197,16 +197,13 @@ inline namespace utils {
         }
 
         // Iteratively feeds the cortex its own predictions and returns the resulting predictions over a specified timeframe.
-        Sequence behaviour(time_t timeframe = SimulatedInfinity)
+        static bool identical_behaviour(Cortex& A, Cortex& B, time_t timeframe = SimulatedInfinity)
         {
-            Sequence predictions{};
-            predictions.reserve(timeframe);
-
-            while (predictions.size() < timeframe) {
-                predictions.push_back(prediction());
-                *this << predictions.back();
+            for (time_t t = 0; t < timeframe; ++t) {
+                if (A.prediction() != B.prediction())
+                    return false;
             }
-            return predictions;
+            return true;
         }
 
         // Adapts the cortex to the given input sequence and returns the time required to achieve perfect prediction.
