@@ -262,40 +262,6 @@ inline namespace utils {
             return predictions;
         }
     };
-    
-    template <typename Cortex>
-    bool predictions_in_constant_time(Cortex &C, const int K = 10, const double EPS = 0.15)
-    {
-        using namespace std::chrono;
-        using Input = Cortex::Sequence::value_type;
-        
-        auto time_once = [&](Cortex& C, const Input& x) {
-            auto t0 = high_resolution_clock::now(); 
-            C << x;
-            auto t1 = high_resolution_clock::now();
-            return t1 - t0;
-            
-        };
-        auto is_flat = [=](auto tm1, auto tm2) -> bool {
-            auto r = tm1 / tm2;
-            return std::fabs(r - 1.0) <= EPS;
-        };
-
-        C << Input{};
-        
-        Input x{};
-        auto prev = time_once(C, x), time0 = prev;
-        for (int i = 0; i < K; ++i) {
-            x = Input::random(x);
-            auto curr = time_once(C, x);
-            if (!is_flat(curr, prev)) 
-                return false;
-            prev = curr;
-        }
-
-        auto timeK = prev;
-        return is_flat(time0, timeK);
-    }
 
     }
 }

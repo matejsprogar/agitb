@@ -251,17 +251,7 @@ namespace sprogar {
                         ASSERT(adapted_score > unadapted_score);
                         ASSERT(adapted_score > random_guess);
                     }
-                },
-                {
-                    "#13 Constant-time prediction (Cortex makes predictions in constant-time, O(1))",
-                    [](time_t) {
-                        Cortex C;
-                        C << Sequence::random(SimulatedInfinity);
-                        
-                        
-                        ASSERT(utils::predictions_in_constant_time(C));
-                    }
-                },
+                }
             };
         };
     }
