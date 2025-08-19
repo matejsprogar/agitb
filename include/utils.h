@@ -74,7 +74,7 @@ inline namespace utils {
                     if (!(false | ... | off[i]))
                         input[i] = bd(rng);
 
-                return ~input;
+                return input;
             }
             
             friend Input operator ~(const Input& self)
@@ -203,7 +203,7 @@ inline namespace utils {
             predictions.reserve(timeframe);
 
             while (predictions.size() < timeframe) {
-                predictions.push_back(TCortex::prediction());
+                predictions.push_back(prediction());
                 *this << predictions.back();
             }
             return predictions;
@@ -226,6 +226,7 @@ inline namespace utils {
         }
 
         Cortex& operator << (const Input& p) { (TCortex&)(*this) << (p); return *this; }
+        Input prediction() const { return TCortex::prediction(); }
 
         // Sequentially feeds each element of the range to the target.
         template <std::ranges::range Range>
@@ -258,7 +259,7 @@ inline namespace utils {
             predictions.reserve(inputs.size());
 
             for (const Input& in : inputs) {
-                predictions.push_back(TCortex::prediction());
+                predictions.push_back(prediction());
                 *this << in;
             }
             return predictions;
