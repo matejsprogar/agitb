@@ -41,10 +41,6 @@ inline namespace utils {
     requires (Indexable<TInput>)
     class Input : public TInput {
         public:
-            using TInput::reference;
-            using TInput::operator[];
-            using TInput::size;
-
             Input() = default;
             Input(const TInput& src) : TInput(src) {}
             Input(const Input&) = default;
@@ -85,9 +81,6 @@ inline namespace utils {
                     bitwise_not[i] = !self[i];
                 return bitwise_not;
             }
-            
-            typename TInput::reference operator [](const size_t idx) { return TInput::operator[](idx); }
-            bool operator [](const size_t idx) const { return TInput::operator[](idx); }
     };
 
     template <typename Input>
