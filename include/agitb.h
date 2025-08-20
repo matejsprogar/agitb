@@ -25,7 +25,7 @@
 
 using namespace std::literals::chrono_literals;
 
-#include "requirements.h"
+#include "concepts.h"
 #include "utils.h"
 
 #define ASSERT(expression) (void)((!!(expression)) || \
@@ -251,7 +251,14 @@ namespace sprogar {
                         ASSERT(adapted_score > unadapted_score);
                         ASSERT(adapted_score > random_guess);
                     }
+                },
+                {
+                    "#12 Bounded Prediction Latency (Cortex architecture allows bounded reaction times.)",
+                    [](time_t) {
+                        ASSERT(false);  // no automated test available - change manually
+                    }
                 }
+
             };
         };
     }
