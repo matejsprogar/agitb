@@ -15,8 +15,7 @@ This repository contains the official C++ reference implementation of the **Arti
 
 AGITB provides a suite of thirteen core requirements, twelve of which are implemented as fully automated tests that evaluate essential characteristics required of an AGI system. Unlike benchmarks focused on symbolic reasoning or language performance, AGITB operates at the level of binary signal processing, where the model must demonstrate adaptation, prediction, and generalization without relying on pretraining or memorization.
 
-The goal is to support the **development**, **evaluation**, and **recognition** of AGI by offering a low-level yet biologically inspired testing framework.
-
+The goal is to advance the **development**, **evaluation**, and **verification** of AGI by offering a biologically inspired low-level testing framework.
 ---
 
 ## C++ Implementation
