@@ -253,7 +253,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#12 Bounded Prediction Latency (Cortex architecture allows bounded reaction times.)",
+                    "#13 Bounded Prediction Latency (Cortex architecture allows bounded reaction times.)",
                     [](time_t) {
                         ASSERT(false);  // no automated test available - change manually
                     }
