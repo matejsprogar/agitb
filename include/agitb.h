@@ -127,13 +127,13 @@ namespace sprogar {
                     "#6 RefractoryPeriod (Each spike (1) must be followed by a no-spike (0).)",
                     [](time_t) {
                         const Input p = Input::random();
-                        const Sequence no_consecutive_inputs = { p, Input::random(p) };
-                        const Sequence consecutive_inputs = { p, p };
-
+                        const Sequence no_consecutive_bits = { p, Input::random(p) };
+                        const Sequence consecutive_bits = { p, p };
+                
                         Cortex C, D;
-
-                        ASSERT(C.adapt(no_consecutive_inputs));
-                        ASSERT(not D.adapt(consecutive_inputs) || p == Input{});
+                
+                        ASSERT(C.adapt(no_consecutive_bits));
+                        ASSERT(not D.adapt(consecutive_bits) || p == Input{});
                     }
                 },
                 {
@@ -155,9 +155,9 @@ namespace sprogar {
                             }
                             return true;
                         };
-
+                
                         Cortex C;
-
+                
                         ASSERT(not indefinitely_adaptable(C));
                     }
                 },
@@ -180,7 +180,7 @@ namespace sprogar {
                             }
                             return false;
                         };
-
+                
                         ASSERT(adaptation_time_depends_on_the_content_of_the_input_sequence());   // rejects the null hypothesis
                     }
                 },
@@ -202,7 +202,7 @@ namespace sprogar {
                             }
                             return false;
                         };
-
+                
                         ASSERT(adaptation_time_depends_on_state_of_the_cortex());   // rejects the null hypothesis
                     }
                 },
@@ -213,18 +213,18 @@ namespace sprogar {
                         auto different_cortex_instances_can_produce_identical_behaviour = [&]() -> bool {
                             for (time_t time = 0; time < SimulatedInfinity; ++time) {
                                 const Sequence trivial_behaviour = { Input{}, Input{} };
-
+                
                                 Cortex C{}, D = Cortex::random();
                                 C.adapt(trivial_behaviour);
                                 D.adapt(trivial_behaviour);
-
+                
                                 bool counterexample = C != D && Cortex::identical_behaviour(C, D, SimulatedInfinity);
                                 if (counterexample)                         // rejects the null hypothesis
                                     return true;
                             }
                             return false;
                         };
-
+                
                         ASSERT(different_cortex_instances_can_produce_identical_behaviour());
                     }
                 },
@@ -236,26 +236,28 @@ namespace sprogar {
                             const Sequence facts = Cortex::adaptable_random_pattern(temporal_pattern_length);
                             const Input disruption = Input::random();
                             const Input expectation = facts[0];
-
+                
                             Cortex A;
                             A.adapt(facts);
                             A << disruption << facts;
                             adapted_score += Input::count_matches(A.prediction(), expectation);
-
+                
                             Cortex U;
                             U << disruption << facts;
                             unadapted_score += Input::count_matches(U.prediction(), expectation);
                         }
                         const size_t random_guess = SimulatedInfinity * Input{}.size() / 2;
-
+                
                         ASSERT(adapted_score > unadapted_score);
                         ASSERT(adapted_score > random_guess);
                     }
                 },
                 {
-                    "#13 Bounded Prediction Latency (Cortex architecture allows bounded reaction times.)",
+                    yellow("#13 ? Bounded Prediction Latency (Cortex architecture can achieve bounded reaction times.)"),
                     [](time_t) {
-                        ASSERT(false);  // no automated test available - change manually
+                        // Manual verification required; no universal automatic serial test exists
+                        const bool manual_verification = false;
+                        ASSERT(manual_verification);
                     }
                 }
 
