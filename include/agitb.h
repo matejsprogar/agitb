@@ -60,6 +60,8 @@ namespace sprogar {
                         test(temporal_pattern_length);
                     }
                 }
+                std::clog << "#13 Bounded Prediction Latency (Cortex architecture can achieve bounded reaction times.)\n";
+                std::clog << yellow("    requires manual verification - no universal automatic serial test exists\n");
 
                 std::clog << green("\nPASS\n");
             }
@@ -251,14 +253,7 @@ namespace sprogar {
                         ASSERT(adapted_score > unadapted_score);
                         ASSERT(adapted_score > random_guess);
                     }
-                },
-                {
-                    yellow("#13 *MANUAL* Bounded Prediction Latency (Cortex architecture can achieve bounded reaction times.)"),
-                    [](time_t) {
-                        // No universal automatic serial test exists.
-                    }
                 }
-
             };
         };
     }
