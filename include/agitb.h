@@ -138,122 +138,122 @@ namespace sprogar {
                         ASSERT(not D.adapt(consecutive_bits) || p == Input{});
                     }
                 },
-                //{
-                //    "#7 Adaptability (The model can adapt to and predict patterns of unknown lengths.)",
-                //    [](time_t temporal_pattern_length) {
-                //        Cortex C;
-                //        ASSERT(C.adapt(Sequence::trivial_pattern(temporal_pattern_length)));
-                //        ASSERT(C.adapt(Sequence::trivial_pattern(temporal_pattern_length + 1)));
-                //    }
-                //},
-                //{
-                //    "#8 Stagnation (You can't teach an old dog new tricks.)",
-                //    [](time_t temporal_pattern_length) {
-                //        auto indefinitely_adaptable = [&](Cortex& dog) -> bool {
-                //            for (time_t time = 0; time < SimulatedInfinity; ++time) {
-                //                Sequence new_trick = Cortex::adaptable_random_pattern(temporal_pattern_length);
-                //                if (not dog.adapt(new_trick))
-                //                    return false;
-                //            }
-                //            return true;
-                //        };
-                //
-                //        Cortex C;
-                //
-                //        ASSERT(not indefinitely_adaptable(C));
-                //    }
-                //},
-                //{
-                //    "#9 Content sensitivity (Adaptation time depends on the content of the input sequence.)",
-                //    [](time_t temporal_pattern_length) {
-                //        // Null Hypothesis: Adaptation time is independent of the input sequence content
-                //        auto adaptation_time_depends_on_the_content_of_the_input_sequence = [=]() -> bool {
-                //            Cortex B;
-                //            const Sequence base_pattern = Sequence::nontrivial_circular_random(temporal_pattern_length);
-                //            const time_t base_time = B.time_to_repeat(base_pattern);
-                //            for (time_t time = 0; time < SimulatedInfinity; ++time) {
-                //                const Sequence new_pattern = Sequence::nontrivial_circular_random(temporal_pattern_length);
-                //                if (new_pattern != base_pattern) {
-                //                    Cortex R;
-                //                    time_t new_time = R.time_to_repeat(new_pattern);
-                //                    if (base_time != new_time)
-                //                        return true;
-                //                }
-                //            }
-                //            return false;
-                //        };
-                //
-                //        ASSERT(adaptation_time_depends_on_the_content_of_the_input_sequence());   // rejects the null hypothesis
-                //    }
-                //},
-                //{
-                //    "#10 Context sensitivity (Adaptation time depends on the state of the cortex.)",
-                //    [](time_t temporal_pattern_length) {
-                //        // Null Hypothesis: Adaptation time is independent of the state of the cortex
-                //        auto adaptation_time_depends_on_state_of_the_cortex = [&]() -> bool {
-                //            const Sequence target_pattern = Cortex::adaptable_random_pattern(temporal_pattern_length);
-                //            Cortex B;
-                //            const time_t base_time = B.time_to_repeat(target_pattern);
-                //            for (time_t time = 0; time < SimulatedInfinity; ++time) {
-                //                Cortex N = Cortex::random();
-                //                if (N != Cortex{}) {
-                //                    time_t new_time = N.time_to_repeat(target_pattern);
-                //                    if (base_time != new_time)
-                //                        return true;
-                //                }
-                //            }
-                //            return false;
-                //        };
-                //
-                //        ASSERT(adaptation_time_depends_on_state_of_the_cortex());   // rejects the null hypothesis
-                //    }
-                //},
-                //{
-                //    "#11 Unobservability (Distinct cortices may exhibit the same observable behaviour.)",
-                //    [](time_t) {
-                //        // Null Hypothesis: "Different cortices cannot produce identical behavior."
-                //        auto different_cortex_instances_can_produce_identical_behaviour = [&]() -> bool {
-                //            for (time_t time = 0; time < SimulatedInfinity; ++time) {
-                //                const Sequence trivial_behaviour = { Input{}, Input{} };
-                //
-                //                Cortex C{}, D = Cortex::random();
-                //                C.adapt(trivial_behaviour);
-                //                D.adapt(trivial_behaviour);
-                //
-                //                bool counterexample = C != D && Cortex::identical_behaviour(C, D, SimulatedInfinity);
-                //                if (counterexample)                         // rejects the null hypothesis
-                //                    return true;
-                //            }
-                //            return false;
-                //        };
-                //
-                //        ASSERT(different_cortex_instances_can_produce_identical_behaviour());
-                //    }
-                //},
-                //{
-                //    "#12 Generalisation (On average, adapted models exhibit the strongest generalisation.)",
-                //    [](time_t temporal_pattern_length) {
-                //        size_t adapted_score = 0, unadapted_score = 0;
-                //        for (time_t time = 0; time < SimulatedInfinity; ++time) {
-                //            const Sequence facts = Cortex::adaptable_random_pattern(temporal_pattern_length);
-                //            const Input disruption = Input::random();
-                //            const Input expectation = facts[0];
-                //
-                //            Cortex A;
-                //            A.adapt(facts);
-                //            A << disruption << facts;
-                //            adapted_score += Input::count_matches(A.prediction(), expectation);
-                //
-                //            Cortex U;
-                //            U << disruption << facts;
-                //            unadapted_score += Input::count_matches(U.prediction(), expectation);
-                //        }
-                //        const size_t random_guess = SimulatedInfinity * Input{}.size() / 2;
-                //
-                //        ASSERT(adapted_score > unadapted_score);
-                //        ASSERT(adapted_score > random_guess);
-                //    }
-                //}
+                {
+                    "#7 Adaptability (The model can adapt to and predict patterns of unknown lengths.)",
+                    [](time_t temporal_pattern_length) {
+                        Cortex C;
+                        ASSERT(C.adapt(Sequence::trivial_pattern(temporal_pattern_length)));
+                        ASSERT(C.adapt(Sequence::trivial_pattern(temporal_pattern_length + 1)));
+                    }
+                },
+                {
+                    "#8 Stagnation (You can't teach an old dog new tricks.)",
+                    [](time_t temporal_pattern_length) {
+                        auto indefinitely_adaptable = [&](Cortex& dog) -> bool {
+                            for (time_t time = 0; time < SimulatedInfinity; ++time) {
+                                Sequence new_trick = Cortex::adaptable_random_pattern(temporal_pattern_length);
+                                if (not dog.adapt(new_trick))
+                                    return false;
+                            }
+                            return true;
+                        };
+                
+                        Cortex C;
+                
+                        ASSERT(not indefinitely_adaptable(C));
+                    }
+                },
+                {
+                    "#9 Content sensitivity (Adaptation time depends on the content of the input sequence.)",
+                    [](time_t temporal_pattern_length) {
+                        // Null Hypothesis: Adaptation time is independent of the input sequence content
+                        auto adaptation_time_depends_on_the_content_of_the_input_sequence = [=]() -> bool {
+                            Cortex B;
+                            const Sequence base_pattern = Sequence::nontrivial_circular_random(temporal_pattern_length);
+                            const time_t base_time = B.time_to_repeat(base_pattern);
+                            for (time_t time = 0; time < SimulatedInfinity; ++time) {
+                                const Sequence new_pattern = Sequence::nontrivial_circular_random(temporal_pattern_length);
+                                if (new_pattern != base_pattern) {
+                                    Cortex R;
+                                    time_t new_time = R.time_to_repeat(new_pattern);
+                                    if (base_time != new_time)
+                                        return true;
+                                }
+                            }
+                            return false;
+                        };
+                
+                        ASSERT(adaptation_time_depends_on_the_content_of_the_input_sequence());   // rejects the null hypothesis
+                    }
+                },
+                {
+                    "#10 Context sensitivity (Adaptation time depends on the state of the cortex.)",
+                    [](time_t temporal_pattern_length) {
+                        // Null Hypothesis: Adaptation time is independent of the state of the cortex
+                        auto adaptation_time_depends_on_state_of_the_cortex = [&]() -> bool {
+                            const Sequence target_pattern = Cortex::adaptable_random_pattern(temporal_pattern_length);
+                            Cortex B;
+                            const time_t base_time = B.time_to_repeat(target_pattern);
+                            for (time_t time = 0; time < SimulatedInfinity; ++time) {
+                                Cortex N = Cortex::random();
+                                if (N != Cortex{}) {
+                                    time_t new_time = N.time_to_repeat(target_pattern);
+                                    if (base_time != new_time)
+                                        return true;
+                                }
+                            }
+                            return false;
+                        };
+                
+                        ASSERT(adaptation_time_depends_on_state_of_the_cortex());   // rejects the null hypothesis
+                    }
+                },
+                {
+                    "#11 Unobservability (Distinct cortices may exhibit the same observable behaviour.)",
+                    [](time_t) {
+                        // Null Hypothesis: "Different cortices cannot produce identical behavior."
+                        auto different_cortex_instances_can_produce_identical_behaviour = [&]() -> bool {
+                            for (time_t time = 0; time < SimulatedInfinity; ++time) {
+                                const Sequence trivial_behaviour = { Input{}, Input{} };
+                
+                                Cortex C{}, D = Cortex::random();
+                                C.adapt(trivial_behaviour);
+                                D.adapt(trivial_behaviour);
+                
+                                bool counterexample = C != D && Cortex::identical_behaviour(C, D, SimulatedInfinity);
+                                if (counterexample)                         // rejects the null hypothesis
+                                    return true;
+                            }
+                            return false;
+                        };
+                
+                        ASSERT(different_cortex_instances_can_produce_identical_behaviour());
+                    }
+                },
+                {
+                    "#12 Generalisation (On average, adapted models exhibit the strongest generalisation.)",
+                    [](time_t temporal_pattern_length) {
+                        size_t adapted_score = 0, unadapted_score = 0;
+                        for (time_t time = 0; time < SimulatedInfinity; ++time) {
+                            const Sequence facts = Cortex::adaptable_random_pattern(temporal_pattern_length);
+                            const Input disruption = Input::random();
+                            const Input expectation = facts[0];
+                
+                            Cortex A;
+                            A.adapt(facts);
+                            A << disruption << facts;
+                            adapted_score += Input::count_matches(A.prediction(), expectation);
+                
+                            Cortex U;
+                            U << disruption << facts;
+                            unadapted_score += Input::count_matches(U.prediction(), expectation);
+                        }
+                        const size_t random_guess = SimulatedInfinity * Input{}.size() / 2;
+                
+                        ASSERT(adapted_score > unadapted_score);
+                        ASSERT(adapted_score > random_guess);
+                    }
+                }
             };
         };
     }
