@@ -253,11 +253,9 @@ namespace sprogar {
                     }
                 },
                 {
-                    yellow("#13 ? Bounded Prediction Latency (Cortex architecture can achieve bounded reaction times.)"),
+                    yellow("#13 *MANUAL* Bounded Prediction Latency (Cortex architecture can achieve bounded reaction times.)"),
                     [](time_t) {
-                        // Manual verification required; no universal automatic serial test exists
-                        const bool manual_verification = false;
-                        ASSERT(manual_verification);
+                        // No universal automatic serial test exists.
                     }
                 }
 
