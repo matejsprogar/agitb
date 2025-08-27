@@ -23,8 +23,6 @@
 #include <algorithm>
 #include <chrono>
 
-using namespace std::literals::chrono_literals;
-
 #include "concepts.h"
 #include "utils.h"
 
