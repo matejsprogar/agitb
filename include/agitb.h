@@ -169,7 +169,7 @@ namespace sprogar {
                             Cortex B;
                             const Sequence base_pattern = Sequence::nontrivial_circular_random(temporal_pattern_length);
                             const time_t base_time = B.time_to_repeat(base_pattern);
-                            for (time_t time = 0; time < SimulatedInfinity; ++time) {
+                            for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
                                 const Sequence new_pattern = Sequence::nontrivial_circular_random(temporal_pattern_length);
                                 if (new_pattern != base_pattern) {
                                     Cortex R;
@@ -192,7 +192,7 @@ namespace sprogar {
                             const Sequence target_pattern = Cortex::adaptable_random_pattern(temporal_pattern_length);
                             Cortex B;
                             const time_t base_time = B.time_to_repeat(target_pattern);
-                            for (time_t time = 0; time < SimulatedInfinity; ++time) {
+                            for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
                                 Cortex N = Cortex::random();
                                 if (N != Cortex{}) {
                                     time_t new_time = N.time_to_repeat(target_pattern);
@@ -211,9 +211,8 @@ namespace sprogar {
                     [](time_t) {
                         // Null Hypothesis: "Different cortices cannot produce identical behavior."
                         auto different_cortex_instances_can_produce_identical_behaviour = [&]() -> bool {
-                            for (time_t time = 0; time < SimulatedInfinity; ++time) {
-                                const Sequence trivial_behaviour = { Input{}, Input{} };
-                
+                            const Sequence trivial_behaviour = { Input{}, Input{} };
+                            for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
                                 Cortex C{}, D = Cortex::random();
                                 C.adapt(trivial_behaviour);
                                 D.adapt(trivial_behaviour);
@@ -232,7 +231,7 @@ namespace sprogar {
                     "#12 Generalisation (On average, adapted models exhibit the strongest generalisation.)",
                     [](time_t temporal_pattern_length) {
                         size_t adapted_score = 0, unadapted_score = 0;
-                        for (time_t time = 0; time < SimulatedInfinity; ++time) {
+                        for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
                             const Sequence facts = Cortex::adaptable_random_pattern(temporal_pattern_length);
                             const Input disruption = Input::random();
                             const Input expectation = facts[0];
