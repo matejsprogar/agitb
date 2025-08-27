@@ -127,7 +127,7 @@ namespace sprogar {
                     "#6 RefractoryPeriod (Each spike (1) must be followed by a no-spike (0).)",
                     [](time_t) {
                         const Input p = Input::random();
-                        const Sequence no_consecutive_bits = { p, Input::random(p) };
+                        const Sequence no_consecutive_bits = { p, ~p };
                         const Sequence consecutive_bits = { p, p };
                 
                         Cortex C, D;
