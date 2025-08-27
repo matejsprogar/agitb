@@ -74,7 +74,7 @@ public:
     bool operator==(const Cortex& rhs) const { return true; }   // TODO: Full member-wise comparison
 
     Cortex& operator << (const Input& p) { return *this; }      // TODO: Process input p
-    Input prediction() const { return Input{}; }                // TODO: Returns the cached prediction for the next input
+    Input prediction() const { return Input{}; }                // TODO: Returns the (cached) prediction for the next input
 };
 
 ```
