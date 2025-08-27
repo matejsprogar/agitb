@@ -44,8 +44,8 @@ Your Cortex class must:
 - Satisfy the `std::regular` concept.
 - Provide methods to accept inputs and retrieve predictions using the following interface:
   ```cpp
-  Cortex& Cortex::operator << (const Input& p); // Process input p
-  Input Cortex::prediction() const;                // Returns the cached prediction for the next input
+  Cortex& Cortex::operator << (const Input& p);    // Process input p
+  Input Cortex::prediction() const;                // Returns the (cached) prediction for the next input
   ```
 
 ### Stub Implementation of Input and Cortex Classes for AGI TestBed
