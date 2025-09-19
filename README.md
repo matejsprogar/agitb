@@ -34,12 +34,12 @@ Your Cortex class must:
 - Provide methods to accept inputs and retrieve predictions using the following interface:
   ```cpp
   Cortex& Cortex::operator << (const Input& p);    // Process input p
-  Input Cortex::prediction() const;                // Returns the (cached) prediction for the next input
+  Input Cortex::prediction() const;                // Returns the prediction for the next input
   ```
 
-- where `Input` defaults to std::bitset<10>, but can also be custom implemented:
-- 
-- ### `Input`
+where `Input` defaults to std::bitset<10>, but can also be custom implemented:
+ 
+### `Input`
 If you need to define a custom `Input`, your type must meet the following interface requirements:
 - Satisfy the `std::regular` concept.
 - Provide methods to access the input size and enable bit-level access through:
@@ -49,7 +49,6 @@ If you need to define a custom `Input`, your type must meet the following interf
   Input::reference Input::operator[](size_t i); // Write access to the i-th bit
   ```
 
-- 
 ### Stub Implementation of the Cortex Class for AGI TestBed
 
 ```cpp
@@ -90,7 +89,7 @@ To use the AGITB testbed, include the main header file and call the static `run(
 
 int main() {
     using AGITB = sprogar::AGI::TestBed<Cortex>;
-    // using AGITB = sprogar::AGI::TestBed<Cortex, CustomInput>;	// only if using custom Input type
+    // using AGITB = sprogar::AGI::TestBed<Cortex, CustomInput>;	// if using CustomInput type
     
     AGITB::run();
     return 0;
