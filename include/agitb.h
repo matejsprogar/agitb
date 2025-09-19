@@ -43,7 +43,7 @@ namespace sprogar {
             using Sequence = Cortex::Sequence;
 
         public:
-            static void run(time_t temporal_pattern_length, size_t test_repetitions = 100)
+            static void run(time_t temporal_pattern_length = 7, size_t test_repetitions = 100)
             {
                 std::clog << "Artificial General Intelligence Testbed\n\n";
                 std::clog << "Testing with temporal patterns with " << temporal_pattern_length << " inputs:\n";
