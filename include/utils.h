@@ -125,7 +125,7 @@ inline namespace utils {
                     return sequence;
             }
         }
-        static Sequence trivial_pattern(time_t temporal_pattern_length)
+        static Sequence simple_pattern(time_t temporal_pattern_length)
         {
             Sequence sequence;
             sequence.resize( temporal_pattern_length );

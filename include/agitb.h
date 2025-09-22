@@ -148,8 +148,8 @@ namespace sprogar {
                     "#7 Adaptability (The model can adapt to and predict temporal patterns of unknown lengths.)",
                     []() {
                         Cortex C;
-                        ASSERT(C.adapt(Sequence::trivial_pattern(TemporalPatternLength)));
-                        ASSERT(C.adapt(Sequence::trivial_pattern(TemporalPatternLength + 1)));
+                        ASSERT(C.adapt(Sequence::simple_pattern(TemporalPatternLength)));
+                        ASSERT(C.adapt(Sequence::simple_pattern(TemporalPatternLength + 1)));
                     }
                 },
                 {
