@@ -43,11 +43,11 @@ namespace sprogar {
         const time_t TemporalPatternLength = 7;
         const size_t BitsPerInput = 10;
 
-        template <typename TCortex, typename TInput = std::bitset<BitsPerInput>>
+        template <typename TCortex>
         class TestBed
         {
 
-            using Input = utils::Input<TInput>;
+            using Input = utils::Input<BitsPerInput>;
             using Cortex = utils::Cortex<TCortex, Input, SimulatedInfinity>;
             using Sequence = Cortex::Sequence;
 

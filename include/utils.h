@@ -38,9 +38,9 @@ inline namespace utils {
     using time_t = size_t;
 
     // Count the number of matching bits between two inputs.
-    template <typename TInput>
-    requires (Indexable<TInput>)
-    class Input : public TInput {
+    template <size_t InputWidth>
+    class Input : public std::bitset<InputWidth> {
+            using TInput = std::bitset<InputWidth>;
         public:
             Input() = default;
             Input(const TInput& src) : TInput(src) {}
@@ -50,13 +50,9 @@ inline namespace utils {
             Input& operator = (const Input& oth) = default;
             Input& operator = (Input&& oth) = default;
             
-            friend bool operator ==(const Input& a, const Input& b) { 
-                return static_cast<const TInput&>(a) == static_cast<const TInput&>(b); 
-            }
-
-            static size_t count_matches(const TInput& a, const Input& b)
+            static size_t count_matches(const Input& a, const Input& b)
             {
-                return std::ranges::count_if(std::views::iota(0ul, Input{}.size()), [&](size_t i) { return a[i] == b[i]; });
+                return std::ranges::count_if(std::views::iota(0ul, InputWidth), [&](size_t i) { return a[i] == b[i]; });
             }
 
             // Returns an input with spikes at random positions, except where explicitly required to have none.
@@ -67,20 +63,11 @@ inline namespace utils {
                 static std::bernoulli_distribution bd(0.5);
 
                 Input input;
-                for (size_t i = 0; i < Input{}.size(); ++i)
+                for (size_t i = 0; i < InputWidth; ++i)
                     if (!(false | ... | off[i]))
                         input[i] = bd(rng);
 
                 return input;
-            }
-            
-            friend Input operator ~(const Input& self)
-            requires (!HasUnaryTilde<TInput>)
-            {
-                Input bitwise_not{};
-                for (size_t i=0; i<Input{}.size(); ++i)
-                    bitwise_not[i] = !self[i];
-                return bitwise_not;
             }
     };
 
