@@ -44,7 +44,7 @@ where `Input` defaults to `std::bitset<10>`.
 ### Stub Implementation of the Cortex Class for AGI Testbed
 
 ```cpp
-using input = std::bitset<10>;
+using Input = std::bitset<10>;
 class Cortex
 {
 public:
