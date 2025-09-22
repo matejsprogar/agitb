@@ -55,14 +55,15 @@ inline namespace utils {
 
             // Returns an input with spikes at random positions, except where explicitly required to have none.
             template<typename... Inputs>
-            static Input random(const Inputs&... off)
+            requires (std::same_as<Input, Inputs> && ...)
+            static Input random(const Inputs&... no_spikes_here)
             {
                 static std::mt19937 rng{ std::random_device{}() };
                 static std::bernoulli_distribution bd(0.5);
 
                 Input input;
                 for (size_t i = 0; i < InputWidth; ++i)
-                    if (!(false | ... | off[i]))
+                    if (!(false | ... | no_spikes_here[i]))
                         input[i] = bd(rng);
 
                 return input;
