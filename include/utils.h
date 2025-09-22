@@ -25,8 +25,6 @@
 #include <ranges>
 #include <random>
 
-#include "concepts.h"
-
 namespace sprogar {
 
 inline std::string red(const char* msg) { return std::format("\033[91m{}\033[0m", msg); }
@@ -151,6 +149,13 @@ inline namespace utils {
             return n;
         }
     };
+    
+    template <typename Cortex, typename Input>
+    concept InputPredictor = std::regular<Cortex> && requires(Cortex cortex, const Cortex ccortex, const Input input)
+    {
+        { cortex << input } -> std::convertible_to<Cortex&>;
+        { ccortex.prediction() } -> std::convertible_to<Input>;
+    };    
 
     template <typename TCortex, typename Input, size_t SimulatedInfinity>
     requires InputPredictor<TCortex, Input>

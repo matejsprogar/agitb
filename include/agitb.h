@@ -24,7 +24,6 @@
 #include <algorithm>
 #include <chrono>
 
-#include "concepts.h"
 #include "utils.h"
 
 #define ASSERT(expression) (void)((!!(expression)) || \
