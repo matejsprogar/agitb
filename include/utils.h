@@ -153,7 +153,7 @@ inline namespace utils {
     };
 
     template <typename TCortex, typename Input, size_t SimulatedInfinity>
-    requires InputPredictor<TCortex, Input> and Indexable<Input>
+    requires InputPredictor<TCortex, Input>
     class Cortex : public TCortex
     {
     public:

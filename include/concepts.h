@@ -21,14 +21,6 @@
 namespace sprogar {
     namespace AGI 
     {
-        template <typename Input>
-        concept Indexable = std::regular<Input> && requires(Input input, const Input cinput)
-        {
-            { input[size_t{}] } -> std::convertible_to<typename Input::reference>;
-            { cinput[size_t{}] } -> std::convertible_to<bool>;
-            { Input{}.size() } -> std::convertible_to<size_t>;
-        };
-
         template <typename Cortex, typename Input>
         concept InputPredictor = std::regular<Cortex> && requires(Cortex cortex, const Cortex ccortex, const Input input)
         {
