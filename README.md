@@ -47,11 +47,16 @@ where `Input` defaults to `std::bitset<10>`.
 using Input = std::bitset<10>;
 class Cortex
 {
+    Input _prediction;
+
 public:
     bool operator==(const Cortex& rhs) const { return true; }   // TODO: Full member-wise comparison
 
-    Cortex& operator << (const Input& p) { return *this; }      // TODO: Process input p
-    Input prediction() const { return Input{}; }                // TODO: Returns the prediction for the next input
+    Cortex& operator << (const Input& p) {
+        _prediction = intelligent_processing(p);                // TODO: Magic occurs here!
+        return *this;
+    }
+    Input prediction() const { return _prediction; }
 };
 ```
 ---
