@@ -6,23 +6,25 @@ This repository contains the official C++ reference implementation of the **Arti
 
 ## Thesis
 
-> **AGI needs a metric.**
-<p>While Large Language Models (LLMs) may be able to pass certain versions of the Turing Test, they do so without grounded understanding and cannot be considered genuine Artificial General Intelligence (AGI). If we are to determine whether a system is truly intelligent—or meaningfully progressing toward general intelligence—we need a clear, rigorous, and actionable metric that goes beyond surface-level imitation.</p>
+> **The capacity to pass the AGITB constitutes a necessary condition for the existence of Artificial General Intelligence.**
+
+While current generative AI systems often give the impression of intelligence, they lack grounded understanding and therefore cannot be regarded as genuine instances of AGI. To distinguish between surface-level imitation and true general intelligence—or measurable progress toward it—we require a rigorous, transparent, and actionable benchmark.
 
 ---
 
 ## AGITB Goal
 
-AGITB provides a suite of thirteen core requirements, twelve of which are implemented as fully automated tests that evaluate essential characteristics required of an AGI system. Unlike benchmarks focused on symbolic reasoning or language performance, AGITB operates at the level of binary signal processing, where the model must demonstrate adaptation, prediction, and generalization without relying on pretraining or memorization.
+The AGITB establishes the AGI benchmark. It consists of thirteen core requirements, twelve of which are implemented as fully automated tests that assess essential characteristics of AGI candidates. Unlike traditional benchmarks centered on symbolic reasoning, language performance, or domain-specific tasks, AGITB evaluates systems at the level of binary signal processing. This low-level design compels models to demonstrate adaptation, prediction, and generalization in ways that cannot be reduced to memorization or large-scale pretraining.
 
-The goal is to advance the **development**, **evaluation**, and **verification** of AGI by offering a biologically inspired low-level testing framework.
+The goal is to advance the **development**, **evaluation**, and **validation** of AGI by offering a biologically inspired low-level testing benchmark.
+
 ---
 
 ## C++ Implementation
 
-AGITB is implemented as a **header-only** library. It defines a templated `TestBed<Cortex, Input=std::bitset<10>>` class, which requires the user to provide the Cortex component type. The instances of this type represent models under test. Upon receiving an input, a cortex object is supposed to generate a prediction for the subsequent input.
+AGITB is provided as a **header-only** library. Its core abstraction is the templated class `TestBed<Cortex>`, where the user specifies the `Cortex` type to be evaluated. Each `Cortex` instance represents a model under test and, upon receiving an input, is expected to produce a prediction of the subsequent input.
 
-The AGITB assumes that the Cortex objects can interact with std::bitset<> type inputs. If this is not the case, the user has the option to define a custom `Input` type that meets the specified interface requirements. An Input object is nothing but a binary-encoded sample representing signals from virtual sensors or actuators. Each input consists of multiple parallel 1-bit signals (channels) at a single point in time.
+By default, AGITB assumes that `Cortex` objects operate on inputs of type `std::bitset<10>`. If this assumption does not hold, users should add define a custom `Input` type that satisfies the required interface. Conceptually, an `Input` object encodes a binary sample collected from (simulated) sensors or actuators, consisting of ten parallel one-bit channels at a single point in time.
 
 ---
 
@@ -37,43 +39,20 @@ Your Cortex class must:
   Input Cortex::prediction() const;                // Returns the prediction for the next input
   ```
 
-where `Input` defaults to std::bitset<10>, but can also be custom implemented:
- 
-### `Input`
-If you need to define a custom `Input`, your type must meet the following interface requirements:
-- Satisfy the `std::regular` concept.
-- Provide methods to access the input size and enable bit-level access through:
-  ```cpp
-  static size_t Input::size();                  // Returns number of input bits
-  bool Input::operator[](size_t i) const;       // Read-only access to the i-th bit
-  Input::reference Input::operator[](size_t i); // Write access to the i-th bit
-  ```
+where `Input` defaults to `std::bitset<10>`.
 
-### Stub Implementation of the Cortex Class for AGI TestBed
+### Stub Implementation of the Cortex Class for AGI Testbed
 
 ```cpp
+using input = std::bitset<10>;
 class Cortex
 {
 public:
     bool operator==(const Cortex& rhs) const { return true; }   // TODO: Full member-wise comparison
 
     Cortex& operator << (const Input& p) { return *this; }      // TODO: Process input p
-    Input prediction() const { return Input{}; }                // TODO: Returns the (cached) prediction for the next input
+    Input prediction() const { return Input{}; }                // TODO: Returns the prediction for the next input
 };
-
-/* If your Cortex cannot work with std::bitset<>, you can define a custom Input type */
-//class CustomInput
-//{
-//public:
-//    CustomInput() {}
-//    bool operator==(const CustomInput& rhs) const { }     // TODO: Full member-wise comparison
-//
-//    using reference = bool&;
-//    static size_t size() { }                              // TODO: Returns number of input bits
-//    bool operator[](size_t i) const { }                   // TODO: Read-only access to the i-th bit
-//    reference operator[](size_t i) { }                    // TODO: Write access to the i-th bit    
-//};
-
 ```
 ---
 
@@ -85,11 +64,10 @@ To use the AGITB testbed, include the main header file and call the static `run(
 ### Example
 
 ```cpp
-#include "agitb.h"
+#include "path/to/agitb.h"
 
 int main() {
     using AGITB = sprogar::AGI::TestBed<Cortex>;
-    // using AGITB = sprogar::AGI::TestBed<Cortex, CustomInput>;	// if using CustomInput type
     
     AGITB::run();
     return 0;
