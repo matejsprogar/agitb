@@ -33,7 +33,6 @@
 
 namespace sprogar {
     namespace AGI {
-        using std::string;
 
         const size_t SimulatedInfinity = 5000;
         const size_t TestRepetitions = 100;
@@ -42,13 +41,13 @@ namespace sprogar {
         const time_t TemporalPatternLength = 7;
         const size_t BitsPerInput = 10;
 
-        template <typename TCortex>
+        template <typename CortexUnderTest>
         class TestBed
         {
 
             using Input = utils::Input<BitsPerInput>;
-            using Cortex = utils::Cortex<TCortex, Input, SimulatedInfinity>;
-            using Sequence = Cortex::Sequence;
+            using Sequence = utils::Sequence<Input>;
+            using Cortex = utils::Cortex<CortexUnderTest, Input, SimulatedInfinity>;
 
         public:
             static void run()
@@ -56,24 +55,24 @@ namespace sprogar {
                 std::clog << "Artificial General Intelligence Testbed\n\n";
                 std::clog << "Testing with temporal patterns with " << TemporalPatternLength << " inputs:\n";
 
-                const string go_back(50, '\b');
+                const std::string go_back(50, '\b');
                 for (const auto& [info, test] : testbed) {
                     std::clog << info << std::endl;
-
+                
                     for (size_t r = 1; r <= TestRepetitions; ++r) {
                         std::clog << r << '/' << TestRepetitions << go_back;
-
+                
                         test();
                     }
                 }
-                std::clog << yellow("#13 Bounded Prediction Latency (Cortex architecture can achieve bounded reaction times.)\n");
-                std::clog << " -> requires manual verification - no universal automatic serial test exists\n";
+                
+                manual_test_13();
 
                 std::clog << green("\nPASS\n");
             }
 
         private:
-            static inline const std::vector<std::pair<string, void(*)()>> testbed =
+            static inline const std::vector<std::pair<std::string, void(*)()>> testbed =
             {
                 {
                     "#1 Genesis (All cortices begin in a completely blank, bias-free state.)",
@@ -259,6 +258,15 @@ namespace sprogar {
                         ASSERT(adapted_score > random_guess);
                     }
                 }
+            };
+            static void manual_test_13() {
+                std::clog << "#13 Bounded Prediction Latency "
+                             "(Cortex architecture can, in theory, provide bounded reaction times.)\n";
+                std::clog << yellow("Manual validation:\n");
+                std::clog << "Does Cortex theoretically support bounded response times? [y/n]\n";
+                                
+                    int answer = std::getchar();
+                ASSERT(answer == 'y' or answer == 'Y');
             };
         };
     }
