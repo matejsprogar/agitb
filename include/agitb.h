@@ -144,7 +144,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#7 Adaptability (The model can adapt to and predict temporal patterns of unknown lengths.)",
+                    "#7 TemporalAdaptability (The model can adapt to and predict temporal patterns of unknown lengths.)",
                     []() {
                         Cortex C;
                         ASSERT(C.adapt(Sequence::simple_pattern(TemporalPatternLength)));
@@ -169,7 +169,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#9 Content sensitivity (Adaptation time depends on the content of the input sequence.)",
+                    "#9 ContentSensitivity (Adaptation time depends on the content of the input sequence.)",
                     []() {
                         // Null Hypothesis: Adaptation time is independent of the input sequence content
                         auto adaptation_time_depends_on_the_content_of_the_input_sequence = [=]() -> bool {
@@ -182,17 +182,17 @@ namespace sprogar {
                                     Cortex R;
                                     time_t new_time = R.time_to_repeat(new_pattern);
                                     if (base_time != new_time)
-                                        return true;
+                                        return true;                        // rejects the null hypothesis
                                 }
                             }
                             return false;
                         };
                 
-                        ASSERT(adaptation_time_depends_on_the_content_of_the_input_sequence());   // rejects the null hypothesis
+                        ASSERT(adaptation_time_depends_on_the_content_of_the_input_sequence()); 
                     }
                 },
                 {
-                    "#10 Context sensitivity (Adaptation time depends on the state of the cortex.)",
+                    "#10 ContextSensitivity (Adaptation time depends on the state of the cortex.)",
                     []() {
                         // Null Hypothesis: Adaptation time is independent of the state of the cortex
                         auto adaptation_time_depends_on_state_of_the_cortex = [&]() -> bool {
@@ -203,14 +203,14 @@ namespace sprogar {
                                 Cortex N = Cortex::random();
                                 if (N != Cortex{}) {
                                     time_t new_time = N.time_to_repeat(target_pattern);
-                                    if (base_time != new_time)
+                                    if (base_time != new_time)               // rejects the null hypothesis
                                         return true;
                                 }
                             }
                             return false;
                         };
                 
-                        ASSERT(adaptation_time_depends_on_state_of_the_cortex());   // rejects the null hypothesis
+                        ASSERT(adaptation_time_depends_on_state_of_the_cortex());
                     }
                 },
                 {
@@ -265,7 +265,7 @@ namespace sprogar {
                 std::clog << yellow("Manual validation:\n");
                 std::clog << "Does Cortex theoretically support bounded response times? [y/n]\n";
                                 
-                    int answer = std::getchar();
+                int answer = std::getchar();
                 ASSERT(answer == 'y' or answer == 'Y');
             };
         };
