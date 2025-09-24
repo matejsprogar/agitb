@@ -50,20 +50,21 @@ inline namespace utils {
             
             static size_t count_matches(const Input& a, const Input& b)
             {
-                return std::ranges::count_if(std::views::iota(0ul, InputWidth), [&](size_t i) { return a[i] == b[i]; });
+                //return std::ranges::count_if(std::views::iota(0ul, InputWidth), [&](size_t i) { return a[i] == b[i]; });
+                return InputWidth - (a ^ b).count();
             }
 
             // Returns an input with spikes at random positions, except where explicitly required to have none.
             template<typename... Inputs>
             requires (std::same_as<Input, Inputs> && ...)
-            static Input random(const Inputs&... no_spikes_here)
+            static Input random(const Inputs&... turn_off)
             {
                 static std::mt19937 rng{ std::random_device{}() };
                 static std::bernoulli_distribution bd(0.5);
 
                 Input input;
                 for (size_t i = 0; i < InputWidth; ++i)
-                    if (!(false | ... | no_spikes_here[i]))
+                    if (!(false | ... | turn_off[i]))
                         input[i] = bd(rng);
 
                 return input;
