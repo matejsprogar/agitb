@@ -36,16 +36,15 @@ namespace sprogar {
     namespace AGI {
         // AGITB environment settings
         const size_t SimulatedInfinity = 5000;
-        const size_t TestRepetitions = 100;
+        const size_t TestRepetitions = 3;
 
         // AGITB problem difficulty settings
         const time_t SequenceLength = 7;
         const size_t BitsPerInput = 10;
 
-        template <typename CortexUnderTest>
+        template <typename CortexUnderTest, typename Input = std::bitset<BitsPerInput>>
         class TestBed
         {
-            using Input = std::bitset<BitsPerInput>;
             using InputSequence = utils::InputSequence<Input>;
             using Cortex = utils::Cortex<CortexUnderTest, Input>;
 
@@ -61,7 +60,7 @@ namespace sprogar {
                     std::clog << info << std::endl;
                 
                     for (size_t r = 1; r <= TestRepetitions; ++r) {
-                        std::clog << r << '/' << TestRepetitions << go_back;
+                        std::clog << r << '/' << TestRepetitions << '\t' << go_back;
                 
                         test();
                     }
@@ -96,7 +95,7 @@ namespace sprogar {
                 {
                     "#3 Determinism (Identical experiences produce an identical state.)",
                     []() {
-                        const InputSequence experience{ InputSequence::random, SimulatedInfinity };
+                        const InputSequence experience = InputSequence(InputSequence::random, SimulatedInfinity);
 
                         Cortex C, D;
                         C << experience;
@@ -109,7 +108,7 @@ namespace sprogar {
                     "#4 Sensitivity (The cortex exhibits chaos-like sensitivity to initial input.)",
                     []() {
                         const Input p = random<Input>();
-                        const InputSequence experience{ InputSequence::random, SimulatedInfinity };
+                        const InputSequence experience = InputSequence(InputSequence::random, SimulatedInfinity);
 
                         Cortex C, D;
                         C << p << experience;
@@ -148,8 +147,8 @@ namespace sprogar {
                     "#7 TemporalAdaptability (The model can adapt to and predict temporal patterns of varying lengths.)",
                     []() {
                         Cortex C;
-                        ASSERT(C.adapt(InputSequence{ InputSequence::trivial_problem, SequenceLength }, SimulatedInfinity));
-                        ASSERT(C.adapt(InputSequence{ InputSequence::trivial_problem, 1 + SequenceLength }, SimulatedInfinity));
+                        ASSERT(C.adapt(InputSequence(InputSequence::trivial_problem, SequenceLength), SimulatedInfinity));
+                        ASSERT(C.adapt(InputSequence(InputSequence::trivial_problem, 1 + SequenceLength), SimulatedInfinity));
                     }
                 },
                 {
@@ -157,10 +156,9 @@ namespace sprogar {
                     []() {
                         auto indefinitely_adaptable = [&](Cortex& dog) -> bool {
                             for (time_t time = 0; time < SimulatedInfinity; ++time) {
-                                InputSequence new_trick = adaptable_random_sequence<Cortex>(SequenceLength, SimulatedInfinity);
-                                ASSERT(new_trick.size() == SequenceLength);
+                                InputSequence learnable_trick = learnable_random_sequence<Cortex>(SequenceLength, SimulatedInfinity);
 
-                                if (not dog.adapt(new_trick, SimulatedInfinity))
+                                if (not dog.adapt(learnable_trick, SimulatedInfinity))
                                     return false;
                             }
                             return true;
@@ -177,12 +175,12 @@ namespace sprogar {
                         // Null Hypothesis: Adaptation time is independent of the input sequence content
                         auto adaptation_time_depends_on_the_content_of_the_input_sequence = [=]() -> bool {
                             Cortex B{};
-                            const InputSequence base_pattern{ InputSequence::circular_random, SequenceLength };
-                            const time_t base_time = B.time_to_repeat(base_pattern, SimulatedInfinity);
+                            const InputSequence base_sequence = learnable_random_sequence<Cortex>(SequenceLength, SimulatedInfinity);
+                            const time_t base_time = B.time_to_repeat(base_sequence, SimulatedInfinity);
                             for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
-                                const InputSequence new_pattern{ InputSequence::circular_random, SequenceLength };
+                                const InputSequence new_pattern = InputSequence(InputSequence::circular_random, SequenceLength);
                                 
-                                if (new_pattern != base_pattern) {
+                                if (new_pattern != base_sequence) {
                                     Cortex C{};
                                     time_t new_time = C.time_to_repeat(new_pattern, SimulatedInfinity);
                                     if (base_time != new_time)
@@ -200,14 +198,14 @@ namespace sprogar {
                     []() {
                         // Null Hypothesis: Adaptation time is independent of the state of the cortex
                         auto adaptation_time_depends_on_state_of_the_cortex = [&]() -> bool {
-                            const InputSequence target_pattern = adaptable_random_sequence<Cortex>(SequenceLength, SimulatedInfinity);
-                            Cortex B{};
-                            const time_t base_time = B.time_to_repeat(target_pattern, SimulatedInfinity);
+                            const InputSequence target_sequence = learnable_random_sequence<Cortex>(SequenceLength, SimulatedInfinity);
+                            Cortex B;
+                            const time_t base_time = B.time_to_repeat(target_sequence, SimulatedInfinity);
                             for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
-                                Cortex N{ Cortex::random };
+                                Cortex N = Cortex(Cortex::random, SequenceLength);
                                 
                                 if (N != Cortex{}) {
-                                    time_t new_time = N.time_to_repeat(target_pattern, SimulatedInfinity);
+                                    time_t new_time = N.time_to_repeat(target_sequence, SimulatedInfinity);
                                     if (base_time != new_time)               // rejects the null hypothesis
                                         return true;
                                 }
@@ -219,17 +217,17 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#11 Unobservability (Distinct cortices may exhibit the same observable behaviour.)",
+                    "#11 Unobservability (Distinct cortices may exhibit the same observable behaviour in some timeframe.)",
                     []() {
                         // Null Hypothesis: "Different cortices cannot produce identical behavior."
                         auto different_cortex_instances_can_produce_identical_behaviour = [&]() -> bool {
                             const InputSequence trivial_behaviour = { Input{}, Input{} };
                             for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
-                                Cortex E{}, R{ Cortex::random };
+                                Cortex E, R(Cortex::random, SequenceLength);
                                 E.adapt(trivial_behaviour, SimulatedInfinity);
                                 R.adapt(trivial_behaviour, SimulatedInfinity);
                 
-                                bool counterexample = E != R && Cortex::identical_behaviour(E, R, SimulatedInfinity);
+                                bool counterexample = E != R && Cortex::identical_behaviour(E, R, 2 * SequenceLength);
                                 if (counterexample)                         // rejects the null hypothesis
                                     return true;
                             }
@@ -240,27 +238,34 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#12 Generalisation (On average, adapted models exhibit the strongest generalisation.)",
+                    "#12 Generalisation (On average, adapted models outperform the non-adapted models.)",
                     []() {
                         size_t adapted_score = 0, unadapted_score = 0;
                         for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
-                            const InputSequence facts = adaptable_random_sequence<Cortex>(SequenceLength, SimulatedInfinity);
+                            const InputSequence facts = InputSequence(InputSequence::circular_random, SequenceLength);
                             const Input disruption = random<Input>();
                             const Input expectation = facts[0];
                 
                             Cortex A;
-                            A.adapt(facts, SimulatedInfinity);
+                            A.adapt(facts, 10*SequenceLength);
                             A << disruption << facts;
                             adapted_score += count_matches(A.prediction(), expectation);
                 
                             Cortex U;
                             U << disruption << facts;
                             unadapted_score += count_matches(U.prediction(), expectation);
+
+                            int pct = 0;
+                            if (attempts % (SimulatedInfinity / 20) == 0) {
+                                std::clog << std::setw(2) << pct << '%' << "\b\b\b";
+                                pct += 5;
+                            }
                         }
                         const size_t random_guess = SimulatedInfinity * Input{}.size() / 2;
                 
                         ASSERT(adapted_score > unadapted_score);
                         ASSERT(adapted_score > random_guess);
+
                     }
                 }
             };

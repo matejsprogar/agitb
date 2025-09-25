@@ -35,11 +35,16 @@ namespace AGI {
 inline namespace utils {
     using time_t = size_t;
 
+    template <size_t BitsPerInput>
+    size_t count_matches(const std::bitset<BitsPerInput>& a, const std::bitset<BitsPerInput>& b)
+    {
+        return BitsPerInput - (a ^ b).count();
+    }
+
     template <typename Input>
     size_t count_matches(const Input& a, const Input& b)
     {
-        //return std::ranges::count_if(std::views::iota(0ul, InputWidth), [&](size_t i) { return a[i] == b[i]; });
-        return Input{}.size() - (a ^ b).count();
+        return std::ranges::count_if(std::views::iota(0ul, a.size()), [&](size_t i) { return a[i] == b[i]; });
     }
 
     // Returns an input with spikes at random positions, except where explicitly required to have none.
@@ -61,6 +66,7 @@ inline namespace utils {
     template <typename Input>
     class InputSequence : public std::vector<Input>
     {
+        using base = std::vector<Input>;
     public:
         enum random_tag { random = 0 };
         enum circular_random_tag { circular_random = 0 };
@@ -74,7 +80,6 @@ inline namespace utils {
             if (0 == length)
                 return;
 
-            using base = std::vector<Input>;
             base::reserve(length);
 
             base::push_back(utils::random<Input>());
@@ -84,8 +89,6 @@ inline namespace utils {
         // constructs a random sequence of inputs with a specified length, exhibiting a circular property 
         // where the first input incorporates refractory periods for the last input in the sequence.
         InputSequence(circular_random_tag, time_t length) : InputSequence(random, length) {
-            using base = std::vector<Input>;
-
             base::pop_back();
             base::push_back(utils::random<Input>(base::back(), base::front()));
         }
@@ -93,65 +96,43 @@ inline namespace utils {
         // constructs a simple, easily adaptable sequence of inputs with a specified length.
         InputSequence(trivial_problem_tag, time_t length)
         {
-            using base = std::vector<Input>;
-
             base::resize( length );
             base::back() = ~Input{};                // [{0...0}, {0...0}, ..., {0...0}, {1...1}]
         }
     };
 
-    template <class Cortex>
-    InputSequence<typename Cortex::InputType> adaptable_random_sequence(time_t length, time_t timeframe)
+
+    template <typename Cortex>
+    InputSequence<typename Cortex::Input> learnable_random_sequence(const size_t length, time_t timeframe)
     {
-        using InputSequence = InputSequence<typename Cortex::InputType>;
-        auto period = [](const InputSequence& sequence)
-            {
-                const size_t n = sequence.size();
-                for (size_t period = 1; period <= n / 2; ++period) {
-                    bool is_periodic = true;
-                    for (size_t i = period; i < n; ++i) {
-                        if (sequence[i] != sequence[i - period]) {
-                            is_periodic = false;
-                            break;
-                        }
-                    }
-                    if (is_periodic) return period;
-                }
-                return n;
-            };
+        using InputSequence = InputSequence<typename Cortex::Input>;
 
-        // ensure the sequence is adaptable and has the desired period
-        for (time_t time = 0; time < timeframe; ++time) {
-            InputSequence seq{ InputSequence::circular_random, length };
-            if (period(seq) != length)
-                continue;
-
+        for (time_t time = 0; time < timeframe; time += length) {
+            const InputSequence in = InputSequence(InputSequence::circular_random, length);
             Cortex C;
-            if (C.adapt(seq, timeframe))   // not every circular sequence is inherently adaptable.
-                return seq;
-        };
-        return InputSequence{}; // failed to find an adaptable InputSequence
+            if (C.adapt(in, timeframe))
+                return in;
+        }
+        std::cerr << red("Error:") << " Could not find a learnable sequence.\n";
+        exit(-1);
     }
 
-
-
-
-    
-    template <typename Cortex, typename Input>
-    concept InputPredictor = std::regular<Cortex> && requires(Cortex cortex, const Cortex ccortex, const Input input)
+    template <typename CortexUnderTest, typename Input>
+    concept InputPredictor = std::regular<CortexUnderTest> 
+        && requires(CortexUnderTest cortex, const CortexUnderTest const_cortex, const Input input)
     {
-        { cortex << input } -> std::convertible_to<Cortex&>;
-       // { ccortex.prediction() } -> std::convertible_to<Input>;
+        { cortex << input } -> std::convertible_to<CortexUnderTest&>;
+        { const_cortex.prediction() } -> std::convertible_to<Input>;
     };    
 
-    template <typename TCortex, typename Input>
-    requires InputPredictor<TCortex, Input>
+    template <typename CortexUnderTest, typename InputType>
+    requires InputPredictor<CortexUnderTest, InputType>
     class Cortex
     {
-        TCortex cortex;
+        CortexUnderTest cortex;
     public:
+        using Input = InputType;
         using InputSequence = utils::InputSequence<Input>;
-        using InputType = Input;
 
         enum random_tag { random = 0 };
 
@@ -164,22 +145,21 @@ inline namespace utils {
         template<typename... Args>
         Cortex(Args&&... args) : cortex(std::forward<Args>(args)...) {}
 
-        // Constructs a randomly initialized cortex object.
-        Cortex(random_tag) : Cortex()
+        // Constructs a randomly initialized cortex object by feedng it with random inputs.
+        Cortex(random_tag, const time_t random_initialization_strength) : Cortex()
         {
-            const time_t arbitrary_random_strength = 10;
-
-            *this << InputSequence(InputSequence::random, arbitrary_random_strength);
+            *this << InputSequence(InputSequence::random, random_initialization_strength);
         }
 
         // Iteratively feeds each cortex its own predictions and returns true if predictions match over a specified timeframe.
         static bool identical_behaviour(Cortex& A, Cortex& B, time_t timeframe)
         {
             for (time_t time = 0; time < timeframe; ++time) {
-                if (A.prediction() != B.prediction())
+                const auto expectation = A.prediction();
+                if (expectation != B.prediction())
                     return false;
-                A << A.prediction();
-                B << B.prediction();
+                A << expectation;
+                B << expectation;
             }
             return A.prediction() == B.prediction();
         }
@@ -188,7 +168,7 @@ inline namespace utils {
         time_t time_to_repeat(const InputSequence& inputs, time_t timeframe)
         {
             for (time_t time = 0; time < timeframe; time += inputs.size()) {
-                if (predict(inputs) == inputs)
+                if (process(inputs) == inputs)
                     return time;
             }
             return timeframe;
@@ -209,20 +189,20 @@ inline namespace utils {
         Cortex& operator << (Range&& range)
         {
             for (auto&& elt : range)
-                *this << elt;
+                cortex << elt;
             return *this;
         }
 
     private:
         // Modifies the cortex by processing the given inputs and returns its corresponding predictions.
-        InputSequence predict(const InputSequence& inputs)
+        InputSequence process(const InputSequence& inputs)
         {
             InputSequence predictions{};
             predictions.reserve(inputs.size());
 
             for (const Input& in : inputs) {
-                predictions.push_back(prediction());
-                *this << in;
+                predictions.push_back(cortex.prediction());
+                cortex << in;
             }
             return predictions;
         }
