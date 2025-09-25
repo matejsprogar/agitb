@@ -35,7 +35,6 @@ namespace AGI {
 inline namespace utils {
     using time_t = size_t;
 
-    // Count the number of matching bits between two inputs.
     template <size_t InputWidth>
     class Input : public std::bitset<InputWidth> {
             using TInput = std::bitset<InputWidth>;
@@ -48,6 +47,7 @@ inline namespace utils {
             Input& operator = (const Input& oth) = default;
             Input& operator = (Input&& oth) = default;
             
+            // Count the number of matching bits between two inputs.
             static size_t count_matches(const Input& a, const Input& b)
             {
                 //return std::ranges::count_if(std::views::iota(0ul, InputWidth), [&](size_t i) { return a[i] == b[i]; });
