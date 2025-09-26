@@ -123,10 +123,17 @@ inline namespace utils {
     {
         { cortex << input } -> std::convertible_to<CortexUnderTest&>;
         { const_cortex.prediction() } -> std::convertible_to<Input>;
-    };    
+    };
+    template <typename InputType>
+    concept Indexable = std::regular<InputType> && requires(InputType input, const InputType cinput)
+    {
+        { input[size_t{}] } -> std::convertible_to<typename InputType::reference>;
+        { cinput[size_t{}] } -> std::convertible_to<bool>;
+        { InputType{}.size() } -> std::convertible_to<size_t>;
+    };
 
     template <typename CortexUnderTest, typename InputType>
-    requires InputPredictor<CortexUnderTest, InputType>
+    requires InputPredictor<CortexUnderTest, InputType> and Indexable<InputType>
     class Cortex
     {
         CortexUnderTest cortex;
