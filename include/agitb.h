@@ -49,6 +49,24 @@ namespace sprogar {
             using Cortex = utils::Cortex<CortexUnderTest, Input>;
 
         public:
+            static void debug()
+            {
+                std::clog << "DEBUG\n";
+
+                // tests 1-12
+                const std::string go_back(50, '\b');
+                std::clog << testbed[11].first << std::endl;
+
+                for (size_t r = 1; r <= 1; ++r) {
+                    std::clog << r << '/' << 1 << '\t' << go_back;
+
+                    testbed[11].second();
+                }
+
+                test_13();
+
+                std::clog << green("\n?\n");
+            }
             static void run()
             {
                 std::clog << "Artificial General Intelligence Testbed\n\n";
@@ -240,6 +258,9 @@ namespace sprogar {
                 {
                     "#12 Generalisation (On average, adapted models outperform the non-adapted models.)",
                     []() {
+                        int progress = 0;
+                        std::clog << '\t';
+
                         size_t adapted_score = 0, unadapted_score = 0;
                         for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
                             const InputSequence facts = InputSequence(InputSequence::circular_random, SequenceLength);
@@ -255,10 +276,9 @@ namespace sprogar {
                             U << disruption << facts;
                             unadapted_score += count_matches(U.prediction(), expectation);
 
-                            int pct = 0;
                             if (attempts % (SimulatedInfinity / 20) == 0) {
-                                std::clog << std::setw(2) << pct << '%' << "\b\b\b";
-                                pct += 5;
+                                std::clog << std::setw(2) << progress << '%' << "\b\b\b";
+                                progress += 5;
                             }
                         }
                         const size_t random_guess = SimulatedInfinity * Input{}.size() / 2;
