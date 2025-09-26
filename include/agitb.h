@@ -36,7 +36,7 @@ namespace sprogar {
     namespace AGI {
         // AGITB environment settings
         const size_t SimulatedInfinity = 5000;
-        const size_t TestRepetitions = 3;
+        const size_t TestRepetitions = 100;
 
         // AGITB problem difficulty settings
         const time_t SequenceLength = 7;
