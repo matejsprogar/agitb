@@ -256,7 +256,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#12 Generalisation (On average, adapted models outperform the non-adapted models.)",
+                    "#12 Generalisation (Prior exposure to data improves performance in unseen situations.)",
                     []() {
                         int progress = 0;
                         std::clog << '\t';
@@ -267,26 +267,30 @@ namespace sprogar {
                             }
                         };
 
-                        size_t adapted_score = 0, unadapted_score = 0;
+                        auto score = [](const InputSequence& facts, const Input disruption, size_t exposure_time) -> size_t {
+                            const Input expectation = facts[0];
+
+                            Cortex A;
+                            A.adapt(facts, exposure_time);
+                            A << disruption;  // establish a novel situation
+                            A << facts;       // begin the sequence
+                            return utils::count_matches(A.prediction(), expectation);
+                        };
+
+                        const size_t limited_exposure_time = 10 * SequenceLength, no_exposure = 0;
+                        size_t adapted_score = 0, non_adapted_score = 0;
                         for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
                             const InputSequence facts = InputSequence(InputSequence::circular_random, SequenceLength);
                             const Input disruption = random<Input>();
-                            const Input expectation = facts[0];
-                
-                            Cortex A;
-                            A.adapt(facts, 10*SequenceLength);
-                            A << disruption << facts;
-                            adapted_score += count_matches(A.prediction(), expectation);
-                
-                            Cortex U;
-                            U << disruption << facts;
-                            unadapted_score += count_matches(U.prediction(), expectation);
+
+                            adapted_score += score(facts, disruption, limited_exposure_time);
+                            non_adapted_score += score(facts, disruption, no_exposure);
 
                             track_progress(attempts);
-                       }
+                        }
                         const size_t random_guess = SimulatedInfinity * Input{}.size() / 2;
                 
-                        ASSERT(adapted_score > unadapted_score);
+                        ASSERT(adapted_score > non_adapted_score);
                         ASSERT(adapted_score > random_guess);
 
                     }
