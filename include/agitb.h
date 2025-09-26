@@ -260,6 +260,12 @@ namespace sprogar {
                     []() {
                         int progress = 0;
                         std::clog << '\t';
+                        auto track_progress = [&](size_t attempts) {
+                            if (attempts % (SimulatedInfinity / 20) == 0) {
+                                std::clog << std::setw(2) << progress << '%' << "\b\b\b";
+                                progress += 5;
+                            }
+                        };
 
                         size_t adapted_score = 0, unadapted_score = 0;
                         for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
@@ -276,11 +282,8 @@ namespace sprogar {
                             U << disruption << facts;
                             unadapted_score += count_matches(U.prediction(), expectation);
 
-                            if (attempts % (SimulatedInfinity / 20) == 0) {
-                                std::clog << std::setw(2) << progress << '%' << "\b\b\b";
-                                progress += 5;
-                            }
-                        }
+                            track_progress(attempts);
+                       }
                         const size_t random_guess = SimulatedInfinity * Input{}.size() / 2;
                 
                         ASSERT(adapted_score > unadapted_score);
