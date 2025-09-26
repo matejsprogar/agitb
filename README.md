@@ -8,7 +8,7 @@ This repository contains the official C++ reference implementation of the **Arti
 
 > **The capacity to pass the AGITB constitutes a necessary condition for the existence of Artificial General Intelligence.**
 
-While current generative AI systems often give the impression of intelligence, they lack grounded understanding and therefore cannot be regarded as genuine instances of AGI. To distinguish between surface-level imitation and true general intelligence—or measurable progress toward it—we require a rigorous, transparent, and actionable benchmark.
+While current AI systems often give the impression of intelligence, they lack a grounded understanding and therefore cannot be regarded as genuine instances of AGI. To distinguish between surface-level imitation and true general intelligence—or measurable progress toward it—we require a rigorous, transparent, and actionable benchmark.
 
 ---
 
@@ -22,24 +22,24 @@ The goal is to advance the **development**, **evaluation**, and **validation** o
 
 ## C++ Implementation
 
-AGITB is provided as a **header-only** library. Its core abstraction is the templated class `TestBed<Cortex>`, where the user specifies the `Cortex` type to be evaluated. Each `Cortex` instance represents a model under test and, upon receiving an input, is expected to produce a prediction of the subsequent input.
+AGITB is distributed as a header-only library. Its central abstraction is the templated class `TestBed<CortexUnderTest>`, where `CortexUnderTest` denotes the model type under evaluation. Each instance of `CortexUnderTest` represents a candidate model that, given an input object, is expected to generate a prediction for the subsequent input.
 
-By default, AGITB assumes that `Cortex` objects operate on inputs of type `std::bitset<10>`. If this assumption does not hold, users should add define a custom `Input` type that satisfies the required interface. Conceptually, an `Input` object encodes a binary sample collected from (simulated) sensors or actuators, consisting of ten parallel one-bit channels at a single point in time.
+An `InputType` encodes a binary input sample from simulated sensors or actuators, consisting of ten parallel one-bit channels captured at a single time step. By default, AGITB defines `InputType` as `std::bitset<10>`. If this default is unsuitable, users may declare `TestBed<MyCortex, MyInput>` with a custom type. The custom `MyInput` must satisfy the `Indexable` concept defined in `utils.h`.
 
 ---
 
 ## API Requirements
 
-### `Cortex`
+### `CortexUnderTest`
 Your Cortex class must:
 - Satisfy the `std::regular` concept.
 - Provide methods to accept inputs and retrieve predictions using the following interface:
   ```cpp
-  Cortex& Cortex::operator << (const Input& p);    // Process input p
-  Input Cortex::prediction() const;                // Returns the prediction for the next input
+  Cortex& Cortex::operator << (const InputType& p); // Process input p
+  InputType Cortex::prediction() const;                 // Returns the prediction for the next input
   ```
 
-where `Input` defaults to `std::bitset<10>`.
+where `InputType` defaults to `std::bitset<10>`.
 
 ### Stub Implementation of the Cortex Class for AGI Testbed
 
@@ -50,10 +50,10 @@ class Cortex
     Input _prediction;
 
 public:
-    bool operator==(const Cortex& rhs) const { return true; }   // TODO: Full member-wise comparison
+    bool operator==(const Cortex& rhs) const { return false; }  // TODO
 
     Cortex& operator << (const Input& p) {
-        _prediction = intelligent_processing(p);                // TODO: Magic occurs here!
+        _prediction = AGI(p);                                   // TODO: Magic occurs here!
         return *this;
     }
     Input prediction() const { return _prediction; }
@@ -64,7 +64,7 @@ public:
 
 ## Usage
 
-To use the AGITB testbed, include the main header file and call the static `run()` method of the `TestBed<Cortex>` class, providing your `Cortex` type as template parameter.
+To use the AGITB testbed, include the main header file `agitb.h` and call the static `run()` method of the `TestBed<Cortex>` class, providing your `Cortex` type as template parameter.
 
 ### Example
 
