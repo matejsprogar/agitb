@@ -49,24 +49,6 @@ namespace sprogar {
             using Cortex = utils::Cortex<CortexUnderTest, Input>;
 
         public:
-            static void debug()
-            {
-                std::clog << "DEBUG\n";
-
-                // tests 1-12
-                const std::string go_back(50, '\b');
-                std::clog << testbed[11].first << std::endl;
-
-                for (size_t r = 1; r <= 1; ++r) {
-                    std::clog << r << '/' << 1 << '\t' << go_back;
-
-                    testbed[11].second();
-                }
-
-                test_13();
-
-                std::clog << green("\n?\n");
-            }
             static void run()
             {
                 std::clog << "Artificial General Intelligence Testbed\n\n";
@@ -77,8 +59,8 @@ namespace sprogar {
                 for (const auto& [info, test] : testbed) {
                     std::clog << info << std::endl;
                 
-                    for (size_t r = 1; r <= TestRepetitions; ++r) {
-                        std::clog << r << '/' << TestRepetitions << '\t' << go_back;
+                    for (size_t i = 1; i <= TestRepetitions; ++i) {
+                        std::clog << i << '/' << TestRepetitions << '\t' << go_back;
                 
                         test();
                     }
@@ -256,52 +238,42 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#12 Generalisation (Prior exposure to data improves performance in unseen situations.)",
+                    "#12 Generalisation (On average, experience improves performance in unseen situations.)",
                     []() {
-                        int progress = 0;
-                        std::clog << '\t';
-                        auto track_progress = [&](size_t attempts) {
-                            if (attempts % (SimulatedInfinity / 20) == 0) {
-                                std::clog << std::setw(2) << progress << '%' << "\b\b\b";
-                                progress += 5;
-                            }
-                        };
-
-                        auto score = [](const InputSequence& facts, const Input disruption, size_t exposure_time) -> size_t {
-                            const Input expectation = facts[0];
-
+                        auto score = [](const InputSequence& facts, const Input& disruption, int exposure_time) -> size_t {
                             Cortex A;
-                            A.adapt(facts, exposure_time);
+                            for (int i = 0; i < exposure_time; ++i)
+                                A << facts;
                             A << disruption;  // establish a novel situation
                             A << facts;       // begin the sequence
-                            return utils::count_matches(A.prediction(), expectation);
+
+                            const Input& most_probable = facts[0];
+                            return utils::count_matching_bits(A.prediction(), most_probable);
                         };
 
-                        const size_t limited_exposure_time = 10 * SequenceLength, no_exposure = 0;
-                        size_t adapted_score = 0, non_adapted_score = 0;
-                        for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
+                        size_t experienced_score = 0, inexperienced_score = 0;
+                        const size_t batch_size = std::max(SimulatedInfinity / TestRepetitions, 10ULL);
+                        for (size_t i = 0; i < batch_size; ++i) {
                             const InputSequence facts = InputSequence(InputSequence::circular_random, SequenceLength);
                             const Input disruption = random<Input>();
 
-                            adapted_score += score(facts, disruption, limited_exposure_time);
-                            non_adapted_score += score(facts, disruption, no_exposure);
-
-                            track_progress(attempts);
+                            inexperienced_score += score(facts, disruption, 0/*no exposure*/);
+                            experienced_score += score(facts, disruption, 10/*short exposure*/);
                         }
-                        const size_t random_guess = SimulatedInfinity * Input{}.size() / 2;
+                        const size_t random_guess = batch_size * Input{}.size() / 2;
                 
-                        ASSERT(adapted_score > non_adapted_score);
-                        ASSERT(adapted_score > random_guess);
-
+                        ASSERT(experienced_score > inexperienced_score);
+                        ASSERT(experienced_score > random_guess);
                     }
                 }
             };
             static void test_13() {
-                std::clog << "#13 Latency (The Cortex shall produce each prediction within a bounded latency.)\n";
+                std::clog << "#13 Latency (The Cortex shall produce each prediction within a bounded latency.)\n\n";
                 std::clog << yellow("Manual validation required:\n");
+
                 std::clog << "Is the Cortex, in principle, capable of producing a prediction within a bounded latency? [y/n]\n";
-                                
                 int answer = std::getchar();
+                                
                 ASSERT(answer == 'y' or answer == 'Y');
             };
         };

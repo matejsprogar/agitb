@@ -36,13 +36,13 @@ inline namespace utils {
     using time_t = size_t;
 
     template <size_t BitsPerInput>
-    size_t count_matches(const std::bitset<BitsPerInput>& a, const std::bitset<BitsPerInput>& b)
+    size_t count_matching_bits(const std::bitset<BitsPerInput>& a, const std::bitset<BitsPerInput>& b)
     {
         return BitsPerInput - (a ^ b).count();
     }
 
     template <typename Input>
-    size_t count_matches(const Input& a, const Input& b)
+    size_t count_matching_bits(const Input& a, const Input& b)
     {
         return std::ranges::count_if(std::views::iota(0ul, a.size()), [&](size_t i) { return a[i] == b[i]; });
     }
