@@ -42,6 +42,8 @@ namespace sprogar {
         const time_t SequenceLength = 7;
         const size_t BitsPerInput = 10;
 
+        static_assert(SequenceLength >= 2, "SequenceLength must be at least 2.");
+
         template <typename CortexUnderTest, typename Input = std::bitset<BitsPerInput>>
         class TestBed
         {
@@ -238,24 +240,24 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#12 Generalisation (On average, experience improves performance in unseen situations.)",
+                    "#12 Generalisation (On average, a relevant experience helps in unseen situations.)",
                     []() {
                         auto score = [](const InputSequence& facts, const Input& disruption, int exposure_time) -> size_t {
-                            Cortex A;
+                            Cortex C;
                             for (int i = 0; i < exposure_time; ++i)
-                                A << facts;
-                            A << disruption;  // establish a novel situation
-                            A << facts;       // begin the sequence
+                                C << facts;                             // gain experience
+                            C << disruption;                            // begin a novel situation
+                            C << (facts | std::views::drop(1));         // proceed with the remaining sequence
 
                             const Input& most_probable = facts[0];
-                            return utils::count_matching_bits(A.prediction(), most_probable);
+                            return utils::count_matching_bits(C.prediction(), most_probable);
                         };
 
                         size_t experienced_score = 0, inexperienced_score = 0;
                         const size_t batch_size = std::max(SimulatedInfinity / TestRepetitions, 10ULL);
                         for (size_t i = 0; i < batch_size; ++i) {
                             const InputSequence facts = InputSequence(InputSequence::circular_random, SequenceLength);
-                            const Input disruption = random<Input>();
+                            const Input disruption = random<Input>(facts[1], facts.back());
 
                             inexperienced_score += score(facts, disruption, 0/*no exposure*/);
                             experienced_score += score(facts, disruption, 10/*short exposure*/);
