@@ -282,12 +282,12 @@ namespace sprogar {
                         const int N = 20;
                         for (int i = 0; i < N; ++i) {
                             Cortex R(Cortex::random, 10uz);
-                            const InputSequence correlated_data = R.generate(SimulatedInfinity);  // R sets the rule behind the data
+                            const auto correlated_data = R.generate(SimulatedInfinity);  // R sets the rule behind the data
                             
                             Cortex C;
                             C << correlated_data;
                             
-                            const InputSequence truth = R.generate(SequenceLength);
+                            const auto truth = R.generate(SequenceLength);
                             score += utils::count_matching_bits(C.generate(SequenceLength), truth);
                         }
                         const size_t random_guess = N * SequenceLength * BitsPerInput / 2;

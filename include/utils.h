@@ -215,14 +215,14 @@ inline namespace utils {
             return *this;
         }
         
-        InputSequence generate(size_t length)
+        auto generate(size_t length)
         {
-            InputSequence seq;
-            seq.reserve(length);
-            while (seq.size() < length) {
-                seq.push_back(prediction());
-                cortex << seq.back();
-            }
+            auto seq = std::views::iota(size_t{0}, length)
+             | std::views::transform([&](size_t) {
+                   auto value = prediction();
+                   cortex << value;
+                   return value;
+               });
             return seq;
         }
 
