@@ -47,6 +47,20 @@ inline namespace utils {
         return std::ranges::count_if(std::views::iota(0ul, a.size()), [&](size_t i) { return a[i] == b[i]; });
     }
 
+    template <std::ranges::input_range R1, std::ranges::input_range R2>
+    size_t count_matching_bits(const R1& r1, const R2& r2)
+    {
+        auto it1 = std::ranges::begin(r1);
+        auto it2 = std::ranges::begin(r2);
+        auto end1 = std::ranges::end(r1);
+
+        size_t count = 0;
+        for (; it1 != end1; ++it1, ++it2) {
+            count += count_matching_bits(*it1, *it2);
+        }
+        return count;
+    }
+    
     // Returns an input with spikes at random positions, except where explicitly required to have none.
     template<typename Input, typename... Inputs>
     requires (std::same_as<Input, Inputs> && ...)
@@ -72,6 +86,7 @@ inline namespace utils {
         enum circular_random_tag { circular_random = 0 };
         enum trivial_problem_tag { trivial_problem = 0 };
 
+        InputSequence() {}
         InputSequence(std::initializer_list<Input> il) : std::vector<Input>(il) {}
 
         // constructs a random sequence of inputs with a specified length.
@@ -198,6 +213,17 @@ inline namespace utils {
             for (auto&& elt : range)
                 cortex << elt;
             return *this;
+        }
+        
+        InputSequence generate(size_t length)
+        {
+            InputSequence seq;
+            seq.reserve(length);
+            while (seq.size() < length) {
+                seq.push_back(prediction());
+                cortex << seq.back();
+            }
+            return seq;
         }
 
     private:

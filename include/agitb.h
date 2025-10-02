@@ -36,7 +36,8 @@ namespace sprogar {
     namespace AGI {
         // AGITB environment settings
         const size_t SimulatedInfinity = 5000;
-        const size_t TestRepetitions = 100;
+        const int Repeat100x = 100;
+        const int RepeatOnce = 1;
 
         // AGITB problem difficulty settings
         const time_t SequenceLength = 7;
@@ -56,28 +57,26 @@ namespace sprogar {
                 std::clog << "Artificial General Intelligence Testbed\n\n";
                 std::clog << "Testing with temporal patterns with " << SequenceLength << " inputs:\n";
 
-                // tests 1-12
                 const std::string go_back(50, '\b');
-                for (const auto& [info, test] : testbed) {
+                for (const auto& [info, repetitions, test] : testbed) {
                     std::clog << info << std::endl;
                 
-                    for (size_t i = 1; i <= TestRepetitions; ++i) {
-                        std::clog << i << '/' << TestRepetitions << '\t' << go_back;
+                    for (int i = 1; i <= repetitions; ++i) {
+                        std::clog << i << '/' << repetitions << '\t' << go_back;
                 
                         test();
                     }
                 }
-                
-                test_13();
 
                 std::clog << green("\nPASS\n");
             }
 
         private:
-            static inline const std::vector<std::pair<std::string, void(*)()>> testbed =
+            static inline const std::vector<std::tuple<std::string, int, void(*)()>> testbed =
             {
                 {
                     "#1 Genesis (All cortices begin in a completely blank, bias-free state.)",
+                    Repeat100x,
                     []() {
                         Cortex C;
 
@@ -87,6 +86,7 @@ namespace sprogar {
                 },
                 {
                     "#2 Bias (A change in state indicates bias.)",
+                    Repeat100x,
                     []() {
                         Cortex C;
                         C << random<Input>();
@@ -96,6 +96,7 @@ namespace sprogar {
                 },
                 {
                     "#3 Determinism (Identical experiences produce an identical state.)",
+                    Repeat100x,
                     []() {
                         const InputSequence experience = InputSequence(InputSequence::random, SimulatedInfinity);
 
@@ -108,6 +109,7 @@ namespace sprogar {
                 },
                 {
                     "#4 Sensitivity (The cortex exhibits chaos-like sensitivity to initial input.)",
+                    Repeat100x,
                     []() {
                         const Input p = random<Input>();
                         const InputSequence experience = InputSequence(InputSequence::random, SimulatedInfinity);
@@ -121,6 +123,7 @@ namespace sprogar {
                 },
                 {
                     "#5 Time (The input order is inherently temporal and crucial to the process.)",
+                    Repeat100x,
                     []() {
                         const Input in_1 = random<Input>();
                         const Input in_2 = random<Input>(in_1);     // in_1 & in_2 == Input{}
@@ -134,6 +137,7 @@ namespace sprogar {
                 },
                 {
                     "#6 RefractoryPeriod (Each spike (1) must be followed by a no-spike (0).)",
+                    Repeat100x,
                     []() {
                         const Input p = random<Input>();
                         const InputSequence no_consecutive_spikes = { p, ~p };
@@ -147,6 +151,7 @@ namespace sprogar {
                 },
                 {
                     "#7 TemporalAdaptability (The model can adapt to and predict temporal patterns of varying lengths.)",
+                    Repeat100x,
                     []() {
                         Cortex C;
                         ASSERT(C.adapt(InputSequence(InputSequence::trivial_problem, SequenceLength), SimulatedInfinity));
@@ -155,6 +160,7 @@ namespace sprogar {
                 },
                 {
                     "#8 Stagnation (You can't teach an old dog new tricks.)",
+                    Repeat100x,
                     []() {
                         auto indefinitely_adaptable = [&](Cortex& dog) -> bool {
                             for (time_t time = 0; time < SimulatedInfinity; ++time) {
@@ -173,6 +179,7 @@ namespace sprogar {
                 },
                 {
                     "#9 ContentSensitivity (Adaptation time depends on the content of the input sequence.)",
+                    Repeat100x,
                     []() {
                         // Null Hypothesis: Adaptation time is independent of the input sequence content
                         auto adaptation_time_depends_on_the_content_of_the_input_sequence = [=]() -> bool {
@@ -197,6 +204,7 @@ namespace sprogar {
                 },
                 {
                     "#10 ContextSensitivity (Adaptation time depends on the state of the cortex.)",
+                    Repeat100x,
                     []() {
                         // Null Hypothesis: Adaptation time is independent of the state of the cortex
                         auto adaptation_time_depends_on_state_of_the_cortex = [&]() -> bool {
@@ -220,6 +228,7 @@ namespace sprogar {
                 },
                 {
                     "#11 Unobservability (Distinct cortices may exhibit the same observable behaviour in some timeframe.)",
+                    Repeat100x,
                     []() {
                         // Null Hypothesis: "Different cortices cannot produce identical behavior."
                         auto different_cortex_instances_can_produce_identical_behaviour = [&]() -> bool {
@@ -240,43 +249,64 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#12 Generalisation (On average, a relevant experience helps in unseen situations.)",
+                    "#12 Recall (A model can recall a sequence despite perturbations.)",
+                    Repeat100x,
                     []() {
-                        auto score = [](const InputSequence& facts, const Input& disruption, int exposure_time) -> size_t {
+                        size_t score = 0;
+                        const int N = 20;
+                        for (int i = 0; i < N; ++i) {
+                            const InputSequence uncorrelated_data = InputSequence(InputSequence::circular_random, SequenceLength);
+                            const Input disruption = random<Input>(uncorrelated_data[1], uncorrelated_data.back());
+
                             Cortex C;
-                            for (int i = 0; i < exposure_time; ++i)
-                                C << facts;                             // gain experience
-                            C << disruption;                            // begin a novel situation
-                            C << (facts | std::views::drop(1));         // proceed with the remaining sequence
+                            const int exposure_time = 5 * SequenceLength;       // the longer the sequence, the longer the exposure
+                            for (int i = 0; i < exposure_time; ++i)             // gain "some" experience prior testing
+                                C << uncorrelated_data;                              
+                                
+                            C << disruption;                                    // begin a novel situation
+                            C << (uncorrelated_data | std::views::drop(1));
 
-                            const Input& most_probable = facts[0];
-                            return utils::count_matching_bits(C.prediction(), most_probable);
-                        };
-
-                        size_t experienced_score = 0, inexperienced_score = 0;
-                        const size_t batch_size = std::max(SimulatedInfinity / TestRepetitions, 10ULL);
-                        for (size_t i = 0; i < batch_size; ++i) {
-                            const InputSequence facts = InputSequence(InputSequence::circular_random, SequenceLength);
-                            const Input disruption = random<Input>(facts[1], facts.back());
-
-                            inexperienced_score += score(facts, disruption, 0/*no exposure*/);
-                            experienced_score += score(facts, disruption, 10/*short exposure*/);
+                            const Input& truth = uncorrelated_data.front();
+                            score += utils::count_matching_bits(C.prediction(), truth);
                         }
-                        const size_t random_guess = batch_size * Input{}.size() / 2;
+                        const size_t random_guess = N * BitsPerInput / 2;
                 
-                        ASSERT(experienced_score > inexperienced_score);
-                        ASSERT(experienced_score > random_guess);
+                        ASSERT(score > random_guess);
+                    }
+                },                
+                {
+                    "#13 Generalization (A model excells in unseen situations.)",
+                    Repeat100x,
+                    []() {
+                        size_t score = 0;
+                        const int N = 20;
+                        for (int i = 0; i < N; ++i) {
+                            Cortex R(Cortex::random, 10uz);
+                            const InputSequence correlated_data = R.generate(SimulatedInfinity);  // R sets the rule behind the data
+                            
+                            Cortex C;
+                            C << correlated_data;
+                            
+                            const InputSequence truth = R.generate(SequenceLength);
+                            score += utils::count_matching_bits(C.generate(SequenceLength), truth);
+                        }
+                        const size_t random_guess = N * SequenceLength * BitsPerInput / 2;
+                
+                        ASSERT(score > random_guess);
+                    }
+                },
+                {
+                    "#14 Latency (The Cortex shall operate within a bounded latency.)",
+                    RepeatOnce,
+                    []() {
+                        std::clog << yellow("Manual validation required:\n");
+
+                        std::clog << "Can the Cortex, in principle, produce a prediction within a bounded latency? [y/n]\n";
+                        int answer = std::getchar();
+                                        
+                        ASSERT(answer == 'y' or answer == 'Y');
                     }
                 }
-            };
-            static void test_13() {
-                std::clog << "#13 Latency (The Cortex shall produce each prediction within a bounded latency.)\n\n";
-                std::clog << yellow("Manual validation required:\n");
-
-                std::clog << "Is the Cortex, in principle, capable of producing a prediction within a bounded latency? [y/n]\n";
-                int answer = std::getchar();
-                                
-                ASSERT(answer == 'y' or answer == 'Y');
             };
         };
     }
