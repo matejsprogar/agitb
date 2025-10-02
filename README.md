@@ -14,7 +14,7 @@ While current AI systems often give the impression of intelligence, they lack a 
 
 ## AGITB Goal
 
-AGITB serves as a benchmark for evaluating artificial general intelligence. It consists of thirteen core requirements, twelve of which are implemented as fully automated tests that assess essential characteristics of AGI candidates. Unlike traditional benchmarks centered on symbolic reasoning, language performance, or domain-specific tasks, AGITB evaluates systems at the level of binary signal processing. This low-level design compels models to demonstrate adaptation, prediction, and generalization in ways that cannot be reduced to memorization or large-scale pretraining.
+AGITB serves as a benchmark for evaluating artificial general intelligence. It consists of fourteen core requirements, thirteen of which are implemented as fully automated tests that assess essential characteristics of AGI candidates. Unlike traditional benchmarks centered on symbolic reasoning, language performance, or domain-specific tasks, AGITB evaluates systems at the level of binary signal processing. This low-level design compels models to demonstrate adaptation, prediction, and generalization in ways that cannot be reduced to memorization or large-scale pretraining.
 
 The goal is to advance the **development**, **evaluation**, and **validation** of AGI by offering a biologically inspired low-level testing benchmark.
 
