@@ -275,7 +275,7 @@ namespace sprogar {
                     }
                 },                
                 {
-                    "#13 Generalization (A model excells in unseen situations.)",
+                    "#13 Generalization (The cortex excells in unseen situations.)",
                     Repeat100x,
                     []() {
                         size_t score = 0;
@@ -296,7 +296,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#14 Latency (The Cortex shall operate within a bounded latency.)",
+                    "#14 Latency (The cortex shall operate within a bounded latency.)",
                     RepeatOnce,
                     []() {
                         std::clog << yellow("Manual validation required:\n");
