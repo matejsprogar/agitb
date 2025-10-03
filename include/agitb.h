@@ -36,20 +36,19 @@ namespace sprogar {
     namespace AGI {
         // AGITB environment settings
         const size_t SimulatedInfinity = 5000;
+
+        // AGITB settings
+        const time_t SequenceLength = 7;
+        const size_t BitsPerInput = 10;
         const int Repeat100x = 100;
         const int RepeatOnce = 1;
 
-        // AGITB problem difficulty settings
-        const time_t SequenceLength = 7;
-        const size_t BitsPerInput = 10;
-
-        static_assert(SequenceLength >= 2, "SequenceLength must be at least 2.");
-
-        template <typename SystemUnderTest, typename Input = std::bitset<BitsPerInput>>
+        template <typename SystemUnderEvaluation>
         class TestBed
         {
+            using Input = std::bitset<BitsPerInput>;
             using InputSequence = utils::InputSequence<Input>;
-            using Model = utils::Model<SystemUnderTest, Input>;
+            using Model = utils::Model<SystemUnderEvaluation, Input>;
 
         public:
             static void run()
@@ -75,7 +74,7 @@ namespace sprogar {
             static inline const std::vector<std::tuple<std::string, int, void(*)()>> testbed =
             {
                 {
-                    "#1 Genesis (All cortices begin in a completely blank, bias-free state.)",
+                    "#1 Unbiased start (All cortices begin in a completely blank, bias-free state.)",
                     Repeat100x,
                     []() {
                         Model M;
@@ -136,7 +135,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#6 RefractoryPeriod (Each spike (1) must be followed by a no-spike (0).)",
+                    "#6 Refractory period (Each spike (1) must be followed by a no-spike (0).)",
                     Repeat100x,
                     []() {
                         const Input p = random<Input>();
@@ -150,7 +149,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#7 TemporalAdaptability (The model can adapt to and predict temporal patterns of varying lengths.)",
+                    "#7 Temporal adaptability (The model can adapt to and predict temporal patterns of varying lengths.)",
                     Repeat100x,
                     []() {
                         Model M;
@@ -178,7 +177,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#9 ContentSensitivity (Adaptation time depends on the content of the input sequence.)",
+                    "#9 Content sensitivity (Adaptation time depends on the content of the input sequence.)",
                     Repeat100x,
                     []() {
                         // Null Hypothesis: Adaptation time is independent of the input sequence content
@@ -203,7 +202,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#10 ContextSensitivity (Adaptation time depends on the state of the model.)",
+                    "#10 Context sensitivity (Adaptation time depends on the state of the model.)",
                     Repeat100x,
                     []() {
                         // Null Hypothesis: Adaptation time is independent of the state of the model
