@@ -279,15 +279,15 @@ namespace sprogar {
                     Repeat100x,
                     []() {
                         size_t score = 0;
-                        const int N = 20;
+                        const int N = 20, k = 10;
                         for (int i = 0; i < N; ++i) {
-                            Cortex R(Cortex::random, 10uz);
-                            const auto correlated_data = R.generate(SimulatedInfinity);  // R sets the rule behind the data
+                            Cortex R(Cortex::random, k * SequenceLength);           // R sets the rule behind the data
+                            const auto train = R.generate(k * SequenceLength);      // split: first k parts for training
+                            const auto truth = R.generate(1 * SequenceLength);      //     1 subsequent part for testing  
                             
                             Cortex C;
-                            C << correlated_data;
+                            C << train;
                             
-                            const auto truth = R.generate(SequenceLength);
                             score += utils::count_matching_bits(C.generate(SequenceLength), truth);
                         }
                         const size_t random_guess = N * SequenceLength * BitsPerInput / 2;

@@ -35,14 +35,29 @@ namespace AGI {
 inline namespace utils {
     using time_t = size_t;
 
+    template <typename C, typename T>
+    concept InputPredictor = std::regular<C>
+        && requires(C c, const C cc, const T t)
+    {
+        { c << t } -> std::convertible_to<C&>;
+        { cc.prediction() } -> std::convertible_to<T>;
+    };
+    template <typename T>
+    concept Indexable = std::regular<T> && requires(T t, const T c)
+    {
+        { t[size_t{}] } -> std::convertible_to<typename T::reference>;
+        { c[size_t{}] } -> std::convertible_to<bool>;
+        { c.size() } -> std::convertible_to<size_t>;
+    };
+
     template <size_t BitsPerInput>
     size_t count_matching_bits(const std::bitset<BitsPerInput>& a, const std::bitset<BitsPerInput>& b)
     {
         return BitsPerInput - (a ^ b).count();
     }
 
-    template <typename Input>
-    size_t count_matching_bits(const Input& a, const Input& b)
+    template <Indexable T>
+    size_t count_matching_bits(const T& a, const T& b)
     {
         return std::ranges::count_if(std::views::iota(0ul, a.size()), [&](size_t i) { return a[i] == b[i]; });
     }
@@ -132,20 +147,6 @@ inline namespace utils {
         exit(-1);
     }
 
-    template <typename CortexUnderTest, typename Input>
-    concept InputPredictor = std::regular<CortexUnderTest> 
-        && requires(CortexUnderTest cortex, const CortexUnderTest const_cortex, const Input input)
-    {
-        { cortex << input } -> std::convertible_to<CortexUnderTest&>;
-        { const_cortex.prediction() } -> std::convertible_to<Input>;
-    };
-    template <typename InputType>
-    concept Indexable = std::regular<InputType> && requires(InputType input, const InputType cinput)
-    {
-        { input[size_t{}] } -> std::convertible_to<typename InputType::reference>;
-        { cinput[size_t{}] } -> std::convertible_to<bool>;
-        { InputType{}.size() } -> std::convertible_to<size_t>;
-    };
 
     template <typename CortexUnderTest, typename InputType>
     requires InputPredictor<CortexUnderTest, InputType> and Indexable<InputType>
@@ -215,14 +216,24 @@ inline namespace utils {
             return *this;
         }
         
-        auto generate(size_t length)
+        //auto generate(size_t length)
+        //{
+        //    auto seq = std::views::iota(size_t{0}, length)
+        //     | std::views::transform([&](size_t) {
+        //           auto value = prediction();
+        //           cortex << value;
+        //           return value;
+        //       });
+        //    return seq;
+        //}
+        InputSequence generate(size_t length)
         {
-            auto seq = std::views::iota(size_t{0}, length)
-             | std::views::transform([&](size_t) {
-                   auto value = prediction();
-                   cortex << value;
-                   return value;
-               });
+            InputSequence seq;
+            seq.reserve(length);
+            while (seq.size() < length) {
+                seq.push_back(prediction());
+                cortex << seq.back();
+            }
             return seq;
         }
 
