@@ -100,11 +100,11 @@ namespace sprogar {
                     []() {
                         const InputSequence experience = InputSequence(InputSequence::random, SimulatedInfinity);
 
-                        Model M, D;
-                        M << experience;
-                        D << experience;
+                        Model M1, M2;
+                        M1 << experience;
+                        M2 << experience;
 
-                        ASSERT(M == D);
+                        ASSERT(M1 == M2);
                     }
                 },
                 {
@@ -114,11 +114,11 @@ namespace sprogar {
                         const Input p = random<Input>();
                         const InputSequence experience = InputSequence(InputSequence::random, SimulatedInfinity);
 
-                        Model M, D;
-                        M << p << experience;
-                        D << ~p << experience;
+                        Model M1, M2;
+                        M1 << p << experience;
+                        M2 << ~p << experience;
 
-                        ASSERT(M != D);
+                        ASSERT(M1 != M2);
                     }
                 },
                 {
@@ -128,11 +128,11 @@ namespace sprogar {
                         const Input in_1 = random<Input>();
                         const Input in_2 = random<Input>(in_1);     // in_1 & in_2 == Input{}
 
-                        Model M, D;
-                        M << in_1 << in_2;
-                        D << in_2 << in_1;
+                        Model M1, M2;
+                        M1 << in_1 << in_2;
+                        M2 << in_2 << in_1;
 
-                        ASSERT(M != D || in_1 == in_2);
+                        ASSERT(M1 != M2 || in_1 == in_2);
                     }
                 },
                 {
@@ -143,10 +143,10 @@ namespace sprogar {
                         const InputSequence no_consecutive_spikes = { p, ~p };
                         const InputSequence consecutive_spikes = { p, p };
                 
-                        Model M, D;
+                        Model M1, M2;
                 
-                        ASSERT(M.adapt(no_consecutive_spikes, SimulatedInfinity));
-                        ASSERT(not D.adapt(consecutive_spikes, SimulatedInfinity) || p == Input{});
+                        ASSERT(M1.adapt(no_consecutive_spikes, SimulatedInfinity));
+                        ASSERT(not M2.adapt(consecutive_spikes, SimulatedInfinity) || p == Input{});
                     }
                 },
                 {
