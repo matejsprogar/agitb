@@ -35,11 +35,11 @@ namespace AGI {
 inline namespace utils {
     using time_t = size_t;
 
-    template <typename C, typename T>
-    concept InputPredictor = std::regular<C>
-        && requires(C c, const C cc, const T t)
+    template <typename M, typename T>
+    concept InputPredictor = std::regular<M>
+        && requires(M c, const M cc, const T t)
     {
-        { c << t } -> std::convertible_to<C&>;
+        { c << t } -> std::convertible_to<M&>;
         { cc.prediction() } -> std::convertible_to<T>;
     };
     template <typename T>
@@ -132,15 +132,15 @@ inline namespace utils {
     };
 
 
-    template <typename Cortex>
-    InputSequence<typename Cortex::Input> learnable_random_sequence(const size_t length, time_t timeframe)
+    template <typename Model>
+    InputSequence<typename Model::Input> learnable_random_sequence(const size_t length, time_t timeframe)
     {
-        using InputSequence = InputSequence<typename Cortex::Input>;
+        using InputSequence = InputSequence<typename Model::Input>;
 
         for (time_t time = 0; time < timeframe; time += length) {
             const InputSequence in = InputSequence(InputSequence::circular_random, length);
-            Cortex C;
-            if (C.adapt(in, timeframe))
+            Model M;
+            if (M.adapt(in, timeframe))
                 return in;
         }
         std::cerr << red("Error:") << " Could not find a learnable sequence.\n";
@@ -148,34 +148,34 @@ inline namespace utils {
     }
 
 
-    template <typename CortexUnderTest, typename InputType>
-    requires InputPredictor<CortexUnderTest, InputType> and Indexable<InputType>
-    class Cortex
+    template <typename ModelUnderTest, typename InputType>
+    requires InputPredictor<ModelUnderTest, InputType> and Indexable<InputType>
+    class Model
     {
-        CortexUnderTest cortex;
+        ModelUnderTest model;
     public:
         using Input = InputType;
         using InputSequence = utils::InputSequence<Input>;
 
         enum random_tag { random = 0 };
 
-        Cortex() = default;
-        Cortex(const Cortex& src) = default;
-        Cortex(Cortex&& src) = default;
-        Cortex& operator=(const Cortex& src) = default;
-        bool operator==(const Cortex& rhs) const = default;// { return cortex == rhs.cortex; }
+        Model() = default;
+        Model(const Model& src) = default;
+        Model(Model&& src) = default;
+        Model& operator=(const Model& src) = default;
+        bool operator==(const Model& rhs) const = default;// { return model == rhs.model; }
     
         template<typename... Args>
-        Cortex(Args&&... args) : cortex(std::forward<Args>(args)...) {}
+        Model(Args&&... args) : model(std::forward<Args>(args)...) {}
 
-        // Constructs a randomly initialized cortex object by feedng it with random inputs.
-        Cortex(random_tag, const time_t random_initialization_strength) : Cortex()
+        // Constructs a randomly initialized model object by feedng it with random inputs.
+        Model(random_tag, const time_t random_initialization_strength) : Model()
         {
             *this << InputSequence(InputSequence::random, random_initialization_strength);
         }
 
-        // Iteratively feeds each cortex its own predictions and returns true if predictions match over a specified timeframe.
-        static bool identical_behaviour(Cortex& A, Cortex& B, time_t timeframe)
+        // Iteratively feeds each model its own predictions and returns true if predictions match over a specified timeframe.
+        static bool identical_behaviour(Model& A, Model& B, time_t timeframe)
         {
             for (time_t time = 0; time < timeframe; ++time) {
                 const auto expectation = A.prediction();
@@ -187,7 +187,7 @@ inline namespace utils {
             return A.prediction() == B.prediction();
         }
 
-        // Adapts the cortex to the given input sequence and returns the time required to achieve perfect prediction.
+        // Adapts the model to the given input sequence and returns the time required to achieve perfect prediction.
         time_t time_to_repeat(const InputSequence& inputs, time_t timeframe)
         {
             for (time_t time = 0; time < timeframe; time += inputs.size()) {
@@ -197,22 +197,22 @@ inline namespace utils {
             return timeframe;
         }
 
-        // Adapts the cortex to the given input sequence and returns true if perfect prediction is achieved.
+        // Adapts the model to the given input sequence and returns true if perfect prediction is achieved.
         bool adapt(const InputSequence& inputs, time_t timeframe)
         {
             return time_to_repeat(inputs, timeframe) < timeframe;
         }
 
-        Cortex& operator << (const Input& p) { cortex << p; return *this; }
-        Input prediction() const { return cortex.prediction(); }
+        Model& operator << (const Input& p) { model << p; return *this; }
+        Input prediction() const { return model.prediction(); }
 
         // Sequentially feeds each element of the range to the target.
         template <std::ranges::range Range>
             requires std::same_as<std::ranges::range_value_t<Range>, Input>
-        Cortex& operator << (Range&& range)
+        Model& operator << (Range&& range)
         {
             for (auto&& elt : range)
-                cortex << elt;
+                model << elt;
             return *this;
         }
         
@@ -221,7 +221,7 @@ inline namespace utils {
         //    auto seq = std::views::iota(size_t{0}, length)
         //     | std::views::transform([&](size_t) {
         //           auto value = prediction();
-        //           cortex << value;
+        //           model << value;
         //           return value;
         //       });
         //    return seq;
@@ -232,21 +232,21 @@ inline namespace utils {
             seq.reserve(length);
             while (seq.size() < length) {
                 seq.push_back(prediction());
-                cortex << seq.back();
+                model << seq.back();
             }
             return seq;
         }
 
     private:
-        // Modifies the cortex by processing the given inputs and returns its corresponding predictions.
+        // Modifies the model by processing the given inputs and returns its corresponding predictions.
         InputSequence process(const InputSequence& inputs)
         {
             InputSequence predictions{};
             predictions.reserve(inputs.size());
 
             for (const Input& in : inputs) {
-                predictions.push_back(cortex.prediction());
-                cortex << in;
+                predictions.push_back(model.prediction());
+                model << in;
             }
             return predictions;
         }
