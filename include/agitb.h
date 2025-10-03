@@ -234,7 +234,7 @@ namespace sprogar {
                         auto different_cortex_instances_can_produce_identical_behaviour = [&]() -> bool {
                             const InputSequence trivial_behaviour = { Input{}, Input{} };
                             for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
-                                Cortex E, R(Cortex::random, SequenceLength);
+                                Cortex E, R = Cortex(Cortex::random, SequenceLength);
                                 E.adapt(trivial_behaviour, SimulatedInfinity);
                                 R.adapt(trivial_behaviour, SimulatedInfinity);
                 
@@ -253,20 +253,19 @@ namespace sprogar {
                     Repeat100x,
                     []() {
                         size_t score = 0;
-                        const int N = 20;
+                        const int N = 20, exposure_time = 5 * SequenceLength;
                         for (int i = 0; i < N; ++i) {
-                            const InputSequence uncorrelated_data = InputSequence(InputSequence::circular_random, SequenceLength);
-                            const Input disruption = random<Input>(uncorrelated_data[1], uncorrelated_data.back());
+                            const InputSequence seq = InputSequence(InputSequence::circular_random, SequenceLength);
+                            const Input disruption = random<Input>(seq[1], seq.back());
 
                             Cortex C;
-                            const int exposure_time = 5 * SequenceLength;       // the longer the sequence, the longer the exposure
-                            for (int i = 0; i < exposure_time; ++i)             // gain "some" experience prior testing
-                                C << uncorrelated_data;                              
+                            for (int i = 0; i < exposure_time; ++i)
+                                C << seq;                                       // prior experience    
                                 
                             C << disruption;                                    // begin a novel situation
-                            C << (uncorrelated_data | std::views::drop(1));
+                            C << (seq | std::views::drop(1));
 
-                            const Input& truth = uncorrelated_data.front();
+                            const Input& truth = seq.front();
                             score += utils::count_matching_bits(C.prediction(), truth);
                         }
                         const size_t random_guess = N * BitsPerInput / 2;
@@ -275,13 +274,13 @@ namespace sprogar {
                     }
                 },                
                 {
-                    "#13 Generalization (The cortex excells in unseen situations.)",
+                    "#13 Generalization (The cortex handles unseen situations.)",
                     Repeat100x,
                     []() {
                         size_t score = 0;
                         const int N = 20, k = 10;
                         for (int i = 0; i < N; ++i) {
-                            Cortex R(Cortex::random, k * SequenceLength);           // R sets the rule behind the data
+                            Cortex R = Cortex(Cortex::random, k * SequenceLength);  // R sets the rule behind the data
                             const auto train = R.generate(k * SequenceLength);      // split: first k parts for training
                             const auto truth = R.generate(1 * SequenceLength);      //     1 subsequent part for testing  
                             
