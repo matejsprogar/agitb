@@ -74,7 +74,7 @@ namespace sprogar {
             {
                 {
                     "#1 Unbiased start (All cortices begin in a completely blank, bias-free state.)",
-                    RepeatOnce,
+                    Repeat100x,
                     []() {
                         Model M;
 
@@ -84,7 +84,7 @@ namespace sprogar {
                 },
                 {
                     "#2 Bias (A change in state indicates bias.)",
-                    RepeatOnce,
+                    Repeat100x,
                     []() {
                         Model M;
                         M << random<Input>();
