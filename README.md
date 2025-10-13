@@ -24,7 +24,7 @@ The goal is to advance the **development**, **evaluation**, and **validation** o
 
 AGITB is distributed as a header-only library. Its central abstraction is the templated class `TestBed<MyModel>`, where `MyModel` denotes the AGI type under evaluation. Each instance of the `MyModel` represents a candidate model that, given an input object, is expected to generate a prediction for the subsequent input.
 
-An `InputType` encodes a binary input sample from simulated sensors or actuators, consisting of ten parallel one-bit channels captured at a single time step. By default, AGITB defines `InputType` as `std::bitset<10>`. If this default is unsuitable, users may declare `TestBed<MyModel, MyInput>` with a custom type. The custom `MyInput` must satisfy the `Indexable` concept defined in `utils.h`.
+An `InputType` encodes a binary input sample from simulated sensors or actuators, consisting of ten parallel one-bit channels captured at a single time step. By default, AGITB defines `InputType` as `std::bitset<10>`.
 
 ---
 
