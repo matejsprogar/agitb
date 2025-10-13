@@ -46,13 +46,20 @@ class MyModel
     Input _prediction;
 
 public:
-    bool operator==(const MyModel& rhs) const { return false; }  // TODO
+    bool operator==(const MyModel& rhs) const {
+      // TODO
+    }
 
     MyModel& operator << (const Input& p) {
-        _prediction = AGI(p);                                   // TODO: Magic occurs here!
+        _prediction = AGI(p);
         return *this;
     }
     Input prediction() const { return _prediction; }
+
+private:
+    Input AGI(const Input& current) {
+      // AGI magic TODO here!
+    }
 };
 ```
 ---
