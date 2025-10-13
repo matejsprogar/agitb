@@ -28,9 +28,7 @@ An `InputType` encodes a binary input sample from simulated sensors or actuators
 
 ---
 
-## API Requirements
-
-### `SystemUnderEvaluation`
+## API Requirements for `SystemUnderEvaluation`
 The MyModel class must:
 - Satisfy the `std::regular` concept.
 - Provide methods to accept inputs and retrieve predictions using the following interface:
