@@ -22,37 +22,35 @@ The goal is to advance the **development**, **evaluation**, and **validation** o
 
 ## C++ Implementation
 
-AGITB is distributed as a header-only library. Its central abstraction is the templated class `TestBed<CortexUnderTest>`, where `CortexUnderTest` denotes the model type under evaluation. Each instance of `CortexUnderTest` represents a candidate model that, given an input object, is expected to generate a prediction for the subsequent input.
+AGITB is distributed as a header-only library. Its central abstraction is the templated class `TestBed<MyModel>`, where `MyModel` denotes the AGI type under evaluation. Each instance of the `MyModel` represents a candidate model that, given an input object, is expected to generate a prediction for the subsequent input.
 
-An `InputType` encodes a binary input sample from simulated sensors or actuators, consisting of ten parallel one-bit channels captured at a single time step. By default, AGITB defines `InputType` as `std::bitset<10>`. If this default is unsuitable, users may declare `TestBed<MyCortex, MyInput>` with a custom type. The custom `MyInput` must satisfy the `Indexable` concept defined in `utils.h`.
+An `InputType` encodes a binary input sample from simulated sensors or actuators, consisting of ten parallel one-bit channels captured at a single time step. By default, AGITB defines `InputType` as `std::bitset<10>`. If this default is unsuitable, users may declare `TestBed<MyModel, MyInput>` with a custom type. The custom `MyInput` must satisfy the `Indexable` concept defined in `utils.h`.
 
 ---
 
 ## API Requirements
 
-### `CortexUnderTest`
-Your Cortex class must:
+### `SystemUnderEvaluation`
+The MyModel class must:
 - Satisfy the `std::regular` concept.
 - Provide methods to accept inputs and retrieve predictions using the following interface:
   ```cpp
-  Cortex& Cortex::operator << (const InputType& p); // Process input p
-  InputType Cortex::prediction() const;                 // Returns the prediction for the next input
+  MyModel& MyModel::operator << (const InputType& p);   // Process input p
+  InputType MyModel::prediction() const;                // Returns the prediction for the next input
   ```
 
-where `InputType` defaults to `std::bitset<10>`.
-
-### Stub Implementation of the Cortex Class for AGI Testbed
+### Stub Implementation of the MyModel Class for AGI Testbed
 
 ```cpp
 using Input = std::bitset<10>;
-class Cortex
+class MyModel
 {
     Input _prediction;
 
 public:
-    bool operator==(const Cortex& rhs) const { return false; }  // TODO
+    bool operator==(const MyModel& rhs) const { return false; }  // TODO
 
-    Cortex& operator << (const Input& p) {
+    MyModel& operator << (const Input& p) {
         _prediction = AGI(p);                                   // TODO: Magic occurs here!
         return *this;
     }
@@ -64,7 +62,7 @@ public:
 
 ## Usage
 
-To use the AGITB testbed, include the main header file `agitb.h` and call the static `run()` method of the `TestBed<Cortex>` class, providing your `Cortex` type as template parameter.
+To use the AGITB testbed, include the main header file `agitb.h` and call the static `run()` method of the `TestBed<MyModel>` class, providing your `MyModel` type as template parameter.
 
 ### Example
 
@@ -72,7 +70,7 @@ To use the AGITB testbed, include the main header file `agitb.h` and call the st
 #include "path/to/agitb.h"
 
 int main() {
-    using AGITB = sprogar::AGI::TestBed<Cortex>;
+    using AGITB = sprogar::AGI::TestBed<MyModel>;
     
     AGITB::run();
     return 0;

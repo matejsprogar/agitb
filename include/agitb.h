@@ -43,10 +43,9 @@ namespace sprogar {
         const int Repeat100x = 100;
         const int RepeatOnce = 1;
 
-        template <typename SystemUnderEvaluation>
+        template <typename SystemUnderEvaluation, typename Input = std::bitset<BitsPerInput>>
         class TestBed
         {
-            using Input = std::bitset<BitsPerInput>;
             using InputSequence = utils::InputSequence<Input>;
             using Model = utils::Model<SystemUnderEvaluation, Input>;
 
