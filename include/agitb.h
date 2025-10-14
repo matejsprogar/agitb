@@ -37,7 +37,7 @@ namespace sprogar {
         // AGITB environment settings
         const size_t SimulatedInfinity = 5000;
 
-        // AGITB settings
+        // AGITB settings : temporal patterns with seven inputs of ten bits each
         const time_t SequenceLength = 7;
         const size_t BitsPerInput = 10;
         const int Repeat100x = 100;
@@ -54,7 +54,6 @@ namespace sprogar {
             static void run()
             {
                 std::clog << "Artificial General Intelligence Testbed\n\n";
-                std::clog << "Testing with temporal patterns with " << SequenceLength << " inputs:\n";
 
                 const std::string go_back(50, '\b');
                 for (const auto& [info, repetitions, test] : testbed) {
