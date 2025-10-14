@@ -96,11 +96,11 @@ namespace sprogar {
                     "#3 Determinism (Identical experiences produce an identical state.)",
                     Repeat100x,
                     []() {
-                        const InputSequence experience = InputSequence(InputSequence::random, SimulatedInfinity);
+                        const InputSequence random_experience(InputSequence::random, SimulatedInfinity);
 
                         Model M1, M2;
-                        M1 << experience;
-                        M2 << experience;
+                        M1 << random_experience;
+                        M2 << random_experience;
 
                         ASSERT(M1 == M2);
                     }
@@ -110,11 +110,11 @@ namespace sprogar {
                     Repeat100x,
                     []() {
                         const Input p = random<Input>();
-                        const InputSequence experience = InputSequence(InputSequence::random, SimulatedInfinity);
+                        const InputSequence random_experience(InputSequence::random, SimulatedInfinity);
 
                         Model M1, M2;
-                        M1 << p << experience;
-                        M2 << ~p << experience;
+                        M1 << p << random_experience;
+                        M2 << ~p << random_experience;
 
                         ASSERT(M1 != M2);
                     }
@@ -151,9 +151,12 @@ namespace sprogar {
                     "#7 Temporal adaptability (The model can adapt to and predict temporal patterns of varying lengths.)",
                     Repeat100x,
                     []() {
+                        const InputSequence trivial_problem(InputSequence::trivial, SequenceLength);
+                        const InputSequence longer_trivial_problem(InputSequence::trivial, SequenceLength + 1);
                         Model M;
-                        ASSERT(M.adapt(InputSequence(InputSequence::trivial_problem, SequenceLength), SimulatedInfinity));
-                        ASSERT(M.adapt(InputSequence(InputSequence::trivial_problem, 1 + SequenceLength), SimulatedInfinity));
+                        
+                        ASSERT(M.adapt(trivial_problem, SimulatedInfinity));
+                        ASSERT(M.adapt(longer_trivial_problem, SimulatedInfinity));
                     }
                 },
                 {
@@ -181,14 +184,14 @@ namespace sprogar {
                     []() {
                         // Null Hypothesis: Adaptation time is independent of the input sequence content
                         auto adaptation_time_depends_on_the_content_of_the_input_sequence = [=]() -> bool {
-                            Model B{};
+                            Model B;
                             const InputSequence base_sequence = learnable_random_sequence<Model>(SequenceLength, SimulatedInfinity);
                             const time_t base_time = B.time_to_repeat(base_sequence, SimulatedInfinity);
                             for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
-                                const InputSequence new_pattern = InputSequence(InputSequence::circular_random, SequenceLength);
+                                const InputSequence new_pattern(InputSequence::circular_random, SequenceLength);
                                 
                                 if (new_pattern != base_sequence) {
-                                    Model M{};
+                                    Model M;
                                     time_t new_time = M.time_to_repeat(new_pattern, SimulatedInfinity);
                                     if (base_time != new_time)
                                         return true;                            // rejects the null hypothesis
@@ -210,7 +213,7 @@ namespace sprogar {
                             Model B;
                             const time_t base_time = B.time_to_repeat(target_sequence, SimulatedInfinity);
                             for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
-                                Model M = Model(Model::random, SequenceLength);
+                                Model M(Model::random, SequenceLength);
                                 
                                 if (M != Model{}) {
                                     time_t m_time = M.time_to_repeat(target_sequence, SimulatedInfinity);
@@ -230,11 +233,11 @@ namespace sprogar {
                     []() {
                         // Null Hypothesis: "Different cortices cannot produce identical behavior."
                         auto different_model_instances_can_produce_identical_behaviour = [&]() -> bool {
-                            const InputSequence trivial_behaviour = { Input{}, Input{} };
+                            const InputSequence simplest_behaviour = { Input{}, Input{} };
                             for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
-                                Model M, R = Model(Model::random, SequenceLength);
-                                M.adapt(trivial_behaviour, SimulatedInfinity);
-                                R.adapt(trivial_behaviour, SimulatedInfinity);
+                                Model M, R(Model::random, SequenceLength);
+                                M.adapt(simplest_behaviour, SimulatedInfinity);
+                                R.adapt(simplest_behaviour, SimulatedInfinity);
                 
                                 bool counterexample = M != R && Model::identical_behaviour(M, R, 2 * SequenceLength);
                                 if (counterexample)                             // rejects the null hypothesis
@@ -253,7 +256,7 @@ namespace sprogar {
                         size_t score = 0;
                         const int N = 20, exposure_time = 5 * SequenceLength;
                         for (int i = 0; i < N; ++i) {
-                            const InputSequence seq = InputSequence(InputSequence::circular_random, SequenceLength);
+                            const InputSequence seq(InputSequence::circular_random, SequenceLength);
                             const Input disruption = random<Input>(seq[1], seq.back());
 
                             Model M;
@@ -278,9 +281,9 @@ namespace sprogar {
                         size_t score = 0;
                         const int N = 20, k = 10;
                         for (int i = 0; i < N; ++i) {
-                            Model R = Model(Model::random, k * SequenceLength); // R sets the rule behind the data
+                            Model R(Model::random, k * SequenceLength);         // R sets the rule behind the data
                             const auto train = R.generate(k * SequenceLength);  // split: first k parts for training
-                            const auto truth = R.generate(1 * SequenceLength);  //     1 subsequent part for testing  
+                            const auto truth = R.generate(1 * SequenceLength);  //        1 subsequent part for testing  
                             
                             Model M;
                             M << train;

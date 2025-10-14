@@ -99,7 +99,7 @@ inline namespace utils {
     public:
         enum random_tag { random = 0 };
         enum circular_random_tag { circular_random = 0 };
-        enum trivial_problem_tag { trivial_problem = 0 };
+        enum trivial_tag { trivial = 0 };
 
         InputSequence() {}
         InputSequence(std::initializer_list<Input> il) : std::vector<Input>(il) {}
@@ -124,7 +124,7 @@ inline namespace utils {
         }
 
         // constructs a simple, easily adaptable sequence of inputs with a specified length.
-        InputSequence(trivial_problem_tag, time_t length)
+        InputSequence(trivial_tag, time_t length)
         {
             base::resize( length );
             base::back() = ~Input{};                // [{0...0}, {0...0}, ..., {0...0}, {1...1}]
