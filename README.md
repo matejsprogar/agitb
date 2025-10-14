@@ -48,6 +48,7 @@ class MyModel
 public:
     bool operator==(const MyModel& rhs) const {
       // TODO
+      return false;
     }
 
     MyModel& operator << (const Input& p) {
@@ -59,6 +60,7 @@ public:
 private:
     Input AGI(const Input& current) {
       // AGI magic TODO here!
+      return Input{};
     }
 };
 ```
