@@ -55,12 +55,12 @@ namespace sprogar {
             {
                 std::clog << "Artificial General Intelligence Testbed\n\n";
 
-                const std::string go_back(50, '\b');
+                const std::string go_back(10, '\b');
                 for (const auto& [info, repetitions, test] : testbed) {
                     std::clog << info << std::endl;
                 
                     for (int i = 1; i <= repetitions; ++i) {
-                        std::clog << i << '/' << repetitions << '\t' << go_back;
+                        std::clog << i << '/' << repetitions << go_back;
                 
                         test();
                     }
