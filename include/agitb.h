@@ -73,7 +73,7 @@ namespace sprogar {
             static inline const std::vector<std::tuple<std::string, int, void(*)()>> testbed =
             {
                 {
-                    "#1 Unbiased start (All cortices begin in a completely blank, bias-free state.)",
+                    "#1 Unbiased start (All models begin in a completely blank, bias-free state.)",
                     Repeat100x,
                     []() {
                         Model M;
@@ -228,10 +228,10 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#11 Unobservability (Distinct cortices may exhibit the same observable behaviour in some timeframe.)",
+                    "#11 Unobservability (Distinct models may exhibit the same observable behaviour in some timeframe.)",
                     Repeat100x,
                     []() {
-                        // Null Hypothesis: "Different cortices cannot produce identical behavior."
+                        // Null Hypothesis: "Different models cannot produce identical behavior."
                         auto different_model_instances_can_produce_identical_behaviour = [&]() -> bool {
                             const InputSequence simplest_behaviour = { Input{}, Input{} };
                             for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
