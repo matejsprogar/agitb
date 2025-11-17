@@ -20,7 +20,7 @@ The goal is to advance the **development**, **evaluation**, and **validation** o
 
 ---
 
-## C++ Implementation
+## The C++ Reference Implementation
 
 AGITB is distributed as a header-only library. Its central abstraction is the templated class `TestBed<MyModel>`, where `MyModel` denotes the AGI type under evaluation. Each instance of the `MyModel` represents a candidate model that, given an input object, is expected to generate a prediction for the subsequent input.
 
