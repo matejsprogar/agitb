@@ -281,7 +281,7 @@ namespace sprogar {
                         size_t score = 0;
                         const int N = 20, k = 10;
                         for (int i = 0; i < N; ++i) {
-                            Model R(Model::random, k * SequenceLength);         // R sets the rule behind the data
+                            Model R(Model::random, k * SequenceLength);         // R sets the unknown rule behind the data
                             const auto train = R.generate(k * SequenceLength);  // split: first k parts for training
                             const auto truth = R.generate(1 * SequenceLength);  //        1 subsequent part for testing  
                             
