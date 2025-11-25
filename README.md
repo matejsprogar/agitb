@@ -6,15 +6,15 @@ This repository contains the official C++ reference implementation of the **Arti
 
 ## Thesis
 
-> **The capacity to pass the AGITB constitutes a necessary condition for the existence of Artificial General Intelligence.**
+> **The capacity to pass the AGITB constitutes a necessary condition for moving beyond narrow, task-specific AI.**
 
-While current AI systems often give the impression of intelligence, they lack a grounded understanding and therefore cannot be regarded as genuine instances of AGI. To distinguish between surface-level imitation and true general intelligence—or measurable progress toward it—we require a rigorous, transparent, and actionable benchmark.
+While current AI systems often give the impression of intelligence, they lack a grounded understanding and therefore cannot be regarded as genuine instances of AGI. To distinguish between surface-level imitation and measurable progress toward true general intelligence, we need a rigorous, transparent, and actionable benchmark.
 
 ---
 
 ## AGITB Goal
 
-AGITB serves as a benchmark for evaluating artificial general intelligence. It consists of fourteen core requirements, thirteen of which are implemented as fully automated tests that assess essential characteristics of AGI candidates. Unlike traditional benchmarks centered on symbolic reasoning, language performance, or domain-specific tasks, AGITB evaluates systems at the level of binary signal processing. This low-level design compels models to demonstrate adaptation, prediction, and generalization in ways that cannot be reduced to memorization or large-scale pretraining.
+AGITB serves as a benchmark for evaluating artificial general intelligence. It consists of fourteen core requirements, thirteen of which are implemented as fully automated tests that assess essential characteristics of AGI candidates. Unlike traditional benchmarks centred on symbolic reasoning, language performance, or domain-specific tasks, AGITB evaluates systems at the level of binary signal processing. This low-level design compels models to demonstrate adaptation, prediction, and generalisation in ways that cannot be reduced to memorisation or large-scale pretraining.
 
 The goal is to advance the **development**, **evaluation**, and **validation** of AGI by offering a biologically inspired low-level testing benchmark.
 
