@@ -134,7 +134,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#6 Refractory period (Each spike (1) must be followed by a no-spike (0).)",
+                    "#6 Absolute refractory period (Each spike (1) must be followed by a no-spike (0).)",
                     Repeat100x,
                     []() {
                         const Input p = random<Input>();
@@ -143,8 +143,8 @@ namespace sprogar {
                 
                         Model M1, M2;
                 
-                        ASSERT(M1.adapt(no_consecutive_spikes, SimulatedInfinity));
-                        ASSERT(not M2.adapt(consecutive_spikes, SimulatedInfinity) || p == Input{});
+                        ASSERT(M1.learn(no_consecutive_spikes, SimulatedInfinity));
+                        ASSERT(not M2.learn(consecutive_spikes, SimulatedInfinity) || p == Input{});
                     }
                 },
                 {
@@ -155,8 +155,8 @@ namespace sprogar {
                         const InputSequence longer_trivial_problem(InputSequence::trivial, SequenceLength + 1);
                         Model M;
                         
-                        ASSERT(M.adapt(trivial_problem, SimulatedInfinity));
-                        ASSERT(M.adapt(longer_trivial_problem, SimulatedInfinity));
+                        ASSERT(M.learn(trivial_problem, SimulatedInfinity));
+                        ASSERT(M.learn(longer_trivial_problem, SimulatedInfinity));
                     }
                 },
                 {
@@ -167,7 +167,7 @@ namespace sprogar {
                             for (time_t time = 0; time < SimulatedInfinity; ++time) {
                                 InputSequence learnable_trick = learnable_random_sequence<Model>(SequenceLength, SimulatedInfinity);
 
-                                if (not dog.adapt(learnable_trick, SimulatedInfinity))
+                                if (not dog.learn(learnable_trick, SimulatedInfinity))
                                     return false;
                             }
                             return true;
@@ -236,8 +236,8 @@ namespace sprogar {
                             const InputSequence simplest_behaviour = { Input{}, Input{} };
                             for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
                                 Model M, R(Model::random, SequenceLength);
-                                M.adapt(simplest_behaviour, SimulatedInfinity);
-                                R.adapt(simplest_behaviour, SimulatedInfinity);
+                                M.learn(simplest_behaviour, SimulatedInfinity);
+                                R.learn(simplest_behaviour, SimulatedInfinity);
                 
                                 bool counterexample = M != R && Model::identical_behaviour(M, R, 2 * SequenceLength);
                                 if (counterexample)                             // rejects the null hypothesis

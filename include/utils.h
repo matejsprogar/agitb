@@ -140,7 +140,7 @@ inline namespace utils {
         for (time_t time = 0; time < timeframe; time += length) {
             const InputSequence in = InputSequence(InputSequence::circular_random, length);
             Model M;
-            if (M.adapt(in, timeframe))
+            if (M.learn(in, timeframe))
                 return in;
         }
         std::cerr << red("Error:") << " Could not find a learnable sequence.\n";
@@ -198,7 +198,7 @@ inline namespace utils {
         }
 
         // Adapts the model to the given input sequence and returns true if perfect prediction is achieved.
-        bool adapt(const InputSequence& inputs, time_t timeframe)
+        bool learn(const InputSequence& inputs, time_t timeframe)
         {
             return time_to_repeat(inputs, timeframe) < timeframe;
         }
