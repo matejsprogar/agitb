@@ -38,8 +38,8 @@ namespace sprogar {
         const size_t SimulatedInfinity = 5000;
 
         // AGITB settings : temporal patterns with seven inputs of ten bits each
-        const time_t SequenceLength = 7;
-        const size_t BitsPerInput = 10;
+        const time_t SequenceLength = 7;        // \eta
+        const size_t BitsPerInput = 10;         // \omega
         const int Repeat100x = 100;
         const int RepeatOnce = 1;
 
@@ -98,11 +98,11 @@ namespace sprogar {
                     []() {
                         const InputSequence random_experience(InputSequence::random, SimulatedInfinity);
 
-                        Model M1, M2;
-                        M1 << random_experience;
-                        M2 << random_experience;
+                        Model A, B;
+                        A << random_experience;
+                        B << random_experience;
 
-                        ASSERT(M1 == M2);
+                        ASSERT(A == B);
                     }
                 },
                 {
@@ -112,39 +112,39 @@ namespace sprogar {
                         const Input p = random<Input>();
                         const InputSequence random_experience(InputSequence::random, SimulatedInfinity);
 
-                        Model M1, M2;
-                        M1 << p << random_experience;
-                        M2 << ~p << random_experience;
+                        Model A, B;
+                        A << p << random_experience;
+                        B << ~p << random_experience;
 
-                        ASSERT(M1 != M2);
+                        ASSERT(A != B);
                     }
                 },
                 {
                     "#5 Time (The input order is inherently temporal and crucial to the process.)",
                     Repeat100x,
                     []() {
-                        const Input in_1 = random<Input>();
-                        const Input in_2 = random<Input>(in_1);     // in_1 & in_2 == Input{}
+                        const Input a = random<Input>();
+                        const Input b = random<Input>(a);     // a & b == Input{}
 
-                        Model M1, M2;
-                        M1 << in_1 << in_2;
-                        M2 << in_2 << in_1;
+                        Model A, B;
+                        A << a << b;
+                        B << b << a;
 
-                        ASSERT(M1 != M2 || in_1 == in_2);
+                        ASSERT(A != B || a == b);
                     }
                 },
                 {
                     "#6 Absolute refractory period (Each spike (1) must be followed by a no-spike (0).)",
                     Repeat100x,
                     []() {
-                        const Input p = random<Input>();
-                        const InputSequence no_consecutive_spikes = { p, ~p };
-                        const InputSequence consecutive_spikes = { p, p };
+                        const Input x = random<Input>();
+                        const InputSequence no_consecutive_spikes = { x, ~x };
+                        const InputSequence consecutive_spikes = { x, x };
                 
-                        Model M1, M2;
+                        Model A, B;
                 
-                        ASSERT(M1.learn(no_consecutive_spikes, SimulatedInfinity));
-                        ASSERT(not M2.learn(consecutive_spikes, SimulatedInfinity) || p == Input{});
+                        ASSERT(A.learn(no_consecutive_spikes, SimulatedInfinity));
+                        ASSERT(not B.learn(consecutive_spikes, SimulatedInfinity) || x == Input{});
                     }
                 },
                 {
@@ -192,8 +192,8 @@ namespace sprogar {
                                 
                                 if (new_pattern != base_sequence) {
                                     Model M;
-                                    time_t new_time = M.time_to_repeat(new_pattern, SimulatedInfinity);
-                                    if (base_time != new_time)
+                                    time_t time = M.time_to_repeat(new_pattern, SimulatedInfinity);
+                                    if (base_time != time)
                                         return true;                            // rejects the null hypothesis
                                 }
                             }
@@ -216,8 +216,8 @@ namespace sprogar {
                                 Model M(Model::random, SequenceLength);
                                 
                                 if (M != Model{}) {
-                                    time_t m_time = M.time_to_repeat(target_sequence, SimulatedInfinity);
-                                    if (base_time != m_time)                    // rejects the null hypothesis
+                                    time_t time = M.time_to_repeat(target_sequence, SimulatedInfinity);
+                                    if (base_time != time)                    // rejects the null hypothesis
                                         return true;
                                 }
                             }
