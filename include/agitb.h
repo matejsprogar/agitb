@@ -73,7 +73,7 @@ namespace sprogar {
             static inline const std::vector<std::tuple<std::string, int, void(*)()>> testbed =
             {
                 {
-                    "#1 Unbiased start (All models begin in a completely blank, bias-free state.)",
+                    "#1 Bias-free start (All models begin in a completely blank, bias-free state.)",
                     Repeat100x,
                     []() {
                         Model M;
