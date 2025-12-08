@@ -106,7 +106,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#4 Sensitivity (The model exhibits chaos-like sensitivity to initial input.)",
+                    "#4 Sensitivity (Inequivalent models remain inequivalent under identical inputs.)",
                     Repeat100x,
                     []() {
                         const Input p = random<Input>();
