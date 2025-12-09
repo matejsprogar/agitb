@@ -93,7 +93,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#3 Determinism (Identical experiences produce an identical state.)",
+                    "#3 Determinism (The model produces the same output if and only if it received the same input.)",
                     Repeat100x,
                     []() {
                         const InputSequence random_experience(InputSequence::random, SimulatedInfinity);
@@ -228,7 +228,7 @@ namespace sprogar {
                 }
             },
             {
-                "#11 Unobservability (Distinct models may exhibit the same observable behaviour in some timeframe.)",
+                "#11 Unobservability (Distinct model instances may exhibit the same observable behaviour in some timeframe.)",
                 Repeat100x,
                 []() {
                     // Null Hypothesis: "Different models cannot produce identical behavior."
