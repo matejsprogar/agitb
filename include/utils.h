@@ -42,24 +42,11 @@ inline namespace utils {
         { c << t } -> std::convertible_to<M&>;
         { cc.prediction() } -> std::convertible_to<T>;
     };
-    template <typename T>
-    concept Indexable = std::regular<T> && requires(T t, const T c)
-    {
-        { t[size_t{}] } -> std::convertible_to<typename T::reference>;
-        { c[size_t{}] } -> std::convertible_to<bool>;
-        { c.size() } -> std::convertible_to<size_t>;
-    };
 
     template <size_t BitsPerInput>
     size_t count_matching_bits(const std::bitset<BitsPerInput>& a, const std::bitset<BitsPerInput>& b)
     {
         return BitsPerInput - (a ^ b).count();
-    }
-
-    template <Indexable T>
-    size_t count_matching_bits(const T& a, const T& b)
-    {
-        return std::ranges::count_if(std::views::iota(0ul, a.size()), [&](size_t i) { return a[i] == b[i]; });
     }
 
     template <std::ranges::input_range R1, std::ranges::input_range R2>
@@ -149,7 +136,7 @@ inline namespace utils {
 
 
     template <typename ModelUnderTest, typename InputType>
-    requires InputPredictor<ModelUnderTest, InputType> and Indexable<InputType>
+    requires InputPredictor<ModelUnderTest, InputType>
     class Model
     {
         ModelUnderTest model;
