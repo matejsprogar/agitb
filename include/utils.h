@@ -40,7 +40,7 @@ inline namespace utils {
         && requires(M c, const M cc, const T t)
     {
         { c << t } -> std::convertible_to<M&>;
-        { cc.prediction() } -> std::convertible_to<T>;
+        { cc.get_prediction() } -> std::convertible_to<T>;
     };
 
     template <size_t BitsPerInput>
@@ -150,7 +150,7 @@ inline namespace utils {
         Model(const Model& src) = default;
         Model(Model&& src) = default;
         Model& operator=(const Model& src) = default;
-        bool operator==(const Model& rhs) const = default;// { return model == rhs.model; }
+        bool operator==(const Model& rhs) const = default;
     
         template<typename... Args>
         Model(Args&&... args) : model(std::forward<Args>(args)...) {}
@@ -165,13 +165,13 @@ inline namespace utils {
         static bool identical_behaviour(Model& A, Model& B, time_t timeframe)
         {
             for (time_t time = 0; time < timeframe; ++time) {
-                const auto expectation = A.prediction();
-                if (expectation != B.prediction())
+                const auto expectation = A.get_prediction();
+                if (expectation != B.get_prediction())
                     return false;
                 A << expectation;
                 B << expectation;
             }
-            return A.prediction() == B.prediction();
+            return A.get_prediction() == B.get_prediction();
         }
 
         // Adapts the model to the given input sequence and returns the time required to achieve perfect prediction.
@@ -191,7 +191,7 @@ inline namespace utils {
         }
 
         Model& operator << (const Input& p) { model << p; return *this; }
-        Input prediction() const { return model.prediction(); }
+        Input get_prediction() const { return model.get_prediction(); }
 
         // Sequentially feeds each element of the range to the target.
         template <std::ranges::range Range>
@@ -203,22 +203,12 @@ inline namespace utils {
             return *this;
         }
         
-        //auto generate(size_t length)
-        //{
-        //    auto seq = std::views::iota(size_t{0}, length)
-        //     | std::views::transform([&](size_t) {
-        //           auto value = prediction();
-        //           model << value;
-        //           return value;
-        //       });
-        //    return seq;
-        //}
         InputSequence generate(size_t length)
         {
             InputSequence seq;
             seq.reserve(length);
             while (seq.size() < length) {
-                seq.push_back(prediction());
+                seq.push_back(get_prediction());
                 model << seq.back();
             }
             return seq;
@@ -232,7 +222,7 @@ inline namespace utils {
             predictions.reserve(inputs.size());
 
             for (const Input& in : inputs) {
-                predictions.push_back(model.prediction());
+                predictions.push_back(model.get_prediction());
                 model << in;
             }
             return predictions;

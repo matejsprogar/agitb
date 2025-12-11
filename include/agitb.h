@@ -40,8 +40,9 @@ namespace sprogar {
         // AGITB settings : temporal patterns with seven inputs of ten bits each
         const time_t SequenceLength = 7;        // \eta
         const size_t BitsPerInput = 10;         // \omega
-        const int Repeat100x = 100;
-        const int RepeatOnce = 1;
+        const size_t RepeatInfty = SimulatedInfinity;
+        const size_t Repeat100x = 100;
+        const size_t RepeatOnce = 1;
 
         template <typename SystemUnderEvaluation>
         class TestBed
@@ -59,7 +60,7 @@ namespace sprogar {
                 for (const auto& [info, repetitions, test] : testbed) {
                     std::clog << info << std::endl;
 
-                    for (int i = 1; i <= repetitions; ++i) {
+                    for (size_t i = 1; i <= repetitions; ++i) {
                         std::clog << i << '/' << repetitions << go_back;
 
                         test();
@@ -70,16 +71,16 @@ namespace sprogar {
             }
 
         private:
-            static inline const std::vector<std::tuple<std::string, int, void(*)()>> testbed =
+            static inline const std::vector<std::tuple<std::string, size_t, void(*)()>> testbed =
             {
                 {
                     "#1 Bias-free start (All models begin in a completely blank, bias-free state.)",
-                    Repeat100x,
+                    RepeatOnce,
                     []() {
                         Model A;
 
-                        ASSERT(A == Model{});				    // The initial state represents absence of bias.
-                        ASSERT(A.prediction() == Input{});	    // No spikes indicate an unbiased initial prediction.
+                        ASSERT(A == Model{});				        // blank models are equal
+                        ASSERT(A.get_prediction() == Input{});	    // first prediction: {0,0,0,0,0,0,0,0,0,0}
                     }
                 },
                 {
@@ -93,8 +94,8 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#3 Determinism (The model produces the same output if and only if it received the same input.)",
-                    Repeat100x,
+                    "#3.1 Determinism (Identical inputs guarantee identical models.)",
+                    RepeatInfty,
                     []() {
                         const InputSequence random_experience(InputSequence::random, SimulatedInfinity);
 
@@ -106,8 +107,8 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#4 Sensitivity (Inequivalent models remain inequivalent under identical inputs.)",
-                    Repeat100x,
+                    "#3.2 Sensitivity (Distinct models remain distinct under identical inputs.)",
+                    RepeatInfty,
                     []() {
                         const Input p = random<Input>();
                         const InputSequence random_experience(InputSequence::random, SimulatedInfinity);
@@ -120,22 +121,22 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#5 Time (The input order is inherently temporal and crucial to the process.)",
-                    Repeat100x,
+                    "#3.3 Time (The input order is inherently temporal and crucial to the process.)",
+                    RepeatInfty,
                     []() {
-                        const Input a = random<Input>();
-                        const Input b = random<Input>(a);     // a & b == Input{}
+                        const Input x1 = random<Input>();
+                        const Input x2 = random<Input>();
 
                         Model A, B;
-                        A << a << b;
-                        B << b << a;
+                        A << x1 << x2;
+                        B << x2 << x1;
 
-                        ASSERT(A != B || a == b);
+                        ASSERT(A != B || x1 == x2);
                     }
                 },
                 {
-                    "#6 Absolute refractory period (Each spike (1) must be followed by a no-spike (0).)",
-                    Repeat100x,
+                    "#4 Absolute refractory period (Each spike (1) must be followed by a no-spike (0).)",
+                    RepeatInfty,
                     []() {
                         const Input x = random<Input>();
                         const InputSequence no_consecutive_spikes = { x, ~x };
@@ -148,7 +149,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#7 Temporal adaptability (The model can adapt to and predict temporal patterns of varying lengths.)",
+                    "#5 Temporal adaptability (The model must be able to learn sequences with varying cycle lengths.)",
                     Repeat100x,
                     []() {
                         const InputSequence trivial_problem(InputSequence::trivial, SequenceLength);
@@ -160,7 +161,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#8 Stagnation (You can't teach an old dog new tricks.)",
+                    "#6 Stagnation (You can't teach an old dog new tricks.)",
                     Repeat100x,
                     []() {
                         auto indefinitely_adaptable = [&](Model& dog) -> bool {
@@ -179,7 +180,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#9 Content sensitivity (Adaptation time depends on the content of the input sequence.)",
+                    "#7 Content sensitivity (Adaptation time depends on the content of the input sequence.)",
                     Repeat100x,
                     []() {
                     // Null Hypothesis: Adaptation time is independent of the input sequence content
@@ -203,110 +204,110 @@ namespace sprogar {
                     ASSERT(adaptation_time_depends_on_the_content_of_the_input_sequence());
                 }
             },
-            {
-                "#10 Context sensitivity (Adaptation time depends on the state of the model.)",
-                Repeat100x,
-                []() {
-                    // Null Hypothesis: Adaptation time is independent of the state of the model
-                    auto adaptation_time_depends_on_state_of_the_model = [&]() -> bool {
-                        const InputSequence target_sequence = learnable_random_sequence<Model>(SequenceLength, SimulatedInfinity);
-                        Model B;
-                        const time_t base_time = B.time_to_repeat(target_sequence, SimulatedInfinity);
-                        for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
-                            Model A(Model::random, SequenceLength);
+                {
+                    "#8 Context sensitivity (Adaptation time depends on the state of the model.)",
+                    Repeat100x,
+                    []() {
+                        // Null Hypothesis: Adaptation time is independent of the state of the model
+                        auto adaptation_time_depends_on_state_of_the_model = [&]() -> bool {
+                            const InputSequence target_sequence = learnable_random_sequence<Model>(SequenceLength, SimulatedInfinity);
+                            Model B;
+                            const time_t base_time = B.time_to_repeat(target_sequence, SimulatedInfinity);
+                            for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
+                                Model A(Model::random, SequenceLength);
 
-                            if (A != Model{}) {
-                                time_t time = A.time_to_repeat(target_sequence, SimulatedInfinity);
-                                if (base_time != time)                    // rejects the null hypothesis
+                                if (A != Model{}) {
+                                    time_t time = A.time_to_repeat(target_sequence, SimulatedInfinity);
+                                    if (base_time != time)                    // rejects the null hypothesis
+                                        return true;
+                                }
+                            }
+                            return false;
+                        };
+
+                        ASSERT(adaptation_time_depends_on_state_of_the_model());
+                    }
+                },
+                {
+                    "#9 Unobservability (Distinct model instances may exhibit the same observable behaviour in some timeframe.)",
+                    Repeat100x,
+                    []() {
+                        // Null Hypothesis: "Different models cannot produce identical behavior."
+                        auto different_model_instances_can_produce_identical_behaviour = [&]() -> bool {
+                            const InputSequence simplest_behaviour = { Input{}, Input{} };
+                            for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
+                                Model A, B(Model::random, SequenceLength);
+                                A.learn(simplest_behaviour, SimulatedInfinity);
+                                B.learn(simplest_behaviour, SimulatedInfinity);
+
+                                bool counterexample = A != B && Model::identical_behaviour(A, B, 2 * SequenceLength);
+                                if (counterexample)                             // rejects the null hypothesis
                                     return true;
                             }
-                        }
-                        return false;
-                    };
+                            return false;
+                        };
 
-                    ASSERT(adaptation_time_depends_on_state_of_the_model());
-                }
-            },
-            {
-                "#11 Unobservability (Distinct model instances may exhibit the same observable behaviour in some timeframe.)",
-                Repeat100x,
-                []() {
-                    // Null Hypothesis: "Different models cannot produce identical behavior."
-                    auto different_model_instances_can_produce_identical_behaviour = [&]() -> bool {
-                        const InputSequence simplest_behaviour = { Input{}, Input{} };
-                        for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
-                            Model A, B(Model::random, SequenceLength);
-                            A.learn(simplest_behaviour, SimulatedInfinity);
-                            B.learn(simplest_behaviour, SimulatedInfinity);
-
-                            bool counterexample = A != B && Model::identical_behaviour(A, B, 2 * SequenceLength);
-                            if (counterexample)                             // rejects the null hypothesis
-                                return true;
-                        }
-                        return false;
-                    };
-
-                    ASSERT(different_model_instances_can_produce_identical_behaviour());
-                }
-            },
-            {
-                "#12 Denoising (The model performs above chance on perturbed inputs.)",
-                Repeat100x,
-                []() {
-                    size_t score = 0;
-                    const int N = 20, exposure_time = 5 * SequenceLength;
-                    for (int i = 0; i < N; ++i) {
-                        const InputSequence seq(InputSequence::circular_random, SequenceLength);
-                        const Input disruption = random<Input>(seq[1], seq.back());
-
-                        Model A;
-                        for (int i = 0; i < exposure_time; ++i)
-                            A << seq;                                       // prior experience    
-
-                        A << disruption;                                    // begin a novel situation
-                        A << (seq | std::views::drop(1));
-
-                        const Input& truth = seq.front();
-                        score += utils::count_matching_bits(A.prediction(), truth);
+                        ASSERT(different_model_instances_can_produce_identical_behaviour());
                     }
-                    const size_t random_guess = N * BitsPerInput / 2;
+                },
+                {
+                    "#10 Denoising (The model performs above chance on perturbed inputs.)",
+                    Repeat100x,
+                    []() {
+                        size_t score = 0;
+                        const int N = 20, exposure_time = 5 * SequenceLength;
+                        for (int i = 0; i < N; ++i) {
+                            const InputSequence seq(InputSequence::circular_random, SequenceLength);
+                            const Input disruption = random<Input>(seq[1], seq.back());
 
-                    ASSERT(score > random_guess);
-                }
-            },
-            {
-                "#13 Generalization (The model performs above chance on previously unseen inputs.)",
-                Repeat100x,
-                []() {
-                    size_t score = 0;
-                    const int N = 20, k = 10;
-                    for (int i = 0; i < N; ++i) {
-                        Model A(Model::random, k * SequenceLength);         // R sets the unknown rule behind the data
-                        const auto train = A.generate(k * SequenceLength);  // split: first k parts for training
-                        const auto truth = A.generate(1 * SequenceLength);  //        1 subsequent part for testing  
+                            Model A;
+                            for (int i = 0; i < exposure_time; ++i)
+                                A << seq;                                       // prior experience    
 
-                        Model B;
-                        B << train;
+                            A << disruption;                                    // begin a novel situation
+                            A << (seq | std::views::drop(1));
 
-                        score += utils::count_matching_bits(B.generate(SequenceLength), truth);
+                            const Input& truth = seq.front();
+                            score += utils::count_matching_bits(A.get_prediction(), truth);
+                        }
+                        const size_t random_guess = N * BitsPerInput / 2;
+
+                        ASSERT(score > random_guess);
                     }
-                    const size_t random_guess = N * SequenceLength * BitsPerInput / 2;
+                },
+                {
+                    "#11 Generalization (The model performs above chance on previously unseen inputs.)",
+                    Repeat100x,
+                    []() {
+                        size_t score = 0;
+                        const int N = 20, k = 10;
+                        for (int i = 0; i < N; ++i) {
+                            Model A(Model::random, k * SequenceLength);         // R sets the unknown rule behind the data
+                            const auto train = A.generate(k * SequenceLength);  // split: first k parts for training
+                            const auto truth = A.generate(1 * SequenceLength);  //        1 subsequent part for testing  
 
-                    ASSERT(score > random_guess);
+                            Model B;
+                            B << train;
+
+                            score += utils::count_matching_bits(B.generate(SequenceLength), truth);
+                        }
+                        const size_t random_guess = N * SequenceLength * BitsPerInput / 2;
+
+                        ASSERT(score > random_guess);
+                    }
+                },
+                {
+                    "#12 Latency (The model shall operate within a bounded latency conjecture.)",
+                    RepeatOnce,
+                    []() {
+                        std::clog << yellow("Manual validation required:\n");
+
+                        std::clog << "Can the Model, in principle, produce a prediction within a bounded latency? [y/n]\n";
+                        int answer = std::getchar();
+
+                        ASSERT(answer == 'y' or answer == 'Y');
+                    }
                 }
-            },
-            {
-                "#14 Latency (The model shall operate within a bounded latency.)",
-                RepeatOnce,
-                []() {
-                    std::clog << yellow("Manual validation required:\n");
-
-                    std::clog << "Can the Model, in principle, produce a prediction within a bounded latency? [y/n]\n";
-                    int answer = std::getchar();
-
-                    ASSERT(answer == 'y' or answer == 'Y');
-                }
-            }
             };
         };
     }
