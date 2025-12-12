@@ -121,7 +121,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#3.3 Time (The input order is inherently temporal and crucial to the process.)",
+                    "#4 Time (System evolution depends on input order.)",
                     RepeatInfty,
                     []() {
                         const Input x1 = random<Input>();
@@ -135,7 +135,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#4 Absolute refractory period (Each spike (1) must be followed by a no-spike (0).)",
+                    "#5 Absolute refractory period (Each spike (1) must be followed by a no-spike (0).)",
                     RepeatInfty,
                     []() {
                         const Input x = random<Input>();
@@ -149,7 +149,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#5 Temporal adaptability (The model must be able to learn sequences with varying cycle lengths.)",
+                    "#6 Temporal adaptability (The model must be able to learn sequences with varying cycle lengths.)",
                     Repeat100x,
                     []() {
                         const InputSequence trivial_problem(InputSequence::trivial, SequenceLength);
@@ -161,7 +161,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#6 Stagnation (You can't teach an old dog new tricks.)",
+                    "#7 Stagnation (You can't teach an old dog new tricks.)",
                     Repeat100x,
                     []() {
                         auto indefinitely_adaptable = [&](Model& dog) -> bool {
@@ -180,7 +180,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#7 Content sensitivity (Adaptation time depends on the content of the input sequence.)",
+                    "#8 Content sensitivity (Adaptation time depends on the content of the input sequence.)",
                     Repeat100x,
                     []() {
                     // Null Hypothesis: Adaptation time is independent of the input sequence content
@@ -189,13 +189,13 @@ namespace sprogar {
                         const InputSequence base_sequence = learnable_random_sequence<Model>(SequenceLength, SimulatedInfinity);
                         const time_t base_time = B.time_to_repeat(base_sequence, SimulatedInfinity);
                         for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
-                            const InputSequence new_pattern(InputSequence::circular_random, SequenceLength);
+                            const InputSequence sequence(InputSequence::circular_random, SequenceLength);
 
-                            if (new_pattern != base_sequence) {
+                            if (sequence != base_sequence) {
                                 Model A;
-                                time_t time = A.time_to_repeat(new_pattern, SimulatedInfinity);
-                                if (base_time != time)
-                                    return true;                            // rejects the null hypothesis
+                                time_t time = A.time_to_repeat(sequence, SimulatedInfinity);
+                                if (base_time != time)                      // rejects the null hypothesis
+                                    return true;
                             }
                         }
                         return false;
@@ -205,7 +205,7 @@ namespace sprogar {
                 }
             },
                 {
-                    "#8 Context sensitivity (Adaptation time depends on the state of the model.)",
+                    "#9 Context sensitivity (Adaptation time depends on the state of the model.)",
                     Repeat100x,
                     []() {
                         // Null Hypothesis: Adaptation time is independent of the state of the model
@@ -229,7 +229,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#9 Unobservability (Distinct model instances may exhibit the same observable behaviour in some timeframe.)",
+                    "#10 Unobservability (Distinct model instances may exhibit the same observable behaviour in some timeframe.)",
                     Repeat100x,
                     []() {
                         // Null Hypothesis: "Different models cannot produce identical behavior."
@@ -251,7 +251,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#10 Denoising (The model performs above chance on perturbed inputs.)",
+                    "#11 Denoising (The model performs above chance on perturbed inputs.)",
                     Repeat100x,
                     []() {
                         size_t score = 0;
@@ -276,7 +276,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#11 Generalization (The model performs above chance on previously unseen inputs.)",
+                    "#12 Generalization (The model performs above chance on previously unseen inputs.)",
                     Repeat100x,
                     []() {
                         size_t score = 0;
@@ -297,7 +297,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#12 Latency (The model shall operate within a bounded latency conjecture.)",
+                    "#13 Latency (The model shall operate within a bounded latency conjecture.)",
                     RepeatOnce,
                     []() {
                         std::clog << yellow("Manual validation required:\n");
