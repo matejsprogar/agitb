@@ -34,7 +34,7 @@ The MyModel class must:
 - Provide methods to accept inputs and retrieve predictions using the following interface:
   ```cpp
   MyModel& MyModel::operator << (const InputType& p);   // Process input p
-  InputType MyModel::prediction() const;                // Returns the prediction for the next input
+  InputType MyModel::get_prediction() const;                // Returns the prediction for the next input
   ```
 
 ### Stub Implementation of the MyModel Class for AGI Testbed
@@ -55,7 +55,7 @@ public:
         _prediction = AGI(p);
         return *this;
     }
-    Input prediction() const { return _prediction; }
+    Input get_prediction() const { return _prediction; }
 
 private:
     Input AGI(const Input& current) {
