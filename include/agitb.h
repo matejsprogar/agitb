@@ -40,7 +40,6 @@ namespace sprogar {
         // AGITB settings : temporal patterns with seven inputs of ten bits each
         const time_t SequenceLength = 7;        // \eta
         const size_t BitsPerInput = 10;         // \omega
-        const size_t RepeatInfty = SimulatedInfinity;
         const size_t Repeat100x = 100;
         const size_t RepeatOnce = 1;
 
@@ -95,7 +94,7 @@ namespace sprogar {
                 },
                 {
                     "#3.1 Determinism (Identical inputs guarantee identical models.)",
-                    RepeatInfty,
+                    Repeat100x,
                     []() {
                         const InputSequence random_experience(InputSequence::random, SimulatedInfinity);
 
@@ -108,7 +107,7 @@ namespace sprogar {
                 },
                 {
                     "#3.2 Sensitivity (Distinct models remain distinct under identical inputs.)",
-                    RepeatInfty,
+                    Repeat100x,
                     []() {
                         const Input p = random<Input>();
                         const InputSequence random_experience(InputSequence::random, SimulatedInfinity);
@@ -122,7 +121,7 @@ namespace sprogar {
                 },
                 {
                     "#4 Time (System evolution depends on input order.)",
-                    RepeatInfty,
+                    Repeat100x,
                     []() {
                         const Input x1 = random<Input>();
                         const Input x2 = random<Input>();
@@ -136,7 +135,7 @@ namespace sprogar {
                 },
                 {
                     "#5 Absolute refractory period (Each spike (1) must be followed by a no-spike (0).)",
-                    RepeatInfty,
+                    Repeat100x,
                     []() {
                         const Input x = random<Input>();
                         const InputSequence no_consecutive_spikes = { x, ~x };
