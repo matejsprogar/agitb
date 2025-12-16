@@ -160,10 +160,10 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#7 Stagnation (You can't teach an old dog new tricks.)",
+                    "#7 Stagnation (You can’t teach an old dog new tricks.)",
                     Repeat100x,
                     []() {
-                        auto indefinitely_adaptable = [&](Model& dog) -> bool {
+                        auto indefinitely_learnable = [&](Model& dog) -> bool {
                             for (time_t time = 0; time < SimulatedInfinity; ++time) {
                                 InputSequence learnable_trick = learnable_random_sequence<Model>(SequenceLength, SimulatedInfinity);
 
@@ -172,12 +172,15 @@ namespace sprogar {
                             }
                             return true;
                         };
+                        const InputSequence first_trick = learnable_random_sequence<Model>(SequenceLength, SimulatedInfinity);
 
                         Model A;
-
-                        ASSERT(not indefinitely_adaptable(A));
+                        A.learn(first_trick, SimulatedInfinity);
+                        
+                        ASSERT(not indefinitely_learnable(A));
+                        ASSERT(A.learn(first_trick, SimulatedInfinity));
                     }
-                },
+                },                
                 {
                     "#8 Content sensitivity (Adaptation time depends on the content of the input sequence.)",
                     Repeat100x,
