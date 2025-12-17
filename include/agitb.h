@@ -133,6 +133,7 @@ namespace sprogar {
                         B << x2 << x1;
 
                         ASSERT(A != B || x1 == x2);
+                        ASSERT(A.get_prediction() != B.get_prediction() || x1 == x2);
                     }
                 },
                 {
