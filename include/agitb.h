@@ -86,14 +86,16 @@ namespace sprogar {
                     "#2 Bias (A change in state indicates bias.)",
                     Repeat100x,
                     []() {
+                        const Input x = random<Input>();
                         Model A;
-                        A << random<Input>();
+                        A << x;
 
                         ASSERT(A != Model{});
+                        ASSERT(A.get_prediction() == x);
                     }
                 },
                 {
-                    "#3 Injective determinism (Models are deterministic and sensitive TODO)",
+                    "#3 Injective determinism (Models are deterministic and sensitive)",
                     Repeat100x,
                     []() {
                         auto deterministic = []() {
