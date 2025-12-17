@@ -86,12 +86,11 @@ namespace sprogar {
                     "#2 Bias (A change in state indicates bias.)",
                     Repeat100x,
                     []() {
-                        const Input x = random<Input>();
                         Model A;
-                        A << x;
+                        A << random<Input>();
 
                         ASSERT(A != Model{});
-                        ASSERT(A.get_prediction() == x);
+                        ASSERT(A.get_prediction() == Input{});	    // second prediction: {0,0,0,0,0,0,0,0,0,0}
                     }
                 },
                 {
