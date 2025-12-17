@@ -165,7 +165,7 @@ namespace sprogar {
                     []() {
                         auto indefinitely_learnable = [&](Model& A) -> bool {
                             for (time_t time = 0; time < SimulatedInfinity; ++time) {
-                                InputSequence learnable_trick = learnable_random_sequence<Model>(SequenceLength, SimulatedInfinity);
+                                InputSequence learnable_trick = Model::learnable_random_sequence(SequenceLength, SimulatedInfinity);
 
                                 if (not A.learn(learnable_trick, SimulatedInfinity))
                                     return false;
@@ -191,7 +191,7 @@ namespace sprogar {
                     // Null Hypothesis: Adaptation time is independent of the input sequence content
                     auto adaptation_time_depends_on_the_content_of_the_input_sequence = [=]() -> bool {
                         Model B;
-                        const InputSequence base_sequence = learnable_random_sequence<Model>(SequenceLength, SimulatedInfinity);
+                        const InputSequence base_sequence = Model::learnable_random_sequence(SequenceLength, SimulatedInfinity);
                         const time_t base_time = B.time_to_repeat(base_sequence, SimulatedInfinity);
                         for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
                             const InputSequence sequence(InputSequence::circular_random, SequenceLength);
@@ -215,7 +215,7 @@ namespace sprogar {
                     []() {
                         // Null Hypothesis: Adaptation time is independent of the state of the model
                         auto adaptation_time_depends_on_state_of_the_model = [&]() -> bool {
-                            const InputSequence target_sequence = learnable_random_sequence<Model>(SequenceLength, SimulatedInfinity);
+                            const InputSequence target_sequence = Model::learnable_random_sequence(SequenceLength, SimulatedInfinity);
                             Model B;
                             const time_t base_time = B.time_to_repeat(target_sequence, SimulatedInfinity);
                             for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {

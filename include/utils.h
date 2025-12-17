@@ -118,23 +118,6 @@ inline namespace utils {
         }
     };
 
-
-    template <typename Model>
-    InputSequence<typename Model::Input> learnable_random_sequence(const size_t length, time_t timeframe)
-    {
-        using InputSequence = InputSequence<typename Model::Input>;
-
-        for (time_t time = 0; time < timeframe; time += length) {
-            const InputSequence in = InputSequence(InputSequence::circular_random, length);
-            Model M;
-            if (M.learn(in, timeframe))
-                return in;
-        }
-        std::cerr << red("Error:") << " Could not find a learnable sequence.\n";
-        exit(-1);
-    }
-
-
     template <typename ModelUnderTest, typename InputType>
     requires InputPredictor<ModelUnderTest, InputType>
     class Model
@@ -159,6 +142,18 @@ inline namespace utils {
         Model(random_tag, const time_t random_initialization_strength) : Model()
         {
             *this << InputSequence(InputSequence::random, random_initialization_strength);
+        }
+
+        static InputSequence learnable_random_sequence(const size_t length, time_t timeframe)
+        {
+            for (time_t time = 0; time < timeframe; time += length) {
+                const InputSequence in = InputSequence(InputSequence::circular_random, length);
+                Model M;
+                if (M.learn(in, timeframe))
+                    return in;
+            }
+            std::cerr << red("Error:") << " Could not find a learnable sequence.\n";
+            exit(-1);
         }
 
         // Iteratively feeds each model its own predictions and returns true if predictions match over a specified timeframe.
