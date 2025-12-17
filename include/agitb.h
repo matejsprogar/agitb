@@ -281,7 +281,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#12 Generalization (The model performs above chance on previously unseen inputs.)",
+                    "#12 Generalisation (The model performs above chance on previously unseen inputs.)",
                     Repeat100x,
                     []() {
                         size_t score = 0;
