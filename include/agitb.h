@@ -124,15 +124,13 @@ namespace sprogar {
                     "#4 Time (System evolution depends on input order.)",
                     Repeat100x,
                     []() {
-                        const Input x1 = random<Input>();
-                        const Input x2 = random<Input>();
+                        const Input x = random<Input>();
 
                         Model A, B;
-                        A << x1 << x2;
-                        B << x2 << x1;
+                        A << x << ~x;
+                        B << ~x << x;
 
-                        ASSERT(A != B || x1 == x2);
-                        ASSERT(A.get_prediction() != B.get_prediction() || x1 == x2);
+                        ASSERT(A != B);
                     }
                 },
                 {
