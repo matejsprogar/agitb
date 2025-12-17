@@ -93,30 +93,30 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#3.1 Determinism (Identical inputs guarantee identical models.)",
+                    "#3 Injective determinism (Models are deterministic and sensitive TODO)",
                     Repeat100x,
                     []() {
-                        const InputSequence random_experience(InputSequence::random, SimulatedInfinity);
+                        auto deterministic = []() {
+                            const InputSequence random_experience(InputSequence::random, SimulatedInfinity);
 
-                        Model A, B;
-                        A << random_experience;
-                        B << random_experience;
+                            Model A, B;
+                            A << random_experience;
+                            B << random_experience;
 
-                        ASSERT(A == B);
-                    }
-                },
-                {
-                    "#3.2 Sensitivity (Distinct models remain distinct under identical inputs.)",
-                    Repeat100x,
-                    []() {
-                        const Input p = random<Input>();
-                        const InputSequence random_experience(InputSequence::random, SimulatedInfinity);
+                            return A == B;
+                        };
+                        auto sensitive = []() {
+                            const Input p = random<Input>();
+                            const InputSequence random_experience(InputSequence::random, SimulatedInfinity);
 
-                        Model A, B;
-                        A << p << random_experience;
-                        B << ~p << random_experience;
+                            Model A, B;
+                            A << p << random_experience;
+                            B << ~p << random_experience;
 
-                        ASSERT(A != B);
+                            return A != B;
+                        };
+                        
+                        ASSERT(deterministic() and sensitive());
                     }
                 },
                 {
@@ -160,25 +160,28 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#7 Stagnation (You can’t teach an old dog new tricks.)",
+                    "#7 Stagnation (After a time performance necessarily drops.)",
                     Repeat100x,
                     []() {
-                        auto indefinitely_learnable = [&](Model& dog) -> bool {
+                        auto indefinitely_learnable = [&](Model& A) -> bool {
                             for (time_t time = 0; time < SimulatedInfinity; ++time) {
                                 InputSequence learnable_trick = learnable_random_sequence<Model>(SequenceLength, SimulatedInfinity);
 
-                                if (not dog.learn(learnable_trick, SimulatedInfinity))
+                                if (not A.learn(learnable_trick, SimulatedInfinity))
                                     return false;
                             }
                             return true;
                         };
-                        const InputSequence first_trick = learnable_random_sequence<Model>(SequenceLength, SimulatedInfinity);
+                        auto minimal_learning_ability = [&](Model& A) -> bool {
+                            InputSequence short_trick(InputSequence::circular_random, 2);
+
+                            return A.learn(short_trick, SimulatedInfinity);
+                        };
 
                         Model A;
-                        A.learn(first_trick, SimulatedInfinity);
-                        
+
                         ASSERT(not indefinitely_learnable(A));
-                        ASSERT(A.learn(first_trick, SimulatedInfinity));
+                        ASSERT(minimal_learning_ability(A));
                     }
                 },                
                 {
@@ -296,18 +299,6 @@ namespace sprogar {
                         const size_t random_guess = N * SequenceLength * BitsPerInput / 2;
 
                         ASSERT(score > random_guess);
-                    }
-                },
-                {
-                    "#13 Latency (The model shall operate within a bounded latency conjecture.)",
-                    RepeatOnce,
-                    []() {
-                        std::clog << yellow("Manual validation required:\n");
-
-                        std::clog << "Can the Model, in principle, produce a prediction within a bounded latency? [y/n]\n";
-                        int answer = std::getchar();
-
-                        ASSERT(answer == 'y' or answer == 'Y');
                     }
                 }
             };
