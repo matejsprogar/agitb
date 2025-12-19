@@ -35,8 +35,8 @@ The MyModel class must:
 - Satisfy the `std::regular` concept.
 - Provide methods to accept inputs and retrieve predictions using the following interface:
   ```cpp
-  MyModel& MyModel::operator << (const InputType& p);   // Process input p
-  InputType MyModel::get_prediction() const;            // Returns the prediction for the next input
+  InputType MyModel::operator ()(const InputType& p);   // Process input p and return the prediction for the next input
+  InputType MyModel::operator ()() const;				// Return the prediction for the next input
   ```
 
 ### Stub Implementation of the MyModel Class for AGI Testbed
@@ -45,21 +45,18 @@ The MyModel class must:
 using Input = std::bitset<10>;
 class MyModel
 {
-    Input _prediction;
-
 public:
     bool operator==(const MyModel& rhs) const {
       // TODO
       return false;
     }
 
-    MyModel& operator << (const Input& p) {
-        _prediction = AGI(p);
-        return *this;
-    }
-    Input get_prediction() const { return _prediction; }
+    Input operator ()() const { return _prediction; }
+    Input operator ()(const Input& p) { return _prediction = AGI(p); }
 
 private:
+    Input _prediction;
+
     Input AGI(const Input& current) {
       // TODO AGI magic here!
       return Input{};
