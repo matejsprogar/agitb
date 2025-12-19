@@ -18,6 +18,7 @@
 * */
 #pragma once
 
+#include <iostream>
 #include <string>
 #include <bitset>
 #include <format>
@@ -135,10 +136,10 @@ inline namespace utils {
         Model& operator=(const Model& src) = default;
         bool operator==(const Model& rhs) const = default;
     
-        template<typename... Args>
-        Model(Args&&... args) : model(std::forward<Args>(args)...) {}
+        //template<typename... Args>
+        //Model(Args&&... args) : model(std::forward<Args>(args)...) {}
 
-        // Constructs a randomly initialized model object by feedng it with random inputs.
+        // Constructs a randomly initialized model by feeding it with random inputs.
         Model(random_tag, const time_t random_initialization_strength) : Model()
         {
             *this << InputSequence(InputSequence::random, random_initialization_strength);
@@ -224,6 +225,87 @@ inline namespace utils {
         }
     };
 
+ /**
+ * Tests whether the second of two paired sequences of elapsed times is consistently 
+ * worse (i.e., larger) than the first, using a one-sided Wilcoxon signed-rank test.
+ *
+ * This function implements a one-sided Wilcoxon signed-rank test on paired data and
+ * returns a boolean indicating whether there is statistically significant evidence
+ * that values in the second sequence (B) tend to be greater than the corresponding
+ * values in the first sequence (A). It intentionally ignores effect size and
+ * variability; it answers only whether the direction of the difference is stable
+ * across pairs.
+ *
+ * The test is:
+ *   - Paired (each observation in A corresponds to one in B)
+ *   - Non-parametric (no distributional assumptions)
+ *   - Robust to outliers and heavy-tailed noise
+ *   - Directional (specifically tests for B > A)
+ *
+ * Given paired observations (A_i, B_i), the Wilcoxon signed-rank test evaluates the
+ * null hypothesis that the median of the paired differences (B_i - A_i) is zero,
+ * against the alternative hypothesis that the median of the paired difference is positive.
+ *
+ * Return value:
+ *  (1) false if fewer than 10 non-zero paired differences are available;
+ *  (2) true if there is statistically significant evidence that B > A
+ *      (z-score exceeds the one-sided threshold);
+ *  (3) false otherwise.
+ *
+ * Parameters:
+ *  A_B
+ *      A vector of paired observations (A_i, B_i).
+ *
+ *  one_sided_z_threshold
+ *      Threshold applied to the z-score from the normal approximation.
+ *      Common one-sided values:
+ *      = 3.090  very conservative (0.1% significance) = AGITB setting
+ *      = 2.326  strong evidence   (1% significance)
+ *      = 1.645  standard choice   (5% significance)    
+ **/
+    bool consistently_greater_second_value(const std::vector<std::pair<size_t, size_t>>& A_B,
+        const double one_sided_z_threshold = 3.090)
+    {
+        struct SignedAbsDiff { size_t abs_diff; int sign; };
+        std::vector<SignedAbsDiff> diffs; diffs.reserve(A_B.size());
+
+        for (auto [a, b] : A_B) {
+            if (a == b) continue;
+            if (b > a)  diffs.emplace_back(b - a, +1);
+            else        diffs.emplace_back(a - b, -1);
+        }
+
+        const int n = (int)diffs.size();
+        const int min_nonzero_pairs = 10;
+        if (n < min_nonzero_pairs) return false;
+
+        std::sort(diffs.begin(), diffs.end(),
+            [](const auto& x, const auto& y) { return x.abs_diff < y.abs_diff; });
+
+        double Wplus = 0.0, tieCorr = 0.0;
+        for (int i = 0; i < n; ) {
+            int j = i + 1;
+            while (j < n && diffs[j].abs_diff == diffs[i].abs_diff)
+                ++j;
+            int t = j - i;
+            double avgRank = 0.5 * ((i + 1) + j);
+            for (int k = i; k < j; ++k)
+                if (diffs[k].sign > 0)
+                    Wplus += avgRank;
+            if (t > 1)
+                tieCorr += (double)t * ((double)t * t - 1); // t^3-t
+            i = j;
+        }
+
+        const double mu = n * (n + 1.0) / 4.0;
+        const double var = n * (n + 1.0) * (2.0 * n + 1.0) / 24.0 - tieCorr / 48.0;
+        if (var <= 0.0) return false;
+
+        const double cc = (Wplus > mu) ? 0.5 : 0.0;
+        double z = (Wplus - mu - cc) / std::sqrt(var);
+
+        return z > one_sided_z_threshold;   // true => evidence that B tends to be greater than A
     }
-}
-}
+}   // utils
+}   // AGI
+}   // sprogar

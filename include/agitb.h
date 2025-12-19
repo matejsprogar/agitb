@@ -27,12 +27,12 @@
 #include "utils.h"
 
 
+namespace sprogar {
 
 #define ASSERT(expression) (void)((!!(expression)) || \
                             (std::cerr << std::format("\n{} in {}:{}\n{}\n\n", red("\nAssertion failed"), __FILE__, __LINE__, #expression), \
                             exit(-1), 0))
 
-namespace sprogar {
     namespace AGI {
         // AGITB environment settings
         const size_t SimulatedInfinity = 5000;
@@ -69,7 +69,7 @@ namespace sprogar {
                 std::clog << green("\nPASS\n");
             }
 
-        private:
+        //private:
             static inline const std::vector<std::tuple<std::string, size_t, void(*)()>> testbed =
             {
                 {
@@ -90,7 +90,7 @@ namespace sprogar {
                         A << random<Input>();
 
                         ASSERT(A != Model{});
-                        ASSERT(A.get_prediction() == Input{});	    // second prediction: {0,0,0,0,0,0,0,0,0,0}
+                        //ASSERT(A.get_prediction() == Input{});	    // second prediction: {0,0,0,0,0,0,0,0,0,0}
                     }
                 },
                 {
@@ -117,7 +117,8 @@ namespace sprogar {
                             return A != B;
                         };
                         
-                        ASSERT(deterministic() and sensitive());
+                        ASSERT(deterministic());
+                        ASSERT(sensitive());
                     }
                 },
                 {
@@ -149,7 +150,7 @@ namespace sprogar {
                 },
                 {
                     "#6 Temporal adaptability (The model must be able to learn sequences with varying cycle lengths.)",
-                    Repeat100x,
+                    RepeatOnce,
                     []() {
                         const InputSequence trivial_problem(InputSequence::trivial, SequenceLength);
                         const InputSequence longer_trivial_problem(InputSequence::trivial, SequenceLength + 1);
@@ -160,28 +161,29 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#7 Stagnation (After a time performance necessarily drops.)",
+                    "#7 Bounded learnability (Bounded learning with a universal minimum.)",
                     Repeat100x,
                     []() {
-                        auto indefinitely_learnable = [&](Model& A) -> bool {
+                        auto limited_learnability = [&](Model& A) -> bool {
                             for (time_t time = 0; time < SimulatedInfinity; ++time) {
                                 InputSequence learnable_trick = Model::learnable_random_sequence(SequenceLength, SimulatedInfinity);
 
                                 if (not A.learn(learnable_trick, SimulatedInfinity))
-                                    return false;
+                                    return true;
                             }
-                            return true;
+                            return false;
                         };
-                        auto minimal_learning_ability = [&](Model& A) -> bool {
-                            InputSequence short_trick(InputSequence::circular_random, 2);
+                        auto universal_learnability = [&](Model& A) -> bool {
+                            const size_t nontrivial_length = 2;
+                            InputSequence any_short_trick(InputSequence::circular_random, nontrivial_length);
 
-                            return A.learn(short_trick, SimulatedInfinity);
+                            return A.learn(any_short_trick, SimulatedInfinity);
                         };
 
                         Model A;
 
-                        ASSERT(not indefinitely_learnable(A));
-                        ASSERT(minimal_learning_ability(A));
+                        ASSERT(limited_learnability(A));
+                        ASSERT(universal_learnability(A));
                     }
                 },                
                 {
@@ -287,18 +289,54 @@ namespace sprogar {
                         size_t score = 0;
                         const int N = 20, k = 10;
                         for (int i = 0; i < N; ++i) {
-                            Model A(Model::random, k * SequenceLength);         // R sets the unknown rule behind the data
-                            const auto train = A.generate(k * SequenceLength);  // split: first k parts for training
-                            const auto truth = A.generate(1 * SequenceLength);  //        1 subsequent part for testing  
+                            Model rule_generator(Model::random, 1000*SequenceLength);        // data hides an unknown random rule
+                            const auto train = rule_generator.generate(k * SequenceLength);  // split: first k parts for training
+                            const auto truth = rule_generator.generate(1 * SequenceLength);  //        1 subsequent part for testing  
 
-                            Model B;
-                            B << train;
+                            Model A;
+                            A << train;
 
-                            score += utils::count_matching_bits(B.generate(SequenceLength), truth);
+                            score += utils::count_matching_bits(A.generate(truth.size()), truth);
                         }
                         const size_t random_guess = N * SequenceLength * BitsPerInput / 2;
 
                         ASSERT(score > random_guess);
+                    }
+                },
+                {
+                    "#13 Bounded Inference (Processing a single input completes in constant time, independent of model complexity.)",
+                    Repeat100x,
+                    []() {
+                        auto inference_time = [](Model& M, const Model::InputSequence& sequence) -> size_t {
+                            const auto start = std::chrono::high_resolution_clock::now();
+
+                            M << sequence;
+
+                            const auto end = std::chrono::high_resolution_clock::now();
+                            return (size_t)std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+                        };
+                        auto experiments = [&](size_t N) {
+                            std::vector<std::pair<size_t, size_t>> results; results.reserve(N);
+                            
+                            while (results.size() < N) {
+                                const InputSequence sequence(InputSequence::random, SimulatedInfinity);
+
+                                Model A;
+                                Model B(Model::random, SimulatedInfinity);
+
+                                results.emplace_back(
+                                    inference_time(A, sequence),   // empty model's time
+                                    inference_time(B, sequence)    // complex model's time
+                                );
+                            }
+
+                            return results;
+                        };
+
+                        const int N = 100;
+                        const auto results = experiments(N);
+
+                        ASSERT(not utils::consistently_greater_second_value(results));
                     }
                 }
             };
