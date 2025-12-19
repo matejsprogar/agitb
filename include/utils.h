@@ -40,8 +40,8 @@ inline namespace utils {
     concept InputPredictor = std::regular<M>
         && requires(M c, const M cc, const T t)
     {
-        { c << t } -> std::convertible_to<M&>;
-        { cc.get_prediction() } -> std::convertible_to<T>;
+        { c(t) } -> std::convertible_to<T>;
+        { cc() } -> std::convertible_to<T>;
     };
 
     template <size_t BitsPerInput>
@@ -144,6 +144,21 @@ inline namespace utils {
         {
             *this << InputSequence(InputSequence::random, random_initialization_strength);
         }
+        
+        //////////////
+        Input operator()() const { return model(); }
+        Model& operator << (const Input& p) { model(p); return *this; }
+        ////////////////
+
+        // Sequentially feeds each element of the range to the target.
+        template <std::ranges::range Range>
+            requires std::same_as<std::ranges::range_value_t<Range>, Input>
+        Model& operator << (Range&& range)
+        {
+            for (auto&& elt : range)
+                model(elt);
+            return *this;
+        }
 
         static InputSequence learnable_random_sequence(const size_t length, time_t timeframe)
         {
@@ -161,13 +176,13 @@ inline namespace utils {
         static bool identical_behaviour(Model& A, Model& B, time_t timeframe)
         {
             for (time_t time = 0; time < timeframe; ++time) {
-                const auto expectation = A.get_prediction();
-                if (expectation != B.get_prediction())
+                const auto prediction = A();
+                if (prediction != B())
                     return false;
-                A << expectation;
-                B << expectation;
+                A << prediction;
+                B << prediction;
             }
-            return A.get_prediction() == B.get_prediction();
+            return A() == B();
         }
 
         // Adapts the model to the given input sequence and returns the time required to achieve perfect prediction.
@@ -185,27 +200,14 @@ inline namespace utils {
         {
             return time_to_repeat(inputs, timeframe) < timeframe;
         }
-
-        Model& operator << (const Input& p) { model << p; return *this; }
-        Input get_prediction() const { return model.get_prediction(); }
-
-        // Sequentially feeds each element of the range to the target.
-        template <std::ranges::range Range>
-            requires std::same_as<std::ranges::range_value_t<Range>, Input>
-        Model& operator << (Range&& range)
-        {
-            for (auto&& elt : range)
-                model << elt;
-            return *this;
-        }
         
+        // Feeds the model its own predictions to generate a sequence of predictions.
         InputSequence generate(size_t length)
         {
-            InputSequence seq;
-            seq.reserve(length);
+            InputSequence seq; seq.reserve(length);
             while (seq.size() < length) {
-                seq.push_back(get_prediction());
-                model << seq.back();
+                seq.push_back(model());
+                model(seq.back());
             }
             return seq;
         }
@@ -214,12 +216,11 @@ inline namespace utils {
         // Modifies the model by processing the given inputs and returns its corresponding predictions.
         InputSequence process(const InputSequence& inputs)
         {
-            InputSequence predictions{};
-            predictions.reserve(inputs.size());
+            InputSequence predictions; predictions.reserve(inputs.size());
 
             for (const Input& in : inputs) {
-                predictions.push_back(model.get_prediction());
-                model << in;
+                predictions.push_back(model());
+                model(in);
             }
             return predictions;
         }

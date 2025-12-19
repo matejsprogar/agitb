@@ -69,7 +69,7 @@ namespace sprogar {
                 std::clog << green("\nPASS\n");
             }
 
-        //private:
+        private:
             static inline const std::vector<std::tuple<std::string, size_t, void(*)()>> testbed =
             {
                 {
@@ -79,7 +79,7 @@ namespace sprogar {
                         Model A;
 
                         ASSERT(A == Model{});				        // blank models are equal
-                        ASSERT(A.get_prediction() == Input{});	    // first prediction: {0,0,0,0,0,0,0,0,0,0}
+                        ASSERT(A() == Input{});	    // first prediction: {0,0,0,0,0,0,0,0,0,0}
                     }
                 },
                 {
@@ -90,7 +90,7 @@ namespace sprogar {
                         A << random<Input>();
 
                         ASSERT(A != Model{});
-                        //ASSERT(A.get_prediction() == Input{});	    // second prediction: {0,0,0,0,0,0,0,0,0,0}
+                        //ASSERT(A() == Input{});	    // second prediction: {0,0,0,0,0,0,0,0,0,0}
                     }
                 },
                 {
@@ -275,7 +275,7 @@ namespace sprogar {
                             A << (seq | std::views::drop(1));
 
                             const Input& truth = seq.front();
-                            score += utils::count_matching_bits(A.get_prediction(), truth);
+                            score += utils::count_matching_bits(A(), truth);
                         }
                         const size_t random_guess = N * BitsPerInput / 2;
 
