@@ -41,6 +41,7 @@ namespace sprogar {
         const time_t SequenceLength = 7;        // \eta
         const size_t BitsPerInput = 10;         // \omega
         const size_t Repeat100x = 100;
+        const size_t RepeatForever = SimulatedInfinity;
         const size_t RepeatOnce = 1;
 
         template <typename SystemUnderEvaluation>
@@ -90,12 +91,11 @@ namespace sprogar {
                         A << random<Input>();
 
                         ASSERT(A != Model{});
-                        //ASSERT(A() == Input{});	    // second prediction: {0,0,0,0,0,0,0,0,0,0}
                     }
                 },
                 {
                     "#3 Injective determinism (Models are deterministic and sensitive)",
-                    Repeat100x,
+                    RepeatForever,
                     []() {
                         auto deterministic = []() {
                             const InputSequence random_experience(InputSequence::random, SimulatedInfinity);
@@ -123,7 +123,7 @@ namespace sprogar {
                 },
                 {
                     "#4 Time (System evolution depends on input order.)",
-                    Repeat100x,
+                    RepeatForever,
                     []() {
                         const Input x = random<Input>();
 
@@ -162,7 +162,7 @@ namespace sprogar {
                 },
                 {
                     "#7 Bounded learnability (Bounded learning with a universal minimum.)",
-                    Repeat100x,
+                    RepeatForever,
                     []() {
                         auto limited_learnability = [&](Model& A) -> bool {
                             for (time_t time = 0; time < SimulatedInfinity; ++time) {
@@ -188,7 +188,7 @@ namespace sprogar {
                 },                
                 {
                     "#8 Content sensitivity (Adaptation time depends on the content of the input sequence.)",
-                    Repeat100x,
+                    RepeatForever,
                     []() {
                     // Null Hypothesis: Adaptation time is independent of the input sequence content
                     auto adaptation_time_depends_on_the_content_of_the_input_sequence = [=]() -> bool {
@@ -213,7 +213,7 @@ namespace sprogar {
             },
                 {
                     "#9 Context sensitivity (Adaptation time depends on the state of the model.)",
-                    Repeat100x,
+                    RepeatForever,
                     []() {
                         // Null Hypothesis: Adaptation time is independent of the state of the model
                         auto adaptation_time_depends_on_state_of_the_model = [&]() -> bool {
@@ -237,7 +237,7 @@ namespace sprogar {
                 },
                 {
                     "#10 Unobservability (Distinct model instances may exhibit the same observable behaviour in some timeframe.)",
-                    Repeat100x,
+                    RepeatForever,
                     []() {
                         // Null Hypothesis: "Different models cannot produce identical behavior."
                         auto different_model_instances_can_produce_identical_behaviour = [&]() -> bool {
@@ -259,7 +259,7 @@ namespace sprogar {
                 },
                 {
                     "#11 Denoising (The model performs above chance on perturbed inputs.)",
-                    Repeat100x,
+                    RepeatForever,
                     []() {
                         size_t score = 0;
                         const int N = 20, exposure_time = 5 * SequenceLength;
@@ -304,10 +304,10 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#13 Bounded Inference (Processing a single input completes in constant time, independent of model complexity.)",
+                    "#13 Bounded state update (A single input-driven state update completes in bounded time, independent of model complexity.)",
                     Repeat100x,
                     []() {
-                        auto inference_time = [](Model& M, const Model::InputSequence& sequence) -> size_t {
+                        auto state_update_time = [](Model& M, const Model::InputSequence& sequence) -> size_t {
                             const auto start = std::chrono::high_resolution_clock::now();
 
                             M << sequence;
@@ -325,8 +325,8 @@ namespace sprogar {
                                 Model B(Model::random, SimulatedInfinity);
 
                                 results.emplace_back(
-                                    inference_time(A, sequence),   // empty model's time
-                                    inference_time(B, sequence)    // complex model's time
+                                    state_update_time(A, sequence),   // empty model's time
+                                    state_update_time(B, sequence)    // complex model's time
                                 );
                             }
 
