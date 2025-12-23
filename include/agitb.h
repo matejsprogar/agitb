@@ -43,6 +43,7 @@ namespace sprogar {
         const size_t Repeat100x = 100;
         const size_t RepeatForever = SimulatedInfinity;
         const size_t RepeatOnce = 1;
+        enum mode { exhaustive = 0, fast = 1};
 
         template <typename SystemUnderEvaluation>
         class TestBed
@@ -52,25 +53,28 @@ namespace sprogar {
             using Model = utils::Model<SystemUnderEvaluation, Input>;
 
         public:
-            static void run()
+            static bool run(mode _mode=exhaustive)
             {
                 std::clog << "Artificial General Intelligence Testbed\n\n";
 
                 const std::string go_back(10, '\b');
                 for (const auto& [info, repetitions, test] : testbed) {
                     std::clog << info << std::endl;
-
-                    for (size_t i = 1; i <= repetitions; ++i) {
-                        std::clog << i << '/' << repetitions << go_back;
-
+                
+                    const size_t N = repeats(_mode, repetitions);
+                    for (size_t i = 1; i <= N; ++i) {
+                        std::clog << i << '/' << N << go_back;
+                
                         test();
                     }
                 }
 
                 std::clog << green("\nPASS\n");
+                return true;
             }
 
         private:
+            static size_t repeats(mode _mode, size_t repetitions) { return _mode == exhaustive ? repetitions : std::min(repetitions, Repeat100x); }
             static inline const std::vector<std::tuple<std::string, size_t, void(*)()>> testbed =
             {
                 {

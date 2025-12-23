@@ -33,10 +33,9 @@ An `InputType` encodes a binary input sample from simulated sensors or actuators
 ## API Requirements for `SystemUnderEvaluation`
 The MyModel class must:
 - Satisfy the `std::regular` concept.
-- Provide methods to accept inputs and retrieve predictions using the following interface:
+- Provide a functor that accepts an input and returns a prediction using the following interface:
   ```cpp
   InputType MyModel::operator ()(const InputType& p);   // Process input p and return the prediction for the next input
-  InputType MyModel::operator ()() const;				// Return the prediction for the next input
   ```
 
 ### Stub Implementation of the MyModel Class for AGI Testbed
@@ -51,13 +50,7 @@ public:
       return false;
     }
 
-    Input operator ()() const { return _prediction; }
-    Input operator ()(const Input& p) { return _prediction = AGI(p); }
-
-private:
-    Input _prediction;
-
-    Input AGI(const Input& current) {
+    Input operator ()(const Input& p) { 
       // TODO AGI magic here!
       return Input{};
     }

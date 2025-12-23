@@ -38,10 +38,9 @@ inline namespace utils {
 
     template <typename M, typename T>
     concept InputPredictor = std::regular<M>
-        && requires(M c, const M cc, const T t)
+        && requires(M c, const T t)
     {
         { c(t) } -> std::convertible_to<T>;
-        { cc() } -> std::convertible_to<T>;
     };
 
     template <size_t BitsPerInput>
@@ -123,7 +122,6 @@ inline namespace utils {
     requires InputPredictor<ModelUnderTest, InputType>
     class Model
     {
-        ModelUnderTest model;
     public:
         using Input = InputType;
         using InputSequence = utils::InputSequence<Input>;
@@ -146,9 +144,9 @@ inline namespace utils {
         }
         
         //////////////
-        Input operator()() const { return model(); }
-        Model& operator << (const Input& p) { model(p); return *this; }
+        Model& operator << (const Input& p) { cached_prediction = model(p); return *this; }
         ////////////////
+        Input operator()() const { return cached_prediction; }
 
         // Sequentially feeds each element of the range to the target.
         template <std::ranges::range Range>
@@ -156,7 +154,7 @@ inline namespace utils {
         Model& operator << (Range&& range)
         {
             for (auto&& elt : range)
-                model(elt);
+                *this << elt;
             return *this;
         }
 
@@ -206,21 +204,24 @@ inline namespace utils {
         {
             InputSequence seq; seq.reserve(length);
             while (seq.size() < length) {
-                seq.push_back(model());
-                model(seq.back());
+                seq.push_back(cached_prediction);
+                cached_prediction = seq.back();
             }
             return seq;
         }
 
     private:
+        ModelUnderTest model;
+        Input cached_prediction;
+        
         // Modifies the model by processing the given inputs and returns its corresponding predictions.
         InputSequence process(const InputSequence& inputs)
         {
             InputSequence predictions; predictions.reserve(inputs.size());
 
             for (const Input& in : inputs) {
-                predictions.push_back(model());
-                model(in);
+                predictions.push_back(cached_prediction);
+                *this << in;
             }
             return predictions;
         }
