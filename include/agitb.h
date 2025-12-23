@@ -98,7 +98,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#3 Injective determinism (Models are deterministic and sensitive)",
+                    "#3 Determinism (Identical inputs guarantee identical models.)",
                     RepeatForever,
                     []() {
                         auto deterministic = []() {
@@ -110,6 +110,14 @@ namespace sprogar {
 
                             return A == B;
                         };
+
+                        ASSERT(deterministic());
+                    }
+                },
+                {
+                    "#4 Sensitivity (Distinct models remain distinct under identical inputs.)",
+                    RepeatForever,
+                    []() {
                         auto sensitive = []() {
                             const Input p = random<Input>();
                             const InputSequence random_experience(InputSequence::random, SimulatedInfinity);
@@ -121,12 +129,11 @@ namespace sprogar {
                             return A != B;
                         };
                         
-                        ASSERT(deterministic());
                         ASSERT(sensitive());
                     }
                 },
                 {
-                    "#4 Time (System evolution depends on input order.)",
+                    "#5 Time (System evolution depends on input order.)",
                     RepeatForever,
                     []() {
                         const Input x = random<Input>();
@@ -139,7 +146,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#5 Absolute refractory period (Each spike (1) must be followed by a no-spike (0).)",
+                    "#6 Absolute refractory period ( model can learn a cyclic sequence only if the sequence satisfies the ARP constraint.)",
                     Repeat100x,
                     []() {
                         const Input x = random<Input>();
@@ -153,7 +160,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#6 Temporal adaptability (The model must be able to learn sequences with varying cycle lengths.)",
+                    "#7 Temporal adaptability (The model must be able to learn sequences with varying cycle lengths.)",
                     RepeatOnce,
                     []() {
                         const InputSequence trivial_problem(InputSequence::trivial, SequenceLength);
@@ -165,7 +172,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#7 Bounded learnability (Bounded learning with a universal minimum.)",
+                    "#8 Bounded learnability (Teaching tricks to an old dog.)",
                     RepeatForever,
                     []() {
                         auto limited_learnability = [&](Model& A) -> bool {
@@ -186,12 +193,12 @@ namespace sprogar {
 
                         Model A;
 
-                        ASSERT(limited_learnability(A));
-                        ASSERT(universal_learnability(A));
+                        ASSERT(limited_learnability(A));    // can't teach an old dog new tricks
+                        ASSERT(universal_learnability(A));  // though a trivial trick is learnable
                     }
                 },                
                 {
-                    "#8 Content sensitivity (Adaptation time depends on the content of the input sequence.)",
+                    "#9 Content sensitivity (Adaptation time depends on the input sequence.)",
                     RepeatForever,
                     []() {
                     // Null Hypothesis: Adaptation time is independent of the input sequence content
@@ -216,7 +223,7 @@ namespace sprogar {
                 }
             },
                 {
-                    "#9 Context sensitivity (Adaptation time depends on the state of the model.)",
+                    "#10 Context sensitivity (Adaptation time depends on the model.)",
                     RepeatForever,
                     []() {
                         // Null Hypothesis: Adaptation time is independent of the state of the model
@@ -240,7 +247,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#10 Unobservability (Distinct model instances may exhibit the same observable behaviour in some timeframe.)",
+                    "#11 Unobservability (Inequivalent models may exhibit the same observable behaviour.)",
                     RepeatForever,
                     []() {
                         // Null Hypothesis: "Different models cannot produce identical behavior."
@@ -262,7 +269,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#11 Denoising (The model performs above chance on perturbed inputs.)",
+                    "#12 Denoising (The model performs above chance on perturbed inputs.)",
                     RepeatForever,
                     []() {
                         size_t score = 0;
@@ -287,7 +294,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#12 Generalisation (The model performs above chance on previously unseen inputs.)",
+                    "#13 Generalisation (The model performs above chance on previously unseen inputs.)",
                     Repeat100x,
                     []() {
                         size_t score = 0;
@@ -308,7 +315,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#13 Bounded state update (A single input-driven state update completes in bounded time, independent of model complexity.)",
+                    "#14 Liveness (The model completes each input-driven transition within bounded time.)",
                     Repeat100x,
                     []() {
                         auto state_update_time = [](Model& M, const Model::InputSequence& sequence) -> size_t {
