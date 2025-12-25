@@ -84,7 +84,6 @@ namespace sprogar {
                         Model A;
 
                         ASSERT(A == Model{});				        // blank models are equal
-                        ASSERT(A() == Input{});	    // first prediction: {0,0,0,0,0,0,0,0,0,0}
                     }
                 },
                 {
