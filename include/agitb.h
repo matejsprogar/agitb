@@ -72,13 +72,25 @@ namespace sprogar {
                 std::clog << green("\nPASS\n");
                 return true;
             }
+            static void debug(int id)
+            {
+                const auto& [info, repetitions, test] = testbed[id];
+                std::clog << info << std::endl;
+
+                const std::string go_back(10, '\b');
+                for (size_t i = 1; i <= repetitions; ++i) {
+                    std::clog << i << '/' << repetitions << go_back;
+
+                    test();
+                }
+            }
 
         private:
             static size_t repeats(mode _mode, size_t repetitions) { return _mode == exhaustive ? repetitions : std::min(repetitions, Repeat100x); }
             static inline const std::vector<std::tuple<std::string, size_t, void(*)()>> testbed =
             {
                 {
-                    "#1 Bias-free start (All models begin in a completely blank, bias-free state.)",
+                    "#1 Bias-free start (All models begin completely blank, bias-free.)",
                     RepeatOnce,
                     []() {
                         Model A;
@@ -87,7 +99,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#2 Bias (A change in state indicates bias.)",
+                    "#2 Bias (A model change indicates bias.)",
                     Repeat100x,
                     []() {
                         Model A;
@@ -97,7 +109,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#3 Determinism (Identical inputs guarantee identical models.)",
+                    "#3 Determinism (Model evolution is deterministic with respect to input.)",
                     RepeatForever,
                     []() {
                         auto deterministic = []() {
@@ -114,7 +126,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#4 Sensitivity (Distinct models remain distinct under identical inputs.)",
+                    "#4 Strong sensitivity (Distinct models remain distinct under any input.)",
                     RepeatForever,
                     []() {
                         auto sensitive = []() {
@@ -132,7 +144,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#5 Time (System evolution depends on input order.)",
+                    "#5 Time (Model evolution depends on input order.)",
                     RepeatForever,
                     []() {
                         const Input x = random<Input>();
@@ -145,7 +157,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#6 Absolute refractory period ( model can learn a cyclic sequence only if the sequence satisfies the ARP constraint.)",
+                    "#6 Absolute refractory period (A model can learn a cyclic sequence only if the sequence satisfies the absolute refractory-period constraint.)",
                     Repeat100x,
                     []() {
                         const Input x = random<Input>();
@@ -183,7 +195,7 @@ namespace sprogar {
                             }
                             return false;
                         };
-                        auto universal_learnability = [&](Model& A) -> bool {
+                        auto length_2_sequences_universally_learnable = [&](Model& A) -> bool {
                             const size_t nontrivial_length = 2;
                             InputSequence any_short_trick(InputSequence::circular_random, nontrivial_length);
 
@@ -192,16 +204,16 @@ namespace sprogar {
 
                         Model A;
 
-                        ASSERT(limited_learnability(A));    // can't teach an old dog new tricks
-                        ASSERT(universal_learnability(A));  // though a trivial trick is learnable
+                        ASSERT(limited_learnability(A));    // The model has limited learnability.
+                        ASSERT(length_2_sequences_universally_learnable(A));  // All admissible length-2 sequences are universally learnable.
                     }
                 },                
                 {
-                    "#9 Content sensitivity (Adaptation time depends on the input sequence.)",
+                    "#9 Content sensitivity (Adaptation time is input dependent.)",
                     RepeatForever,
                     []() {
                     // Null Hypothesis: Adaptation time is independent of the input sequence content
-                    auto adaptation_time_depends_on_the_content_of_the_input_sequence = [=]() -> bool {
+                    auto adaptation_time_is_input_dependent = [=]() -> bool {
                         Model B;
                         const InputSequence base_sequence = Model::learnable_random_sequence(SequenceLength, SimulatedInfinity);
                         const time_t base_time = B.time_to_repeat(base_sequence, SimulatedInfinity);
@@ -218,15 +230,15 @@ namespace sprogar {
                         return false;
                     };
 
-                    ASSERT(adaptation_time_depends_on_the_content_of_the_input_sequence());
+                    ASSERT(adaptation_time_is_input_dependent());
                 }
             },
                 {
-                    "#10 Context sensitivity (Adaptation time depends on the model.)",
+                    "#10 Context sensitivity (Adaptation time is model dependent.)",
                     RepeatForever,
                     []() {
-                        // Null Hypothesis: Adaptation time is independent of the state of the model
-                        auto adaptation_time_depends_on_state_of_the_model = [&]() -> bool {
+                        // Null Hypothesis: Adaptation time is independent of the model
+                        auto adaptation_time_is_model_dependent = [&]() -> bool {
                             const InputSequence target_sequence = Model::learnable_random_sequence(SequenceLength, SimulatedInfinity);
                             Model B;
                             const time_t base_time = B.time_to_repeat(target_sequence, SimulatedInfinity);
@@ -242,11 +254,11 @@ namespace sprogar {
                             return false;
                         };
 
-                        ASSERT(adaptation_time_depends_on_state_of_the_model());
+                        ASSERT(adaptation_time_is_model_dependent());
                     }
                 },
                 {
-                    "#11 Unobservability (Inequivalent models may exhibit the same observable behaviour.)",
+                    "#11 Unobservability (Distinct models may be observationally indistinguishable.)",
                     RepeatForever,
                     []() {
                         // Null Hypothesis: "Different models cannot produce identical behavior."
@@ -268,11 +280,11 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#12 Denoising (The model performs above chance on perturbed inputs.)",
+                    "#12 Denoising (The model outperforms the best trivial baseline predictor.)",
                     RepeatForever,
                     []() {
-                        size_t score = 0;
-                        const int N = 20, exposure_time = 5 * SequenceLength;
+                        size_t model_score = 0, baseline_0_score = 0, baseline_1_score = 0;
+                        const int N = 20, exposure_time = 5 * SequenceLength;   // plenty of time
                         for (int i = 0; i < N; ++i) {
                             const InputSequence seq(InputSequence::circular_random, SequenceLength);
                             const Input disruption = random<Input>(seq[1], seq.back());
@@ -285,21 +297,22 @@ namespace sprogar {
                             A << (seq | std::views::drop(1));
 
                             const Input& truth = seq.front();
-                            score += utils::count_matching_bits(A(), truth);
+                            model_score += utils::count_matching_bits(A(), truth);
+                            baseline_0_score += utils::count_matching_bits(Input{}, truth);
+                            baseline_1_score += utils::count_matching_bits(~Input{}, truth);
                         }
-                        const size_t random_guess = N * BitsPerInput / 2;
 
-                        ASSERT(score > random_guess);
+                        ASSERT(model_score > std::max(baseline_0_score, baseline_1_score));
                     }
                 },
                 {
                     "#13 Generalisation (The model performs above chance on previously unseen inputs.)",
-                    Repeat100x,
+                    RepeatForever,
                     []() {
                         size_t score = 0;
                         const int N = 20, k = 10;
                         for (int i = 0; i < N; ++i) {
-                            Model rule_generator(Model::random, 1000*SequenceLength);        // data hides an unknown random rule
+                            Model rule_generator(Model::random, 1000*SequenceLength);        // implements an unknown random rule
                             const auto train = rule_generator.generate(k * SequenceLength);  // split: first k parts for training
                             const auto truth = rule_generator.generate(1 * SequenceLength);  //        1 subsequent part for testing  
 
@@ -315,7 +328,7 @@ namespace sprogar {
                 },
                 {
                     "#14 Liveness (The model completes each input-driven transition within bounded time.)",
-                    Repeat100x,
+                    RepeatForever,
                     []() {
                         auto state_update_time = [](Model& M, const Model::InputSequence& sequence) -> size_t {
                             const auto start = std::chrono::high_resolution_clock::now();
