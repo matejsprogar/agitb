@@ -72,18 +72,6 @@ namespace sprogar {
                 std::clog << green("\nPASS\n");
                 return true;
             }
-            static void debug(int id)
-            {
-                const auto& [info, repetitions, test] = testbed[id];
-                std::clog << info << std::endl;
-
-                const std::string go_back(10, '\b');
-                for (size_t i = 1; i <= repetitions; ++i) {
-                    std::clog << i << '/' << repetitions << go_back;
-
-                    test();
-                }
-            }
 
         private:
             static size_t repeats(mode _mode, size_t repetitions) { return _mode == exhaustive ? repetitions : std::min(repetitions, Repeat100x); }
@@ -95,7 +83,7 @@ namespace sprogar {
                     []() {
                         Model A;
 
-                        ASSERT(A == Model{});				        // blank models are equal
+                        ASSERT(A == Model{});				        // A_0 == B_0
                     }
                 },
                 {
@@ -105,7 +93,7 @@ namespace sprogar {
                         Model A;
                         A << random<Input>();
 
-                        ASSERT(A != Model{});
+                        ASSERT(A != Model{});                       // A_1 != A_0
                     }
                 },
                 {
@@ -133,11 +121,11 @@ namespace sprogar {
                             const Input p = random<Input>();
                             const InputSequence random_experience(InputSequence::random, SimulatedInfinity);
 
-                            Model A, B;
-                            A << p << random_experience;
-                            B << ~p << random_experience;
+                            Model A, B;                             // A_0, B_0
+                            A << p << random_experience;            // A_1, A_5001
+                            B << ~p << random_experience;           // B_1, B_5001
 
-                            return A != B;
+                            return A != B;                          // A_5001 != B_5001
                         };
                         
                         ASSERT(sensitive());
