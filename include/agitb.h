@@ -78,7 +78,7 @@ namespace sprogar {
             static inline const std::vector<std::tuple<std::string, size_t, void(*)()>> testbed =
             {
                 {
-                    "#1 Bias-free start (All models begin completely blank, bias-free.)",
+                    "#1 Uninformed start (All instances of a given model type begin transitioning from an identical initial configuration.)",
                     RepeatOnce,
                     []() {
                         Model A;
@@ -87,7 +87,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#2 Bias (A model change indicates bias.)",
+                    "#2 Model transition (Every exposure to input produces a model transition.)",
                     Repeat100x,
                     []() {
                         Model A;
@@ -114,7 +114,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#4 Strong sensitivity (Distinct models remain distinct under any input.)",
+                    "#4 Update injectivity (Distinct models remain distinct under any input.)",
                     RepeatForever,
                     []() {
                         auto sensitive = []() {
