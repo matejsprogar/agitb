@@ -55,8 +55,8 @@ namespace sprogar {
         public:
             static bool run(mode _mode = exhaustive)
             {
-                std::clog << "Artificial General Intelligence Testbed\n\n";
-                std::clog << "Random seed: " << random_seed << std::endl;
+                std::clog << "Artificial General Intelligence Testbed\n";
+                std::clog << "Random seed: " << random_seed << std::endl << std::endl;
 
                 const std::string go_back(10, '\b');
                 for (const auto& [info, repetitions, test] : testbed) {
@@ -175,7 +175,7 @@ namespace sprogar {
                     "#8 Bounded learnability (Teaching tricks to an old dog.)",
                     RepeatForever,
                     []() {
-                        auto limited_learnability = [&](Model& A) -> bool {
+                        auto limited_learnability = [](Model& A) -> bool {
                             for (time_t time = 0; time < SimulatedInfinity; ++time) {
                                 InputSequence learnable_trick = Model::learnable_random_sequence(SequenceLength, SimulatedInfinity);
 
@@ -184,7 +184,7 @@ namespace sprogar {
                             }
                             return false;
                         };
-                        auto length_2_sequences_universally_learnable = [&](Model& A) -> bool {
+                        auto length_2_sequences_universally_learnable = [](Model& A) -> bool {
                             const size_t nontrivial_length = 2;
                             InputSequence any_short_trick(InputSequence::circular_random, nontrivial_length);
 
@@ -202,7 +202,7 @@ namespace sprogar {
                     RepeatForever,
                     []() {
                     // Null Hypothesis: Adaptation time is independent of the input sequence content
-                    auto adaptation_time_is_input_dependent = [=]() -> bool {
+                    auto adaptation_time_is_input_dependent = []() -> bool {
                         Model B;
                         const InputSequence base_sequence = Model::learnable_random_sequence(SequenceLength, SimulatedInfinity);
                         const time_t base_time = B.time_to_repeat(base_sequence, SimulatedInfinity);
@@ -227,7 +227,7 @@ namespace sprogar {
                     RepeatForever,
                     []() {
                     // Null Hypothesis: Adaptation time is independent of the model
-                    auto adaptation_time_is_model_dependent = [&]() -> bool {
+                    auto adaptation_time_is_model_dependent = []() -> bool {
                         const InputSequence target_sequence = Model::learnable_random_sequence(SequenceLength, SimulatedInfinity);
                         Model B;
                         const time_t base_time = B.time_to_repeat(target_sequence, SimulatedInfinity);
@@ -251,7 +251,7 @@ namespace sprogar {
                 RepeatForever,
                 []() {
                     // Null Hypothesis: "Different models cannot produce identical behavior."
-                    auto different_model_instances_can_produce_identical_behaviour = [&]() -> bool {
+                    auto different_model_instances_can_produce_identical_behaviour = []() -> bool {
                         const InputSequence simplest_behaviour = { Input{}, Input{} };
                         for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
                             Model A, B(Model::random, SequenceLength);
