@@ -56,6 +56,7 @@ namespace sprogar {
             static bool run(mode _mode = exhaustive)
             {
                 std::clog << "Artificial General Intelligence Testbed\n\n";
+                std::clog << "Random seed: " << random_seed << std::endl;
 
                 const std::string go_back(10, '\b');
                 for (const auto& [info, repetitions, test] : testbed) {
@@ -114,21 +115,20 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#4 Irreversibility (Once the model leaves a configuration, it can never return to it.)",
+                    "#4 History (Each input leaves a permanent internal trace.)",
                     RepeatForever,
                     []() {
                         Model A(Model::random, SequenceLength);
 
-                        const size_t N = 1 << BitsPerInput;
-                        for (size_t i = 0; i < N; ++i) {
-                            Model Ax = A;
-                            Ax << Input(i);
+                        std::vector<Model> trajectory;
+                        trajectory.reserve(SimulatedInfinity);
 
-                            for (size_t j = 0; j < N; ++j) {
-                                Model Axy = Ax;
-                                Axy << Input(j);
-                                ASSERT(Axy != A);
-                            }
+                        trajectory.push_back(A);
+                        while (trajectory.size() < SimulatedInfinity) {
+                            A << random<Input>();
+
+                            ASSERT(std::find(trajectory.begin(), trajectory.end(), A) == trajectory.end());
+                            trajectory.push_back(A);
                         }
                     }
                 },

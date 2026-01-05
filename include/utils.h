@@ -36,6 +36,8 @@ namespace AGI {
 inline namespace utils {
     using time_t = size_t;
 
+    static const auto random_seed = std::random_device{}();
+
     template <typename M, typename T>
     concept InputPredictor = std::regular<M>
         && requires(M c, const T& t)
@@ -68,7 +70,7 @@ inline namespace utils {
     requires (std::same_as<Input, Inputs> && ...)
     Input random(const Inputs&... turn_off)
     {
-        static std::mt19937 rng{ std::random_device{}() };
+        static std::mt19937 rng{ random_seed };
         static std::bernoulli_distribution bd(0.5);
 
         Input input{};
@@ -144,6 +146,7 @@ inline namespace utils {
         }
         
         //////////////
+        Input operator ()(const Input& p) { return cached_prediction = model(p); }
         Model& operator << (const Input& p) { cached_prediction = model(p); return *this; }
         ////////////////
         Input operator()() const { return cached_prediction; }
