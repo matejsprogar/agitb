@@ -172,7 +172,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#8 Bounded learnability (Teaching tricks to an old dog.)",
+                    "#8 Limits (The model’s learnability is limited, except for the simplest tasks.)",
                     RepeatForever,
                     []() {
                         auto limited_learnability = [](Model& A) -> bool {
