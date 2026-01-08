@@ -38,7 +38,7 @@ namespace sprogar {
         const size_t SimulatedInfinity = 5000;
 
         // AGITB settings : temporal patterns with seven inputs of ten bits each
-        const time_t SequenceLength = 7;        // |\varphi
+        const time_t SequenceLength = 7;        // N
         const size_t BitsPerInput = 10;         // L
         const size_t Repeat100x = 100;
         const size_t RepeatForever = SimulatedInfinity;
@@ -62,9 +62,9 @@ namespace sprogar {
                 for (const auto& [info, repetitions, test] : testbed) {
                     std::clog << info << std::endl;
 
-                    const size_t N = repeats(_mode, repetitions);
-                    for (size_t i = 1; i <= N; ++i) {
-                        std::clog << i << '/' << N << go_back;
+                    const size_t R = repeats(_mode, repetitions);
+                    for (size_t i = 1; i <= R; ++i) {
+                        std::clog << i << '/' << R << go_back;
 
                         test();
                     }
@@ -75,12 +75,14 @@ namespace sprogar {
             }
 
         private:
-            static size_t repeats(mode _mode, size_t repetitions) { return _mode == exhaustive ? repetitions : std::min(repetitions, Repeat100x); }
+            static inline const auto all_distinct_inputs = std::views::iota(0, 1 << BitsPerInput)
+                | std::views::transform([](int i) { return Input(i); });
+            static inline size_t repeats(mode _mode, size_t repetitions) { return _mode == exhaustive ? repetitions : std::min(repetitions, Repeat100x); }
             static inline const std::vector<std::tuple<std::string, size_t, void(*)()>> testbed =
             {
                 {
                     "#1 Uninformed start (All instances of a given model type begin transitioning from an identical initial configuration.)",
-                    RepeatOnce,
+                    Repeat100x,
                     []() {
                         Model A;
 
@@ -88,34 +90,40 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#2 Model transition (Every exposure to input produces a model transition.)",
+                    "#2 Perpetual change (Every input modifies the model configuration.)",
                     Repeat100x,
                     []() {
-                        Model A;
-                        A << random<Input>();
+                        const time_t warm_up = utils::random(SimulatedInfinity);
+                        Model A(Model::random, warm_up);
 
-                        ASSERT(A != Model{});                       // A_1 != A_0
+                        for (const Input& x : all_distinct_inputs) {
+                            Model A_prev = A;
+                            A << x;
+
+                            ASSERT(A != A_prev);                       // A_1 != A_0
+                        }
                     }
                 },
                 {
                     "#3 Determinism (Model evolution is deterministic with respect to input.)",
-                    RepeatForever,
+                    Repeat100x,
                     []() {
-                        auto deterministic = []() {
-                            const InputSequence random_experience(InputSequence::random, SimulatedInfinity);
+                        const InputSequence warm_up(InputSequence::random, utils::random(SimulatedInfinity));
+                        Model A, B;
 
-                            Model A, B;
-                            A << random_experience;
-                            B << random_experience;
+                        A << warm_up;   
+                        B << warm_up;       // B = A would allow RNG duplication.
 
-                            return A == B;
-                        };
+                        for (const Input& x : all_distinct_inputs) {
+                            A << x;
+                            B << x;
 
-                        ASSERT(deterministic());
+                            ASSERT(A == B);
+                        }
                     }
                 },
                 {
-                    "#4 History (Each input leaves a permanent internal trace.)",
+                    "#4 Trace (Each input leaves a permanent internal trace.)",
                     RepeatForever,
                     []() {
                         Model A(Model::random, SequenceLength);
@@ -134,33 +142,75 @@ namespace sprogar {
                 },
                 {
                     "#5 Time (Model evolution depends on input order.)",
-                    RepeatForever,
+                    Repeat100x,
                     []() {
-                        const Input x = random<Input>();
+                        for (const Input& x : all_distinct_inputs) {
+                            Model A(Model::random, SequenceLength), B = A;
+                            A << x << ~x;
+                            B << ~x << x;
 
-                        Model A, B;
-                        A << x << ~x;
-                        B << ~x << x;
-
-                        ASSERT(A != B);
+                            ASSERT(A != B);
+                        }
                     }
                 },
                 {
                     "#6 Absolute refractory period (A model can learn a cyclic sequence only if the sequence satisfies the absolute refractory-period constraint.)",
-                    Repeat100x,
+                    RepeatOnce,
                     []() {
-                        const Input x = random<Input>();
-                        const InputSequence no_consecutive_spikes = { x, ~x };
-                        const InputSequence consecutive_spikes = { x, x };
+                        for (const Input x : all_distinct_inputs) {
+                            const InputSequence no_consecutive_spikes = { x, ~x };
+                            const InputSequence consecutive_spikes = { x, x };
+                            const bool has_spike = x.any();
 
-                        Model A, B;
+                            Model A, B;
 
-                        ASSERT(A.learn(no_consecutive_spikes, SimulatedInfinity));
-                        ASSERT(not B.learn(consecutive_spikes, SimulatedInfinity) || x == Input{});
+                            ASSERT(A.learn(no_consecutive_spikes, SimulatedInfinity));
+                            ASSERT(not B.learn(consecutive_spikes, SimulatedInfinity) || !has_spike);
+                        }
                     }
                 },
                 {
-                    "#7 Temporal adaptability (The model must be able to learn sequences with varying cycle lengths.)",
+                    "#7a Limited learnability (No model can learn everything there is to learn.)",
+                    RepeatForever,
+                    []() {
+                        auto limited_learnability = [](Model& A) -> bool {
+                            for (time_t time = 0; time < SimulatedInfinity; ++time) {
+                                InputSequence admissible_sequence(InputSequence::circular_random, SequenceLength);
+
+                                if (not A.learn(admissible_sequence, SimulatedInfinity))
+                                    return true;
+                            }
+                            return false;
+                        };
+
+                        Model A;
+                        ASSERT(limited_learnability(A));                            // The model has limited learnability.
+                    }
+                },
+                {
+                    "#7b Limited learnability (All admissible length-2 sequences are universally learnable.)",
+                    RepeatForever,
+                    []() {
+                        auto admissible = [](const Input & x1, const Input & x2) -> bool {
+                            return not (x1 & x2).any();                             // absolute refractory-period constraint
+                        };
+
+                        const time_t warm_up = utils::random(SimulatedInfinity);
+                        const Model base(Model::random, warm_up);                   // a reachable configuration in Model space
+                        for (const Input& x1 : all_distinct_inputs) {
+                            for (const Input& x2 : all_distinct_inputs) {
+                                if (!admissible(x1, x2))
+                                    continue;
+
+                                InputSequence length_2_sequence = { x1, x2 };
+                                Model A = base;
+                                ASSERT(A.learn(length_2_sequence, SimulatedInfinity));
+                            }
+                        }
+                    }
+                },
+                {
+                    "#8 Temporal adaptability (The model must be able to learn sequences with varying cycle lengths.)",
                     RepeatOnce,
                     []() {
                         const InputSequence trivial_problem(InputSequence::trivial, SequenceLength);
@@ -172,47 +222,22 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#8 Limits (The model’s learnability is limited, except for the simplest tasks.)",
-                    RepeatForever,
-                    []() {
-                        auto limited_learnability = [](Model& A) -> bool {
-                            for (time_t time = 0; time < SimulatedInfinity; ++time) {
-                                InputSequence learnable_trick = Model::learnable_random_sequence(SequenceLength, SimulatedInfinity);
-
-                                if (not A.learn(learnable_trick, SimulatedInfinity))
-                                    return true;
-                            }
-                            return false;
-                        };
-                        auto length_2_sequences_universally_learnable = [](Model& A) -> bool {
-                            const size_t nontrivial_length = 2;
-                            InputSequence any_short_trick(InputSequence::circular_random, nontrivial_length);
-
-                            return A.learn(any_short_trick, SimulatedInfinity);
-                        };
-
-                        Model A;
-
-                        ASSERT(limited_learnability(A));    // The model has limited learnability.
-                        ASSERT(length_2_sequences_universally_learnable(A));  // All admissible length-2 sequences are universally learnable.
-                    }
-                },
-                {
                     "#9 Content sensitivity (Adaptation time is input dependent.)",
                     RepeatForever,
                     []() {
                     // Null Hypothesis: Adaptation time is independent of the input sequence content
                     auto adaptation_time_is_input_dependent = []() -> bool {
                         Model B;
-                        const InputSequence base_sequence = Model::learnable_random_sequence(SequenceLength, SimulatedInfinity);
-                        const time_t base_time = B.time_to_repeat(base_sequence, SimulatedInfinity);
+                        const InputSequence phi1 = Model::learnable_random_sequence(SequenceLength, SimulatedInfinity);
+                        const time_t phi1_time = B.time_to_learn(phi1, SimulatedInfinity);
                         for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
-                            const InputSequence sequence(InputSequence::circular_random, SequenceLength);
+                            const InputSequence phi2(InputSequence::circular_random, SequenceLength);   // admissible by construction
 
-                            if (sequence != base_sequence) {
+                            if (phi2 != phi1) {
                                 Model A;
-                                time_t time = A.time_to_repeat(sequence, SimulatedInfinity);
-                                if (base_time != time)                      // rejects the null hypothesis
+                                time_t phi2_time = A.time_to_learn(phi2, SimulatedInfinity);
+                                const bool phi2_learnable = phi2_time < SimulatedInfinity;
+                                if (phi2_learnable and phi1_time != phi2_time)                          // rejects the null hypothesis
                                     return true;
                             }
                         }
@@ -228,17 +253,15 @@ namespace sprogar {
                     []() {
                     // Null Hypothesis: Adaptation time is independent of the model
                     auto adaptation_time_is_model_dependent = []() -> bool {
-                        const InputSequence target_sequence = Model::learnable_random_sequence(SequenceLength, SimulatedInfinity);
-                        Model B;
-                        const time_t base_time = B.time_to_repeat(target_sequence, SimulatedInfinity);
+                        const InputSequence phi = Model::learnable_random_sequence(SequenceLength, SimulatedInfinity);
+                        Model A;
+                        const time_t A_time = A.time_to_learn(phi, SimulatedInfinity);
                         for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
-                            Model A(Model::random, SequenceLength);
+                            Model B(Model::random, 1 + utils::random(SequenceLength));                  // B != A by construction
 
-                            if (A != Model{}) {
-                                time_t time = A.time_to_repeat(target_sequence, SimulatedInfinity);
-                                if (base_time != time)                    // rejects the null hypothesis
-                                    return true;
-                            }
+                            time_t B_time = A.time_to_learn(phi, SimulatedInfinity);
+                            if (A_time != B_time)                                                       // rejects the null hypothesis
+                                return true;
                         }
                         return false;
                     };
@@ -273,8 +296,8 @@ namespace sprogar {
                 RepeatForever,
                 []() {
                     size_t model_score = 0, baseline_0_score = 0, baseline_1_score = 0;
-                    const int N = 20, exposure_time = 5 * SequenceLength;   // plenty of time
-                    for (int i = 0; i < N; ++i) {
+                    const int num_of_experiments = 20, exposure_time = 5 * SequenceLength;   // plenty of time
+                    for (int i = 0; i < num_of_experiments; ++i) {
                         const InputSequence seq(InputSequence::circular_random, SequenceLength);
                         const Input disruption = random<Input>(seq[1], seq.back());
 
@@ -299,8 +322,8 @@ namespace sprogar {
                 RepeatForever,
                 []() {
                     size_t score = 0;
-                    const int N = 20, k = 10;
-                    for (int i = 0; i < N; ++i) {
+                    const int num_of_experiments = 20, k = 10;
+                    for (int i = 0; i < num_of_experiments; ++i) {
                         Model rule_generator(Model::random, SimulatedInfinity);          // implements an unknown random rule
                         const auto train = rule_generator.generate(k * SequenceLength);  // split: first k parts for training
                         const auto truth = rule_generator.generate(1 * SequenceLength);  //        1 subsequent part for testing  
@@ -310,16 +333,16 @@ namespace sprogar {
 
                         score += utils::count_matching_bits(A.generate(truth.size()), truth);
                     }
-                    const size_t random_guess = N * SequenceLength * BitsPerInput / 2;
+                    const size_t random_guess = num_of_experiments * SequenceLength * BitsPerInput / 2;
 
                     ASSERT(score > random_guess);
                 }
             },
             {
-                "#14 Liveness (The model completes each input-driven transition within bounded time.)",
+                "#14 Real-time liveness (The model completes each input-driven transition within bounded time.)",
                 RepeatForever,
                 []() {
-                    auto state_update_time = [](Model& M, const Model::InputSequence& sequence) -> size_t {
+                    auto total_update_time = [](Model& M, const Model::InputSequence& sequence) -> size_t {
                         const auto start = std::chrono::high_resolution_clock::now();
 
                         M << sequence;
@@ -327,26 +350,26 @@ namespace sprogar {
                         const auto end = std::chrono::high_resolution_clock::now();
                         return (size_t)std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
                     };
-                    auto experiments = [&](size_t N) {
-                        std::vector<std::pair<size_t, size_t>> results; results.reserve(N);
+                    auto conduct_experiments = [&](size_t num) {
+                        std::vector<std::pair<size_t, size_t>> results; results.reserve(num);
 
-                        while (results.size() < N) {
+                        while (results.size() < num) {
                             const InputSequence sequence(InputSequence::random, SimulatedInfinity);
 
                             Model A;
                             Model B(Model::random, SimulatedInfinity);
 
                             results.emplace_back(
-                                state_update_time(A, sequence),   // empty model's time
-                                state_update_time(B, sequence)    // complex model's time
+                                total_update_time(A, sequence),
+                                total_update_time(B, sequence)
                             );
                         }
 
                         return results;
                     };
 
-                    const int N = 100;
-                    const auto results = experiments(N);
+                    const int num_of_experiments = 100;
+                    const auto results = conduct_experiments(num_of_experiments);
 
                     ASSERT(not utils::consistently_greater_second_value(results));
                 }

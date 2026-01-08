@@ -64,6 +64,13 @@ inline namespace utils {
         }
         return count;
     }
+
+    inline size_t random(size_t hi)
+    {
+        static std::mt19937 rng{ random_seed+1 };
+        static std::uniform_int_distribution<size_t> dist(0, hi);
+        return dist(rng);
+    }
     
     // Returns an input with spikes at random positions, except where explicitly required to have none.
     template<typename Input, typename... Inputs>
@@ -187,7 +194,7 @@ inline namespace utils {
         }
 
         // Adapts the model to the given input sequence and returns the time required to achieve perfect prediction.
-        time_t time_to_repeat(const InputSequence& inputs, time_t timeframe)
+        time_t time_to_learn(const InputSequence& inputs, time_t timeframe)
         {
             for (time_t time = 0; time < timeframe; time += inputs.size()) {
                 if (process(inputs) == inputs)
@@ -199,7 +206,7 @@ inline namespace utils {
         // Adapts the model to the given input sequence and returns true if perfect prediction is achieved.
         bool learn(const InputSequence& inputs, time_t timeframe)
         {
-            return time_to_repeat(inputs, timeframe) < timeframe;
+            return time_to_learn(inputs, timeframe) < timeframe;
         }
         
         // Feeds the model its own predictions to generate a sequence of predictions.
@@ -258,7 +265,7 @@ inline namespace utils {
  *  (3) false otherwise.
  *
  * Parameters:
- *  A_B
+ *  AB
  *      A vector of paired observations (A_i, B_i).
  *
  *  one_sided_z_threshold
@@ -268,13 +275,13 @@ inline namespace utils {
  *      = 2.326  strong evidence   (1% significance)
  *      = 1.645  standard choice   (5% significance)    
  **/
-    bool consistently_greater_second_value(const std::vector<std::pair<size_t, size_t>>& A_B,
+    bool consistently_greater_second_value(const std::vector<std::pair<size_t, size_t>>& AB,
         const double one_sided_z_threshold = 3.090)
     {
         struct SignedAbsDiff { size_t abs_diff; int sign; };
-        std::vector<SignedAbsDiff> diffs; diffs.reserve(A_B.size());
+        std::vector<SignedAbsDiff> diffs; diffs.reserve(AB.size());
 
-        for (auto [a, b] : A_B) {
+        for (auto [a, b] : AB) {
             if (a == b) continue;
             if (b > a)  diffs.emplace_back(b - a, +1);
             else        diffs.emplace_back(a - b, -1);
