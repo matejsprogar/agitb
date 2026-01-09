@@ -65,7 +65,7 @@ inline namespace utils {
         return count;
     }
 
-    inline size_t random(size_t hi)
+    inline size_t random_warm_up_time(time_t hi)
     {
         static std::mt19937 rng{ random_seed+1 };
         static std::uniform_int_distribution<size_t> dist(0, hi);
@@ -153,10 +153,10 @@ inline namespace utils {
         }
         
         //////////////
-        Input operator ()(const Input& p) { return cached_prediction = model(p); }
-        Model& operator << (const Input& p) { cached_prediction = model(p); return *this; }
+        Input operator ()(const Input& p) { return current_prediction = model(p); }
+        Model& operator << (const Input& p) { current_prediction = model(p); return *this; }
         ////////////////
-        Input operator()() const { return cached_prediction; }
+        Input operator()() const { return current_prediction; }
 
         // Sequentially feeds each element of the range to the target.
         template <std::ranges::range Range>
@@ -176,7 +176,7 @@ inline namespace utils {
                 if (M.learn(in, timeframe))
                     return in;
             }
-            std::cerr << red("Error:") << " Could not find a learnable sequence.\n";
+            std::cerr << "Error: Couldn't find a learnable sequence.\n";
             exit(-1);
         }
 
@@ -193,12 +193,12 @@ inline namespace utils {
             return A() == B();
         }
 
-        // Adapts the model to the given input sequence and returns the time required to achieve perfect prediction.
+        // Adapts the model to the given input sequence and returns the learning time in atomic steps required to achieve perfect prediction.
         time_t time_to_learn(const InputSequence& inputs, time_t timeframe)
         {
-            for (time_t time = 0; time < timeframe; time += inputs.size()) {
+            for (time_t tau = 0; tau < timeframe; tau += inputs.size()) {
                 if (process(inputs) == inputs)
-                    return time;
+                    return tau;
             }
             return timeframe;
         }
@@ -214,15 +214,15 @@ inline namespace utils {
         {
             InputSequence seq; seq.reserve(length);
             while (seq.size() < length) {
-                seq.push_back(cached_prediction);
-                cached_prediction = seq.back();
+                seq.push_back(current_prediction);
+                current_prediction = seq.back();
             }
             return seq;
         }
 
     private:
         ModelUnderTest model;
-        Input cached_prediction;
+        Input current_prediction;
         
         // Modifies the model by processing the given inputs and returns its corresponding predictions.
         InputSequence process(const InputSequence& inputs)
@@ -230,7 +230,7 @@ inline namespace utils {
             InputSequence predictions; predictions.reserve(inputs.size());
 
             for (const Input& in : inputs) {
-                predictions.push_back(cached_prediction);
+                predictions.push_back(current_prediction);
                 *this << in;
             }
             return predictions;
