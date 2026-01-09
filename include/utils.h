@@ -46,13 +46,13 @@ inline namespace utils {
     };
 
     template <size_t BitsPerInput>
-    size_t count_matching_bits(const std::bitset<BitsPerInput>& a, const std::bitset<BitsPerInput>& b)
+    size_t match_score(const std::bitset<BitsPerInput>& a, const std::bitset<BitsPerInput>& b)
     {
         return BitsPerInput - (a ^ b).count();
     }
 
     template <std::ranges::input_range R1, std::ranges::input_range R2>
-    size_t count_matching_bits(const R1& r1, const R2& r2)
+    size_t match_score(const R1& r1, const R2& r2)
     {
         auto it1 = std::ranges::begin(r1);
         auto it2 = std::ranges::begin(r2);
@@ -60,7 +60,7 @@ inline namespace utils {
 
         size_t count = 0;
         for (; it1 != end1; ++it1, ++it2) {
-            count += count_matching_bits(*it1, *it2);
+            count += match_score(*it1, *it2);
         }
         return count;
     }
@@ -210,14 +210,15 @@ inline namespace utils {
         }
         
         // Feeds the model its own predictions to generate a sequence of predictions.
-        InputSequence generate(size_t length)
+        auto generate(size_t length)
         {
-            InputSequence seq; seq.reserve(length);
-            while (seq.size() < length) {
-                seq.push_back(current_prediction);
-                current_prediction = seq.back();
-            }
-            return seq;
+            return std::views::iota(std::size_t{ 0 }, length)
+                | std::views::transform([&](std::size_t) {
+                    Model& model = *this;
+                    const Input prediction = model();
+                    model << prediction;
+                    return prediction; 
+                });
         }
 
     private:

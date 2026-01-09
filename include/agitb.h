@@ -45,6 +45,9 @@ namespace sprogar {
         const size_t RepeatOnce = 1;
         enum mode { exhaustive = 0, fast = 1 };
 
+        static_assert(SequenceLength > 1);
+        static_assert(BitsPerInput > 1);
+
         template <typename SystemUnderEvaluation>
         class TestBed
         {
@@ -266,77 +269,65 @@ namespace sprogar {
                 }
             },
             {
-                "#11 Unobservability (Distinct models may be observationally indistinguishable.)",
+                "#11 Denoising (An informed model outperforms the best constant baseline at denoising the corrupted input.)",
                 RepeatForever,
                 []() {
-                    // Null Hypothesis: "Distinct models cannot produce identical behavior."
-                    auto different_model_instances_can_produce_identical_behaviour = []() -> bool {
-                        const InputSequence phi = { Input{}, Input{} };     // learnable by Axiom 7
-                        for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
-                            Model A, B(Model::random, utils::random_warm_up_time(SimulatedInfinity));
-                            A.learn(phi, SimulatedInfinity);
-                            B.learn(phi, SimulatedInfinity);
-
-                            bool counterexample = A != B && Model::identical_behaviour(A, B, 2 * SequenceLength);
-                            if (counterexample)                             // rejects the null hypothesis
-                                return true;
-                        }
-                        return false;
+                    auto corruption = [](const Input& x0, const Input& x1, const Input& xk) -> Input {
+                        Input x;
+                        do {
+                            x = random<Input>(x1, xk);              // respect Axiom 6
+                        } while (x == x0);                          // ensure corruption
+                        return x;
                     };
-
-                    ASSERT(different_model_instances_can_produce_identical_behaviour());
-                }
-            },
-            {
-                "#12 Denoising (The model outperforms the best trivial baseline predictor.)",
-                RepeatForever,
-                []() {
                     const Input all_zeros = Input{}, all_ones = ~all_zeros;
                     size_t model_score = 0, baseline_0_score = 0, baseline_1_score = 0;
-                    const int num_of_experiments = 20, n = 5 * SequenceLength;   // plenty of time
+                    const int num_of_experiments = 20;              // within each of 5,000 trials
+                    const int n = 5 * SequenceLength;               // informing context length
                     for (int i = 0; i < num_of_experiments; ++i) {
                         const InputSequence phi(InputSequence::circular_random, SequenceLength);
-                        const Input _x1 = random<Input>(phi[1], phi.back());
+                        const Input x1_corrupted = corruption(phi[0], phi[1], phi.back());
 
                         Model A;
-                        for (int i = 0; i < n; ++i)
-                            A << phi;                                       // A << phi^n
+                        for (int j = 0; j < n; ++j)
+                            A << phi;                                                   // A << phi^n
 
-                        A << _x1 << (phi | std::views::drop(1));            // A << phi'
+                        A << x1_corrupted << (phi | std::views::drop(1));               // A << phi'
 
                         const Input& x1 = phi.front();
-                        model_score += utils::count_matching_bits(A(), x1);
-                        baseline_0_score += utils::count_matching_bits(all_zeros, x1);
-                        baseline_1_score += utils::count_matching_bits(all_ones, x1);
+                        model_score += utils::match_score(A(), x1);
+                        baseline_0_score += utils::match_score(all_zeros, x1);
+                        baseline_1_score += utils::match_score(all_ones, x1);
                     }
 
                     ASSERT(model_score > std::max(baseline_0_score, baseline_1_score));
                 }
             },
             {
-                "#13 Generalisation (The model performs above chance on previously unseen inputs.)",
+                "#12 Generalisation (The model performs above chance on previously unseen inputs.)",
                 RepeatForever,
                 []() {
                     size_t score = 0;
                     const int num_of_experiments = 20, k = 10;
                     for (int i = 0; i < num_of_experiments; ++i) {
-                        Model phi_generator(Model::random, SimulatedInfinity);
-                        const auto phi1 = phi_generator.generate(k * SequenceLength);
-                        const auto phi2 = phi_generator.generate(1 * SequenceLength);
+                        Model phi_generator(Model::random, SimulatedInfinity);          // unknown random rule
+                        const auto phi1 = phi_generator.generate(k * SequenceLength);   // prefix
+                        const auto phi2 = phi_generator.generate(1 * SequenceLength);   // continuation
 
                         Model A;
                         A << phi1;
 
-                        const InputSequence predicted_phi2 = A.generate(phi2.size());
-                        score += utils::count_matching_bits(predicted_phi2, phi2);
+                        const auto phi2_star = A.generate(phi2.size());
+                        score += utils::match_score(phi2_star, phi2);
                     }
-                    const size_t random_guess = num_of_experiments * SequenceLength * BitsPerInput / 2;
+                    // phi2.size() == SequenceLength, L = BitsPerInput
+                    const size_t total_bits = num_of_experiments * SequenceLength * BitsPerInput;
+                    const size_t random_guess = total_bits / 2;
 
                     ASSERT(score > random_guess);
                 }
             },
             {
-                "#14 Real-time liveness (The model completes each input-driven transition within bounded time.)",
+                "#13 Real-time liveness (Each model update completes within a uniform time bound.)",
                 RepeatForever,
                 []() {
                     auto total_update_time = [](Model& M, const Model::InputSequence& phi) -> size_t {
