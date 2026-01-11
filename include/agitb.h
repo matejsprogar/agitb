@@ -100,7 +100,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#3 Determinism (Model evolution is deterministic with respect to input.)",
+                    "#2 Determinism (Model evolution is deterministic with respect to input.)",
                     Repeat100x,
                     []() {
                         const InputSequence warm_up(InputSequence::random, utils::random_warm_up_time(SimulatedInfinity));
@@ -118,7 +118,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#4 Trace (Each input leaves a permanent internal trace.)",
+                    "#3 Trace (Each input leaves a permanent internal trace.)",
                     RepeatForever,
                     []() {
                         Model A(Model::random, utils::random_warm_up_time(SimulatedInfinity));
@@ -136,7 +136,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#5 Time (Model evolution depends on input order.)",
+                    "#4 Time (Model evolution depends on input order.)",
                     Repeat100x,
                     []() {
                         // sistematically use inputs x and ~x instead of sequences phi1, phi2 to reduce test duration
@@ -150,7 +150,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#6 Absolute refractory period (A model can learn a cyclic sequence only if the sequence satisfies the absolute refractory-period constraint.)",
+                    "#5 Absolute refractory period (A model can learn a cyclic sequence only if the sequence satisfies the absolute refractory-period constraint.)",
                     RepeatOnce,
                     []() {
                         for (const Input x : all_distinct_inputs) {
@@ -166,7 +166,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#7 Limited learnability (No model can learn everything there is to learn, except for the simplest cases.)",
+                    "#6 Limited learnability (No model can learn everything there is to learn, except for the simplest cases.)",
                     RepeatForever,
                     []() {
                         auto limited_learnability = [](Model& A) -> bool {
@@ -202,7 +202,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#8 Temporal adaptability (The model must be able to learn sequences with varying cycle lengths.)",
+                    "#7 Temporal adaptability (The model must be able to learn sequences with varying cycle lengths.)",
                     RepeatOnce,
                     []() {
                         const InputSequence phi1(InputSequence::trivial, SequenceLength);
@@ -214,7 +214,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#9 Content sensitivity (Adaptation time is input dependent.)",
+                    "#8 Content sensitivity (Adaptation time is input dependent.)",
                     RepeatForever,
                     []() {
                         // Null Hypothesis: Adaptation time is independent of the input sequence content
@@ -240,7 +240,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#10 Context sensitivity (Adaptation time is model dependent.)",
+                    "#9 Context sensitivity (Adaptation time is model dependent.)",
                     RepeatForever,
                     []() {
                         // Null Hypothesis: Adaptation time is independent of the model
@@ -262,7 +262,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#11 Denoising (An informed model outperforms the best constant baseline at denoising the corrupted input.)",
+                    "#10 Denoising (An informed model outperforms the best constant baseline at denoising the corrupted input.)",
                     RepeatForever,
                     []() {
                         auto corruption = [](const Input& x0, const Input& x1, const Input& xk) -> Input {
@@ -296,7 +296,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#12 Generalisation (The model performs above chance on previously unseen inputs.)",
+                    "#11 Generalisation (The model performs above chance on previously unseen inputs.)",
                     RepeatForever,
                     []() {
                         size_t score = 0;
@@ -320,7 +320,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#13 Real-time liveness (Each model update completes within a uniform time bound.)",
+                    "#12 Real-time liveness (Each model update completes within a uniform time bound.)",
                     RepeatForever,
                     []() {
                         auto batch_update_time = [](Model& model, const InputSequence& batch) -> time_t {
