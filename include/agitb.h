@@ -333,7 +333,7 @@ namespace sprogar {
                         };
                         auto autotune_batch_size = [&](const Model& model) -> size_t {
                             InputSequence batch(InputSequence::random, 1);
-                            while (batch.size() < 100000) {
+                            while (batch.size() < 1000000) {
                                 Model _model = model;
                                 if (batch_update_time(_model, batch) >= 100ull)
                                     break;

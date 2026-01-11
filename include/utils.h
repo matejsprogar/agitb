@@ -130,7 +130,7 @@ inline namespace utils {
             base::back() = ~Input{};                // [{0...0}, {0...0}, ..., {0...0}, {1...1}]
         }
 
-        // deterministically constructs a batch of structured inputs 
+        // deterministically constructs a stress batch of structured inputs
         InputSequence(structured_tag, time_t length, const size_t id)
         {
             base::reserve(length+1);
@@ -140,7 +140,7 @@ inline namespace utils {
             const Input half_bits_set = (~Input()) >> (L / 2);              // 0b0000011111 @ L=10
 
             const int choice = id % predefined_patterns;
-            const Input arp = choice != 7 ? Input{} : ~half_bits_set;   // absolute refractory-period
+            const Input arp = choice != 7 ? Input{} : ~half_bits_set;       // absolute refractory-period
 
             while (base::size() < length) {
                 const size_t shift = (base::size() / 2) % L;
