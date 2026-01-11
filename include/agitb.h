@@ -76,13 +76,6 @@ namespace sprogar {
                 std::clog << green("\nPASS\n");
                 return true;
             }
-            static void debug()
-            {
-                const auto& [info, repetitions, test] = testbed[11];
-                std::clog << info << std::endl;
-                test();
-                std::clog << green("\nOK\n");
-            }
 
         private:
             static inline const auto all_distinct_inputs = std::views::iota(0, 1 << BitsPerInput)
