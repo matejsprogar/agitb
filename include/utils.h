@@ -96,9 +96,13 @@ inline namespace utils {
         enum random_tag { random = 0 };
         enum circular_random_tag { circular_random = 0 };
         enum trivial_tag { trivial = 0 };
+        enum structured_tag { structured = 0 };
 
         InputSequence() {}
         InputSequence(std::initializer_list<Input> il) : std::vector<Input>(il) {}
+
+        //template<typename... Args>
+        //Model(Args&&... args) : model(std::forward<Args>(args)...) {}
 
         // constructs a random sequence of inputs with a specified length.
         InputSequence(random_tag, time_t length)
@@ -125,6 +129,35 @@ inline namespace utils {
             base::resize( length );
             base::back() = ~Input{};                // [{0...0}, {0...0}, ..., {0...0}, {1...1}]
         }
+
+        // deterministically constructs a batch of structured inputs 
+        InputSequence(structured_tag, time_t length, const size_t id)
+        {
+            base::reserve(length+1);
+
+            const size_t predefined_patterns = 8;
+            const size_t L = Input{}.size();
+            const Input half_bits_set = (~Input()) >> (L / 2);              // 0b0000011111 @ L=10
+
+            const int choice = id % predefined_patterns;
+            const Input arp = choice != 7 ? Input{} : ~half_bits_set;   // absolute refractory-period
+
+            while (base::size() < length) {
+                const size_t shift = (base::size() / 2) % L;
+                switch (choice)
+                {
+                case 0: base::push_back(Input{}); break;                    // 0 0 0 0 0...
+                case 1: base::push_back(~Input{}); break;                   // ~0 0 ~0 0 ~0...
+                case 2: base::push_back(Input{1}); break;                   // 1 0 1 0 1...
+                case 3: base::push_back(Input{2}); break;                   // 2 0 2 0 2...
+                case 4: base::push_back(Input{1ull << shift}); break;       // 1 0 2 0 4...
+                case 5: base::push_back(Input{3ull << shift}); break;       // 3 0 6 0 12...
+                case 6: base::push_back(half_bits_set); break;              // h 0 h 0 h...
+                case 7: base::push_back(half_bits_set); break;              // h ~h h ~h h...
+                }
+                base::push_back(arp);
+            }
+        }
     };
 
     template <typename ModelUnderTest, typename InputType>
@@ -147,9 +180,9 @@ inline namespace utils {
         //Model(Args&&... args) : model(std::forward<Args>(args)...) {}
 
         // Constructs a randomly initialized model by feeding it with random inputs.
-        Model(random_tag, const time_t random_initialization_strength) : Model()
+        Model(random_tag, const time_t warm_up) : Model()
         {
-            *this << InputSequence(InputSequence::random, random_initialization_strength);
+            *this << InputSequence(InputSequence::random, warm_up);
         }
         
         //////////////
@@ -244,30 +277,29 @@ inline namespace utils {
  *
  * This function implements a one-sided Wilcoxon signed-rank test on paired data and
  * returns a boolean indicating whether there is statistically significant evidence
- * that values in the second sequence (B) tend to be greater than the corresponding
- * values in the first sequence (A). It intentionally ignores effect size and
+ * that values in the second sequence (V2) tend to be greater than the corresponding
+ * values in the first sequence (V1). It intentionally ignores effect size and
  * variability; it answers only whether the direction of the difference is stable
  * across pairs.
  *
  * The test is:
- *   - Paired (each observation in A corresponds to one in B)
+ *   - Paired (each observation in V1 corresponds to one in V2)
  *   - Non-parametric (no distributional assumptions)
  *   - Robust to outliers and heavy-tailed noise
- *   - Directional (specifically tests for B > A)
+ *   - Directional (specifically tests for V2 > V1)
  *
- * Given paired observations (A_i, B_i), the Wilcoxon signed-rank test evaluates the
- * null hypothesis that the median of the paired differences (B_i - A_i) is zero,
+ * Given paired observations (V1_i, V2_i), the Wilcoxon signed-rank test evaluates the
+ * null hypothesis that the median of the paired differences (V2_i - V1_i) is zero,
  * against the alternative hypothesis that the median of the paired difference is positive.
  *
  * Return value:
  *  (1) false if fewer than 10 non-zero paired differences are available;
- *  (2) true if there is statistically significant evidence that B > A
+ *  (2) true if there is statistically significant evidence that V2 > V1
  *      (z-score exceeds the one-sided threshold);
  *  (3) false otherwise.
  *
  * Parameters:
- *  AB
- *      A vector of paired observations (A_i, B_i).
+ *  V1, V2: index-paired observations (V1_i, V2_i)
  *
  *  one_sided_z_threshold
  *      Threshold applied to the z-score from the normal approximation.
@@ -276,20 +308,23 @@ inline namespace utils {
  *      = 2.326  strong evidence   (1% significance)
  *      = 1.645  standard choice   (5% significance)    
  **/
-    bool consistently_greater_second_value(const std::vector<std::pair<size_t, size_t>>& AB,
+    bool consistently_greater_second_value(const std::vector<time_t>& V1, const std::vector<time_t>& V2,
         const double one_sided_z_threshold = 3.090)
     {
-        struct SignedAbsDiff { size_t abs_diff; int sign; };
-        std::vector<SignedAbsDiff> diffs; diffs.reserve(AB.size());
+        assert(V1.size() == V2.size());
 
-        for (auto [a, b] : AB) {
-            if (a == b) continue;
-            if (b > a)  diffs.emplace_back(b - a, +1);
-            else        diffs.emplace_back(a - b, -1);
+        struct SignedAbsDiff { size_t abs_diff; int sign; };
+        std::vector<SignedAbsDiff> diffs; diffs.reserve(V1.size());
+
+        for (size_t i = 0; i < V1.size(); ++i) {
+            const time_t v1 = V1[i], v2 = V2[i];
+            if (v1 == v2) continue;
+            if (v2 > v1)    diffs.emplace_back(v2 - v1, +1);
+            else            diffs.emplace_back(v1 - v2, -1);
         }
 
         const int n = (int)diffs.size();
-        const int min_nonzero_pairs = 10;
+        const int min_nonzero_pairs = 20;
         if (n < min_nonzero_pairs) return false;
 
         std::sort(diffs.begin(), diffs.end(),
@@ -317,7 +352,19 @@ inline namespace utils {
         const double cc = (Wplus > mu) ? 0.5 : 0.0;
         double z = (Wplus - mu - cc) / std::sqrt(var);
 
-        return z > one_sided_z_threshold;   // true => evidence that B tends to be greater than A
+        return z > one_sided_z_threshold;   // true => evidence that V2 tends to be greater than V1
+    }
+
+    template <typename T>
+    inline T median(const std::vector<T>& times)
+    {
+        std::vector<T> sorted_times = times;
+        std::sort(sorted_times.begin(), sorted_times.end());
+        const size_t n = sorted_times.size();
+        if (n % 2 == 1)
+            return sorted_times[n / 2];
+        else
+            return (sorted_times[n / 2 - 1] + sorted_times[n / 2]) / 2;
     }
 }   // utils
 }   // AGI
