@@ -43,7 +43,7 @@ namespace sprogar {
         const size_t Repeat100x = 100;
         const size_t RepeatForever = SimulatedInfinity;
         const size_t RepeatOnce = 1;
-        enum mode { exhaustive = 0, fast = 1 };
+        enum test_mode { competent = 0, fast = Repeat100x, simple = RepeatOnce };
 
         static_assert(SequenceLength > 1);
         static_assert(BitsPerInput > 1);
@@ -56,7 +56,7 @@ namespace sprogar {
             using Model = utils::Model<SystemUnderEvaluation, Input>;
 
         public:
-            static bool run(mode _mode = exhaustive)
+            static bool run(test_mode _mode = competent)
             {
                 std::clog << "Artificial General Intelligence Testbed\n";
                 std::clog << "Random seed: " << random_seed << std::endl << std::endl;
@@ -80,16 +80,16 @@ namespace sprogar {
         private:
             static inline const auto all_distinct_inputs = std::views::iota(0, 1 << BitsPerInput)
                 | std::views::transform([](int i) { return Input(i); });
-            static inline size_t repeats(mode _mode, size_t repetitions) { return _mode == exhaustive ? repetitions : std::min(repetitions, Repeat100x); }
+            static inline size_t repeats(test_mode _mode, size_t repetitions) { return _mode == competent ? repetitions : std::min(repetitions, (size_t)_mode); }
             static inline const std::vector<std::tuple<std::string, size_t, void(*)()>> testbed =
             {
                 {
                     "#1 Uninformed start (All instances of a given model type begin transitioning from an identical initial configuration.)",
                     Repeat100x,
                     []() {
-                        Model A;
+                        Model A, B;
 
-                        ASSERT(A == Model{});				            // A_0 == B_0
+                        ASSERT(A == B);				                    // A_0 == B_0
                     }
                 },
                 {
@@ -132,13 +132,12 @@ namespace sprogar {
                     "#4 Time (Model evolution depends on input order.)",
                     Repeat100x,
                     []() {
-                        // sistematically use inputs x and ~x instead of sequences phi1, phi2 to reduce test duration
                         for (const Input& x : all_distinct_inputs) {
-                            Model A(Model::random, utils::random_warm_up_time(SimulatedInfinity)), X = A;
+                            Model A(Model::random, utils::random_warm_up_time(SimulatedInfinity)), B = A;
                             A << x << ~x;
-                            X << ~x << x;
+                            B << ~x << x;
 
-                            ASSERT(A != X);
+                            ASSERT(A != B);
                         }
                     }
                 },
@@ -159,7 +158,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#6 Limited learnability (No model can learn everything there is to learn, except for the simplest cases.)",
+                    "#6 Limited learnability (No model can learn everything there is to learn, except for length-2 cases.)",
                     RepeatForever,
                     []() {
                         auto limited_learnability = [](Model& A) -> bool {
@@ -180,8 +179,8 @@ namespace sprogar {
                                         continue;
 
                                     const InputSequence admissible_length_2_case = { x1, x2 };
-                                    Model X = A;
-                                    if (!X.learn(admissible_length_2_case, SimulatedInfinity))
+                                    Model B = A;
+                                    if (!B.learn(admissible_length_2_case, SimulatedInfinity))
                                         return false;
                                 }
                             }
@@ -190,8 +189,8 @@ namespace sprogar {
 
                         Model A;
 
-                        ASSERT(limited_learnability(A));                            // Axiom 7.a
-                        ASSERT(unlimited_learnability_on_length_2_cases(A));        // Axiom 7.b
+                        ASSERT(limited_learnability(A));                            // Axiom 6.a
+                        ASSERT(unlimited_learnability_on_length_2_cases(A));        // Axiom 6.b
                     }
                 },
                 {

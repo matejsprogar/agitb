@@ -25,6 +25,7 @@
 #include <algorithm>
 #include <ranges>
 #include <random>
+#include <cassert>
 
 namespace sprogar {
 
