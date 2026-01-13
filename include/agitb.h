@@ -40,10 +40,8 @@ namespace sprogar {
         // AGITB settings : temporal patterns with seven inputs of ten bits each
         const time_t SequenceLength = 7;        // N
         const size_t BitsPerInput = 10;         // L
-        const size_t Repeat100x = 100;
-        const size_t RepeatForever = SimulatedInfinity;
-        const size_t RepeatOnce = 1;
-        enum test_mode { competent = 0, fast = Repeat100x, simple = RepeatOnce };
+        enum number_of_competent_trials { RepeatOnce = 1, Repeat100x = 100, RepeatForever = SimulatedInfinity };
+        enum test_mode { competent = 0, simple = 1, fast = Repeat100x };
 
         static_assert(SequenceLength > 1);
         static_assert(BitsPerInput > 1);
@@ -65,9 +63,9 @@ namespace sprogar {
                 for (const auto& [info, repetitions, test] : testbed) {
                     std::clog << info << std::endl;
 
-                    const size_t R = repeats(_mode, repetitions);
-                    for (size_t i = 1; i <= R; ++i) {
-                        std::clog << i << '/' << R << go_back;
+                    const size_t T = trials(_mode, repetitions);
+                    for (size_t t = 1; t <= T; ++t) {
+                        std::clog << t << '/' << T << go_back;
 
                         test();
                     }
@@ -76,12 +74,32 @@ namespace sprogar {
                 std::clog << green("\nPASS\n");
                 return true;
             }
+            static bool run(int test_id, int trials = 1)
+            {
+                assert(test_id > 0 and test_id <= testbed.size());
+                
+                std::clog << "Artificial General Intelligence Testbed\n";
+                std::clog << "Random seed: " << random_seed << std::endl << std::endl;
 
+                const std::string go_back(10, '\b');
+                const auto& [info, repetitions, test] = testbed[test_id-1];
+                
+                std::clog << info << std::endl;
+                for (int t = 1; t <= trials; ++t) {
+                    std::clog << t << '/' << trials << go_back;
+
+                    test();
+                }
+
+                std::clog << green("\nPASS\n");
+                return true;
+            }
+            
         private:
             static inline const auto all_distinct_inputs = std::views::iota(0, 1 << BitsPerInput)
                 | std::views::transform([](int i) { return Input(i); });
-            static inline size_t repeats(test_mode _mode, size_t repetitions) { return _mode == competent ? repetitions : std::min(repetitions, (size_t)_mode); }
-            static inline const std::vector<std::tuple<std::string, size_t, void(*)()>> testbed =
+            static inline size_t trials(test_mode _mode, size_t repetitions) { return _mode == competent ? repetitions : std::min(repetitions, (size_t)_mode); }
+            static inline const std::vector<std::tuple<std::string, number_of_competent_trials, void(*)()>> testbed =
             {
                 {
                     "#1 Uninformed start (All instances of a given model type begin transitioning from an identical initial configuration.)",
@@ -324,16 +342,17 @@ namespace sprogar {
                             return (time_t)std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
                         };
                         auto autotune_batch_size = [&](const Model& model) -> size_t {
+                            const time_t target_batch_duration_us = 100;
                             InputSequence batch(InputSequence::random, 1);
-                            while (batch.size() < 1000000) {
+                            while (batch.size() < 1'000'000) {
                                 Model _model = model;
-                                if (batch_update_time(_model, batch) >= 100ull)
+                                if (batch_update_time(_model, batch) >= target_batch_duration_us)
                                     break;
                                 batch = InputSequence(InputSequence::random, 2 * batch.size());
                             }
                             return batch.size();
                         };
-                        auto one_trial_measurements = [&](const size_t num_batches, const size_t batch_size) {
+                        auto measure_times = [&](const size_t num_batches, const size_t batch_size) {
                             std::vector<time_t> blank_times, complex_times;
                             blank_times.reserve(num_batches);
                             complex_times.reserve(num_batches);
@@ -341,9 +360,9 @@ namespace sprogar {
                             const Model blank, complex(Model::random, SimulatedInfinity);
 
                             const size_t structured_batches = num_batches / 4;      // structured:random = 1:4
-                            while (blank_times.size() < num_batches) {
+                            for (size_t batch_id = 0; batch_id < num_batches; ++batch_id) {
                                 const InputSequence batch = blank_times.size() < structured_batches ?
-                                    InputSequence(InputSequence::structured, batch_size, blank_times.size()) :
+                                    InputSequence(InputSequence::structured, batch_size, batch_id) :
                                     InputSequence(InputSequence::random, batch_size);
 
                                 Model _blank = blank;
@@ -356,9 +375,9 @@ namespace sprogar {
                             return std::make_pair(blank_times, complex_times);
                         };
 
-                        const size_t num_batches = 100;
+                        const size_t num_of_batches = 100;
                         const size_t batch_size = std::max(autotune_batch_size(Model()), autotune_batch_size(Model(Model::random, SimulatedInfinity)));
-                        const auto [blank_times, complex_times] = one_trial_measurements(num_batches, batch_size);
+                        const auto [blank_times, complex_times] = measure_times(num_of_batches, batch_size);
 
                         const time_t absolute_non_liveness_guard = 10 * utils::median(blank_times);
                         ASSERT(*std::ranges::max_element(blank_times) <= absolute_non_liveness_guard);
