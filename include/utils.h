@@ -37,7 +37,8 @@ namespace AGI {
 inline namespace utils {
     using time_t = size_t;
 
-    static const auto random_seed = std::random_device{}();
+    static unsigned rng_seed = std::random_device{}();
+    static std::mt19937 rng(rng_seed);
 
     template <typename M, typename T>
     concept InputPredictor = std::regular<M>
@@ -68,7 +69,6 @@ inline namespace utils {
 
     inline size_t random_warm_up_time(time_t hi)
     {
-        static std::mt19937 rng{ random_seed+1 };
         static std::uniform_int_distribution<size_t> dist(0, hi);
         return dist(rng);
     }
@@ -78,7 +78,6 @@ inline namespace utils {
     requires (std::same_as<Input, Inputs> && ...)
     Input random(const Inputs&... turn_off)
     {
-        static std::mt19937 rng{ random_seed };
         static std::bernoulli_distribution bd(0.5);
 
         Input input{};

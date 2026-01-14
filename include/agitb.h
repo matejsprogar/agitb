@@ -30,7 +30,7 @@
 namespace sprogar {
 
 #define ASSERT(expression) (void)((!!(expression)) || \
-                            (std::cerr << std::format("\n{} in {}:{}\n{}\n\n", red("\nAssertion failed"), __FILE__, __LINE__, #expression), \
+                            (std::cerr << std::format("\n{} in {}:{}\n{}\n\nrng_seed: {}\n", red("\nAssertion failed"), __FILE__, __LINE__, #expression, utils::rng_seed), \
                             exit(-1), 0))
 
     namespace AGI {
@@ -55,10 +55,10 @@ namespace sprogar {
             using Model = utils::Model<SystemUnderEvaluation, Input>;
 
         public:
+            // Runs all tests from the testbed using the specified test mode.
             static bool run(test_mode _mode = competent)
             {
                 std::clog << "Artificial General Intelligence Testbed\n";
-                std::clog << "Random seed: " << random_seed << std::endl << std::endl;
 
                 const std::string go_back(10, '\b');
                 for (const auto& [info, repetitions, test] : testbed) {
@@ -68,6 +68,7 @@ namespace sprogar {
                     for (size_t t = 1; t <= T; ++t) {
                         std::clog << t << '/' << T << go_back;
 
+                        utils::rng_seed = utils::rng();
                         test();
                     }
                 }
@@ -75,22 +76,20 @@ namespace sprogar {
                 std::clog << green("\nPASS\n");
                 return true;
             }
-            static bool run(int test_id, int trials = 1)
+            // Runs a specified test from the testbed, identified by its 1-based ID, using the given RNG seed.
+            static bool run(int test_id, unsigned seed = std::random_device{}())
             {
                 assert(test_id > 0 and test_id <= testbed.size());
                 
-                std::clog << "Artificial General Intelligence Testbed\n";
-                std::clog << "Random seed: " << random_seed << std::endl << std::endl;
-
-                const std::string go_back(10, '\b');
                 const auto& [info, repetitions, test] = testbed[test_id-1];
-                
-                std::clog << info << std::endl;
-                for (int t = 1; t <= trials; ++t) {
-                    std::clog << t << '/' << trials << go_back;
 
-                    test();
-                }
+                utils::rng.seed(utils::rng_seed = seed);
+                std::clog << "Artificial General Intelligence Testbed\n";
+                std::clog << "Random seed: " << rng_seed << std::endl << std::endl;
+                std::clog << info << std::endl;
+
+                // Run once
+                test();
 
                 std::clog << green("\nPASS\n");
                 return true;
