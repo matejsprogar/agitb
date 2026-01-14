@@ -41,7 +41,7 @@ inline namespace utils {
 
     template <typename M, typename T>
     concept InputPredictor = std::regular<M>
-        && requires(M c, const T& t)
+        and requires(M c, const T& t)
     {
         { c(t) } -> std::convertible_to<T>;
     };

@@ -46,12 +46,15 @@ namespace sprogar {
         static_assert(SequenceLength > 1);
         static_assert(BitsPerInput > 1);
 
-        template <typename SystemUnderEvaluation>
+        template <template <typename> typename SystemUnderEvaluation, typename NativeSystemInputType>
+        requires std::convertible_to<NativeSystemInputType, std::bitset<BitsPerInput>> 
+                and std::constructible_from<NativeSystemInputType, std::bitset<BitsPerInput>>
         class TestBed
         {
+                
             using Input = std::bitset<BitsPerInput>;
             using InputSequence = utils::InputSequence<Input>;
-            using Model = utils::Model<SystemUnderEvaluation, Input>;
+            using Model = utils::Model<SystemUnderEvaluation<Input>, Input>;
 
         public:
             static bool run(test_mode _mode = competent)

@@ -14,7 +14,7 @@ While current AI systems often give the impression of intelligence, they lack a 
 
 ## AGITB Goal
 
-AGITB is a benchmark designed to evaluate artificial general intelligence at its most fundamental level. It consists of a collection of short, intuitive tests that assess whether a system satisfies a set of axioms intended to capture core properties of general intelligence. With one exception, all tests are fully automated.
+AGITB is a benchmark designed to evaluate artificial general intelligence at its most fundamental level. It consists of a collection of short, intuitive tests that assess whether a system satisfies a set of axioms intended to capture core properties of general intelligence. All tests are fully automated.
 
 Unlike conventional benchmarks that focus on symbolic reasoning, natural language performance, or domain-specific tasks, AGITB operates at the level of binary signal processing. Models interact only with low-level binary inputs and outputs, without access to semantic structure, task descriptions, or pretrained knowledge. This design forces systems to demonstrate genuine adaptation, prediction, and generalisation, rather than relying on memorisation, heuristics, or large-scale pretraining.
 
@@ -24,24 +24,33 @@ By stripping away high-level abstractions, AGITB provides a biologically inspire
 
 ## The C++ Reference Implementation
 
-AGITB is distributed as a header-only library. Its central abstraction is the templated class `TestBed<MyModel>`, where `MyModel` denotes the AGI type under evaluation. Each instance of the `MyModel` represents a candidate model that, given an input object, is expected to generate a prediction for the subsequent input.
+AGITB is distributed as a header-only library. Its central abstraction is the class template `TestBed<MyModel, MyInput>`, where the template parameter `MyModel` denotes the AGI type under evaluation and `MyInput` denotes the `MyModel`-specific input type. Each instance of `MyModel<>` represents a candidate model that, given an input object, is expected to produce a prediction for the next input of type `InputType`.
 
-An `InputType` encodes a binary input sample from simulated sensors or actuators, consisting of ten parallel one-bit channels captured at a single time step. By default, AGITB defines `InputType` as `std::bitset<10>`.
+The `InputType` represents a binary input sample originating from (simulated) sensors or actuators. It consists of multiple parallel one-bit channels captured at a single time step. Although AGITB internally defines `InputType` as `std::bitset<10>`, a model may instead operate on a custom input type (e.g. `MyInput`), as long as it is both constructible from and convertible to `std::bitset<10>`.
 
 ---
 
-## API Requirements for `SystemUnderEvaluation`
-The MyModel class must:
-- Satisfy the `std::regular` concept.
-- Provide a functor that accepts an input and returns a prediction using the following interface:
-  ```cpp
-  InputType MyModel::operator ()(const InputType& p);   // Process input p and return the prediction for the next input
-  ```
+## API Requirements for the `MyModel` class template
 
-### Stub Implementation of the MyModel Class for AGI Testbed
+The `MyModel` class must:
+- Be a class template with exactly one template parameter.
+- Satisfy the `std::regular` concept.
+- Provide a callable interface (functor) that accepts a single input and returns a prediction, using the following signature:
+  ```cpp
+  InputType MyModel::operator ()(const InputType& p);
+  ```
+Additionally, the `InputType` template parameter of `MyModel` must:
+- Satisfy the `std::regular` concept.
+- Satisfy the `std::constructible_from<InputType, std::bitset<10>>` concept.
+- Satisfy the `std::convertible_to<InputType, std::bitset<10>>` concept.
+
+
+### Stub Implementation of the `MyModel` Class for AGI Testbed
 
 ```cpp
-using Input = std::bitset<10>;
+template<typename Input>
+    requires std::convertible_to<Input, std::bitset<10>>
+        and std::constructible_from<Input, std::bitset<10>>
 class MyModel
 {
 public:
@@ -54,6 +63,18 @@ public:
       // TODO AGI magic here!
       return Input{};
     }
+};
+```
+#### Support for a custom `MyInput` class
+An AGI model that uses a custom `InputType` can be made compatible with AGITB by providing conversions to and from `std::bitset`:
+```cpp
+struct MyInput
+{
+    MyInput() = default;
+    friend bool operator==(const MyInput&, const MyInput&) = default;
+    
+    template <size_t L> MyInput(const std::bitset<L>&) { ... }
+    template <size_t L> operator std::bitset<L> () const { ... }
 };
 ```
 ---
@@ -69,7 +90,11 @@ To use the AGITB testbed, include the main header file `agitb.h` and call the st
 #include "path/to/agitb.h"
 
 int main() {
-    using AGITB = sprogar::AGI::TestBed<MyModel>;
+    // For a MyModel-specific input type:
+	using AGITB = sprogar::AGI::TestBed<MyModel, MyInput>;
+    
+    // For models that use std::bitset directly:
+	using AGITB = sprogar::AGI::TestBed<MyModel>;
     
     AGITB::run();
     return 0;
