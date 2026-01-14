@@ -34,7 +34,7 @@ constructible from and convertible to `std::bitset<>`.
 
 ---
 
-## API Requirements for the `MyModel` class template
+## API Requirements for the `MyModel` class
 
 The `MyModel` class must:
 - Satisfy the `std::regular` concept.
@@ -64,7 +64,7 @@ public:
 };
 ```
 #### Support for a custom `MyInput` class
-If `MyModel` was originally designed to operate on input types other than `std::bitset`, it can still be used, as long as `MyInput` supports construction from and converstion to `std::bitset`:
+If `MyModel` was originally designed to operate on input types other than `std::bitset`, it can still be used, as long as `MyInput` supports construction from and conversion to `std::bitset`:
 ```cpp
 struct MyInput
 {
