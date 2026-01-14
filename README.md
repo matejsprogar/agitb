@@ -26,10 +26,10 @@ By stripping away high-level abstractions, AGITB provides a biologically inspire
 
 AGITB is distributed as a header-only library. Its central abstraction is the class template `TestBed<MyModel>`, where the template parameter `MyModel` denotes 
 the AGI type under evaluation. Each instance of `MyModel` represents a candidate model that, given an input object, is expected to produce a prediction for the 
-next input of type `InputType`.
+next input.
 
-The `InputType` represents a binary input sample originating from (simulated) sensors or actuators. It consists of multiple parallel one-bit channels captured at a single 
-time step. Although AGITB internally defines `InputType` as `std::bitset<10>`, a model may instead operate on a custom input type (e.g. `MyInput`), as long as `MyInput` is both 
+An input represents a binary input sample originating from (simulated) sensors or actuators. It consists of multiple parallel one-bit channels captured at a single 
+time step. Although AGITB's internal input type is `std::bitset<10>`, a model may instead operate on a custom input type (i.e. `MyInput`), as long as `MyInput` is both 
 constructible from and convertible to `std::bitset<>`.
 
 ---
@@ -40,16 +40,16 @@ The `MyModel` class must:
 - Satisfy the `std::regular` concept.
 - Provide a callable interface (functor) that accepts a single input and returns a prediction, using the following signature:
   ```cpp
-  InputType MyModel::operator ()(const InputType& p);
+  MyInput MyModel::operator ()(const MyInput& p);
   ```
 
 
-### Stub Implementation of the `MyModel` Class for AGI Testbed
+### Stub Implementation of the `MyModel` Class
 
 ```cpp
 class MyModel
 {
-	using MyInput = ...
+	using MyInput = std::bitset<10>;  // or a custom input type satisfying the requirements below
 
 public:
     bool operator==(const MyModel& rhs) const {
@@ -64,7 +64,7 @@ public:
 };
 ```
 #### Support for a custom `MyInput` class
-If `MyModel` was originally designed to operate on inputs other than `std::bitset`, it can still be used, provided the `MyInput` type supports construction from and converstion to `std::bitset`:
+If `MyModel` was originally designed to operate on input types other than `std::bitset`, it can still be used, as long as `MyInput` supports construction from and converstion to `std::bitset`:
 ```cpp
 struct MyInput
 {
