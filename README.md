@@ -24,57 +24,55 @@ By stripping away high-level abstractions, AGITB provides a biologically inspire
 
 ## The C++ Reference Implementation
 
-AGITB is distributed as a header-only library. Its central abstraction is the class template `TestBed<MyModel, MyInput>`, where the template parameter `MyModel` denotes the AGI type under evaluation and `MyInput` denotes the `MyModel`-specific input type. Each instance of `MyModel<>` represents a candidate model that, given an input object, is expected to produce a prediction for the next input of type `InputType`.
+AGITB is distributed as a header-only library. Its central abstraction is the class template `TestBed<MyModel>`, where the template parameter `MyModel` denotes 
+the AGI type under evaluation. Each instance of `MyModel` represents a candidate model that, given an input object, is expected to produce a prediction for the 
+next input of type `InputType`.
 
-The `InputType` represents a binary input sample originating from (simulated) sensors or actuators. It consists of multiple parallel one-bit channels captured at a single time step. Although AGITB internally defines `InputType` as `std::bitset<10>`, a model may instead operate on a custom input type (e.g. `MyInput`), as long as it is both constructible from and convertible to `std::bitset<10>`.
+The `InputType` represents a binary input sample originating from (simulated) sensors or actuators. It consists of multiple parallel one-bit channels captured at a single 
+time step. Although AGITB internally defines `InputType` as `std::bitset<10>`, a model may instead operate on a custom input type (e.g. `MyInput`), as long as `MyInput` is both 
+constructible from and convertible to `std::bitset<>`.
 
 ---
 
 ## API Requirements for the `MyModel` class template
 
 The `MyModel` class must:
-- Be a class template with exactly one template parameter.
 - Satisfy the `std::regular` concept.
 - Provide a callable interface (functor) that accepts a single input and returns a prediction, using the following signature:
   ```cpp
   InputType MyModel::operator ()(const InputType& p);
   ```
-Additionally, the `InputType` template parameter of `MyModel` must:
-- Satisfy the `std::regular` concept.
-- Satisfy the `std::constructible_from<InputType, std::bitset<10>>` concept.
-- Satisfy the `std::convertible_to<InputType, std::bitset<10>>` concept.
 
 
 ### Stub Implementation of the `MyModel` Class for AGI Testbed
 
 ```cpp
-template<typename Input>
-    requires std::convertible_to<Input, std::bitset<10>>
-        and std::constructible_from<Input, std::bitset<10>>
 class MyModel
 {
+	using MyInput = ...
+
 public:
     bool operator==(const MyModel& rhs) const {
       // TODO
       return false;
     }
 
-    Input operator ()(const Input& p) { 
+    MyInput operator ()(const MyInput& p) { 
       // TODO AGI magic here!
-      return Input{};
+      return MyInput{};
     }
 };
 ```
 #### Support for a custom `MyInput` class
-An AGI model that uses a custom `InputType` can be made compatible with AGITB by providing conversions to and from `std::bitset`:
+If `MyModel` was originally designed to operate on inputs other than `std::bitset`, it can still be used, provided the `MyInput` type supports construction from and converstion to `std::bitset`:
 ```cpp
 struct MyInput
 {
     MyInput() = default;
     friend bool operator==(const MyInput&, const MyInput&) = default;
     
-    template <size_t L> MyInput(const std::bitset<L>&) { ... }
-    template <size_t L> operator std::bitset<L> () const { ... }
+    template <size_t L> MyInput(const std::bitset<L>&) { ... }			// std::constructible_from<MyInput, std::bitset<L>>
+    template <size_t L> operator std::bitset<L> () const { ... }		// std::convertible_to<MyInput, std::bitset<L>
 };
 ```
 ---
@@ -90,10 +88,6 @@ To use the AGITB testbed, include the main header file `agitb.h` and call the st
 #include "path/to/agitb.h"
 
 int main() {
-    // For a MyModel-specific input type:
-	using AGITB = sprogar::AGI::TestBed<MyModel, MyInput>;
-    
-    // For models that use std::bitset directly:
 	using AGITB = sprogar::AGI::TestBed<MyModel>;
     
     AGITB::run();
