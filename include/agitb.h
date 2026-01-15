@@ -30,7 +30,7 @@
 namespace sprogar {
 
 #define ASSERT(expression) (void)((!!(expression)) || \
-                            (std::cerr << std::format("\n{} in {}:{}\n{}\n\nrng_seed: {}\n", red("\nAssertion failed"), __FILE__, __LINE__, #expression, utils::rng_seed), \
+                            (std::cerr << std::format("\n\n{} in {}:{}\n{}\n\nrng_seed: {}\n", red("Assertion failed"), __FILE__, __LINE__, #expression, utils::rng_seed), \
                             exit(-1), 0))
 
     namespace AGI {
@@ -38,10 +38,10 @@ namespace sprogar {
         const size_t SimulatedInfinity = 5000;
 
         // AGITB settings : temporal patterns with seven inputs of ten bits each
-        const time_t SequenceLength = 7;        // N
         const size_t BitsPerInput = 10;         // L
+        const time_t SequenceLength = 7;        // N
         enum number_of_competent_trials { RepeatOnce = 1, Repeat100x = 100, RepeatForever = SimulatedInfinity };
-        enum test_mode { competent = 0, simple = 1, fast = Repeat100x };
+        enum operation_mode { competent = 0, simple = 1, fast = Repeat100x };
 
         static_assert(SequenceLength > 1);
         static_assert(BitsPerInput > 1);
@@ -56,7 +56,7 @@ namespace sprogar {
 
         public:
             // Runs all tests from the testbed using the specified test mode.
-            static bool run(test_mode _mode = competent)
+            static bool run(operation_mode test_mode = competent)
             {
                 std::clog << "Artificial General Intelligence Testbed\n";
 
@@ -64,7 +64,7 @@ namespace sprogar {
                 for (const auto& [info, repetitions, test] : testbed) {
                     std::clog << info << std::endl;
 
-                    const size_t T = trials(_mode, repetitions);
+                    const size_t T = trials(test_mode, repetitions);
                     for (size_t t = 1; t <= T; ++t) {
                         std::clog << t << '/' << T << go_back;
 
@@ -76,12 +76,12 @@ namespace sprogar {
                 std::clog << green("\nPASS\n");
                 return true;
             }
-            // Runs a specified test from the testbed, identified by its 1-based ID, using the given RNG seed.
-            static bool run(int test_id, unsigned seed = std::random_device{}())
+            // Runs a specified test from the testbed using the given RNG seed.
+            static bool run(int test_number, unsigned seed = std::random_device{}())
             {
-                assert(test_id > 0 and test_id <= testbed.size());
+                assert(test_number > 0 and test_number <= testbed.size());
                 
-                const auto& [info, repetitions, test] = testbed[test_id-1];
+                const auto& [info, repetitions, test] = testbed[test_number -1];
 
                 utils::rng.seed(utils::rng_seed = seed);
                 std::clog << "Artificial General Intelligence Testbed\n";
@@ -98,7 +98,7 @@ namespace sprogar {
         private:
             static inline const auto all_distinct_inputs = std::views::iota(0, 1 << BitsPerInput)
                 | std::views::transform([](int i) { return Input(i); });
-            static inline size_t trials(test_mode _mode, size_t repetitions) { return _mode == competent ? repetitions : std::min(repetitions, (size_t)_mode); }
+            static inline size_t trials(operation_mode _mode, size_t repetitions) { return _mode == competent ? repetitions : std::min(repetitions, (size_t)_mode); }
             static inline const std::vector<std::tuple<std::string, number_of_competent_trials, void(*)()>> testbed =
             {
                 {
@@ -166,24 +166,24 @@ namespace sprogar {
                         for (const Input x : all_distinct_inputs) {
                             const InputSequence no_consecutive_spikes = { x, ~x };
                             const InputSequence consecutive_spikes = { x, x };
-                            const bool has_spike = x.any();
+                            const bool spikes = x.any();
 
                             Model A, B;
 
                             ASSERT(A.learn(no_consecutive_spikes, SimulatedInfinity));
-                            ASSERT(not B.learn(consecutive_spikes, SimulatedInfinity) || !has_spike);
+                            ASSERT(not B.learn(consecutive_spikes, SimulatedInfinity) || !spikes);
                         }
                     }
                 },
                 {
-                    "#6 Limited learnability (No model can learn everything there is to learn, except for length-2 cases.)",
+                    "#6 Limited learnability (No model can learn everything there is to learn, except for length-2 sequences.)",
                     RepeatForever,
                     []() {
                         auto limited_learnability = [](Model& A) -> bool {
                             for (time_t time = 0; time < SimulatedInfinity; ++time) {
-                                InputSequence admissible_sequence(InputSequence::circular_random, SequenceLength);
+                                const InputSequence learnable_sequence = Model::learnable_random_sequence(SequenceLength, SimulatedInfinity);
 
-                                if (not A.learn(admissible_sequence, SimulatedInfinity))
+                                if (not A.learn(learnable_sequence, SimulatedInfinity))
                                     return true;
                             }
                             return false;
@@ -215,12 +215,12 @@ namespace sprogar {
                     "#7 Temporal adaptability (The model must be able to learn sequences with varying cycle lengths.)",
                     RepeatOnce,
                     []() {
-                        const InputSequence phi1(InputSequence::trivial, SequenceLength);
-                        const InputSequence phi2(InputSequence::trivial, SequenceLength + 1);
+                        const InputSequence psi1(InputSequence::trivial, SequenceLength);
+                        const InputSequence psi2(InputSequence::trivial, SequenceLength + 1);
                         Model A;
 
-                        ASSERT(A.learn(phi1, SimulatedInfinity));
-                        ASSERT(A.learn(phi2, SimulatedInfinity));
+                        ASSERT(A.learn(psi1, SimulatedInfinity));
+                        ASSERT(A.learn(psi2, SimulatedInfinity));
                     }
                 },
                 {
@@ -230,16 +230,16 @@ namespace sprogar {
                         // Null Hypothesis: Adaptation time is independent of the input sequence content
                         auto adaptation_time_is_input_dependent = []() -> bool {
                             Model B;
-                            const InputSequence phi1 = Model::learnable_random_sequence(SequenceLength, SimulatedInfinity);
-                            const time_t phi1_time = B.time_to_learn(phi1, SimulatedInfinity);
+                            const InputSequence psi1 = Model::learnable_random_sequence(SequenceLength, SimulatedInfinity);
+                            const time_t psi1_time = B.time_to_learn(psi1, SimulatedInfinity);
                             for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
-                                const InputSequence phi2(InputSequence::circular_random, SequenceLength);   // admissible by construction
+                                const InputSequence psi2(InputSequence::circular_random, SequenceLength);   // admissible by construction
 
-                                if (phi2 != phi1) {
+                                if (psi2 != psi1) {
                                     Model A;
-                                    time_t phi2_time = A.time_to_learn(phi2, SimulatedInfinity);
-                                    const bool phi2_learnable = phi2_time < SimulatedInfinity;
-                                    if (phi2_learnable and phi1_time != phi2_time)                          // rejects the null hypothesis
+                                    time_t psi2_time = A.time_to_learn(psi2, SimulatedInfinity);
+                                    const bool psi2_learnable = psi2_time < SimulatedInfinity;
+                                    if (psi2_learnable and psi1_time != psi2_time)                          // rejects the null hypothesis
                                         return true;
                                 }
                             }
@@ -255,13 +255,13 @@ namespace sprogar {
                     []() {
                         // Null Hypothesis: Adaptation time is independent of the model
                         auto adaptation_time_is_model_dependent = []() -> bool {
-                            const InputSequence phi = Model::learnable_random_sequence(SequenceLength, SimulatedInfinity);
+                            const InputSequence psi = Model::learnable_random_sequence(SequenceLength, SimulatedInfinity);
                             Model A;
-                            const time_t A_time = A.time_to_learn(phi, SimulatedInfinity);
+                            const time_t A_time = A.time_to_learn(psi, SimulatedInfinity);
                             for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
                                 Model B(Model::random, 1 + utils::random_warm_up_time(SimulatedInfinity));  // B != A by construction
 
-                                time_t B_time = B.time_to_learn(phi, SimulatedInfinity);
+                                time_t B_time = B.time_to_learn(psi, SimulatedInfinity);
                                 if (A_time != B_time)                                                       // rejects the null hypothesis
                                     return true;
                             }
@@ -272,23 +272,23 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#10 Denoising (An informed model outperforms the best constant baseline at denoising the corrupted input.)",
+                    "#10 Denoising (An informed model outperforms the best constant baseline at denoising a corrupted input.)",
                     RepeatForever,
                     []() {
-                        auto corruption = [](const Input& x0, const Input& x1, const Input& xk) -> Input {
-                            Input x;
+                        auto corrupt = [](const Input& x, const Input& x_next, const Input& x_prev) -> Input {
+                            Input x_new;
                             do {
-                                x = random<Input>(x1, xk);              // respect Axiom 6
-                            } while (x == x0);                          // ensure corruption
-                            return x;
+                                x_new = random<Input>(x_next, x_prev);  // respect Axiom 6
+                            } while (x_new == x);                       // ensure corruption
+                            return x_new;
                         };
                         const Input all_zeros = Input{}, all_ones = ~all_zeros;
                         size_t model_score = 0, baseline_0_score = 0, baseline_1_score = 0;
-                        const int num_of_experiments = 20;              // within each of 5,000 trials
+                        const int num_of_runs = 20;                     // within each of 5,000 trials
                         const int n = 5 * SequenceLength;               // informing context length
-                        for (int i = 0; i < num_of_experiments; ++i) {
+                        for (int i = 0; i < num_of_runs; ++i) {
                             const InputSequence phi(InputSequence::circular_random, SequenceLength);
-                            const Input x1_corrupted = corruption(phi[0], phi[1], phi.back());
+                            const Input x1_corrupted = corrupt(phi[0], phi[1], phi.back());
 
                             Model A;
                             for (int j = 0; j < n; ++j)
@@ -306,15 +306,15 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#11 Generalisation (The model performs above chance on previously unseen inputs.)",
+                    "#11 Generalisation (An informed model predicts previously unseen inputs better than chance.)",
                     RepeatForever,
                     []() {
                         size_t score = 0;
-                        const int num_of_experiments = 20, k = 10;
-                        for (int i = 0; i < num_of_experiments; ++i) {
-                            Model phi_generator(Model::random, SimulatedInfinity);          // unknown random rule
-                            const auto phi1 = phi_generator.generate(k * SequenceLength);   // prefix
-                            const auto phi2 = phi_generator.generate(1 * SequenceLength);   // continuation
+                        const int num_of_runs = 20, rho = 10;                                   // |phi1| = rho * |phi2|
+                        for (int i = 0; i < num_of_runs; ++i) {
+                            Model phi_generator(Model::random, SimulatedInfinity);              // unknown random rule
+                            const auto phi1 = phi_generator.generate(rho * SequenceLength);     // prefix
+                            const auto phi2 = phi_generator.generate(  1 * SequenceLength);     // continuation
 
                             Model A;
                             A << phi1;
@@ -322,11 +322,11 @@ namespace sprogar {
                             const auto phi2_star = A.generate(phi2.size());
                             score += utils::match_score(phi2_star, phi2);
                         }
-                        // phi2.size() == SequenceLength, L = BitsPerInput
-                        const size_t total_bits = num_of_experiments * SequenceLength * BitsPerInput;
-                        const size_t random_guess = total_bits / 2;
+                        // total_bits = num_of_runs * phi2.size() * L
+                        const size_t total_bits = num_of_runs * SequenceLength * BitsPerInput;
+                        const size_t random_chance = total_bits / 2;
 
-                        ASSERT(score > random_guess);
+                        ASSERT(score > random_chance);
                     }
                 },
                 {
