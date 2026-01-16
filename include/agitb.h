@@ -176,10 +176,10 @@ namespace sprogar {
                     }
                 },
                 {
-                    "#6 Limited learnability (No model can learn everything there is to learn, except for length-2 sequences.)",
+                    "#6 Inevitable saturation (A model cannot learn everything there is to learn, except for length-2 sequences.)",
                     RepeatForever,
                     []() {
-                        auto limited_learnability = [](Model& A) -> bool {
+                        auto inevitable_saturation = [](Model& A) -> bool {
                             for (time_t time = 0; time < SimulatedInfinity; ++time) {
                                 const InputSequence learnable_sequence = Model::learnable_random_sequence(SequenceLength, SimulatedInfinity);
 
@@ -188,7 +188,7 @@ namespace sprogar {
                             }
                             return false;
                         };
-                        auto unlimited_learnability_on_length_2_cases = [](const Model& A) -> bool {
+                        auto universal_learnability_of_admissible_length_2_sequences = [](const Model& A) -> bool {
                             auto admissible = [](const Input& x1, const Input& x2) -> bool { return not (x1 & x2).any(); };
 
                             for (const Input& x1 : all_distinct_inputs) {
@@ -196,9 +196,9 @@ namespace sprogar {
                                     if (!admissible(x1, x2))
                                         continue;
 
-                                    const InputSequence admissible_length_2_case = { x1, x2 };
+                                    const InputSequence admissible_length_2_sequence = { x1, x2 };
                                     Model B = A;
-                                    if (!B.learn(admissible_length_2_case, SimulatedInfinity))
+                                    if (!B.learn(admissible_length_2_sequence, SimulatedInfinity))
                                         return false;
                                 }
                             }
@@ -207,16 +207,16 @@ namespace sprogar {
 
                         Model A;
 
-                        ASSERT(limited_learnability(A));                            // Axiom 6.a
-                        ASSERT(unlimited_learnability_on_length_2_cases(A));        // Axiom 6.b
+                        ASSERT(inevitable_saturation(A));                                       // Axiom 6.a
+                        ASSERT(universal_learnability_of_admissible_length_2_sequences(A));     // Axiom 6.b
                     }
                 },
                 {
                     "#7 Temporal adaptability (The model must be able to learn sequences with varying cycle lengths.)",
                     RepeatOnce,
                     []() {
-                        const InputSequence psi1(InputSequence::trivial, SequenceLength);
-                        const InputSequence psi2(InputSequence::trivial, SequenceLength + 1);
+                        const InputSequence psi1(InputSequence::trivial, SequenceLength);       // 00....01
+                        const InputSequence psi2(InputSequence::trivial, SequenceLength + 1);   // 00....001    
                         Model A;
 
                         ASSERT(A.learn(psi1, SimulatedInfinity));
@@ -230,16 +230,16 @@ namespace sprogar {
                         // Null Hypothesis: Adaptation time is independent of the input sequence content
                         auto adaptation_time_is_input_dependent = []() -> bool {
                             Model B;
-                            const InputSequence psi1 = Model::learnable_random_sequence(SequenceLength, SimulatedInfinity);
-                            const time_t psi1_time = B.time_to_learn(psi1, SimulatedInfinity);
+                            const InputSequence psi = Model::learnable_random_sequence(SequenceLength, SimulatedInfinity);
+                            const time_t psi_time = B.time_to_learn(psi, SimulatedInfinity);
                             for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
-                                const InputSequence psi2(InputSequence::circular_random, SequenceLength);   // admissible by construction
+                                const InputSequence phi(InputSequence::circular_random, SequenceLength); // admissible by construction
 
-                                if (psi2 != psi1) {
+                                if (phi != psi) {
                                     Model A;
-                                    time_t psi2_time = A.time_to_learn(psi2, SimulatedInfinity);
-                                    const bool psi2_learnable = psi2_time < SimulatedInfinity;
-                                    if (psi2_learnable and psi1_time != psi2_time)                          // rejects the null hypothesis
+                                    const time_t phi_time = A.time_to_learn(phi, SimulatedInfinity);
+                                    const bool phi_learnable = phi_time != SimulatedInfinity;
+                                    if (phi_learnable and psi_time != phi_time)                          // rejects the null hypothesis
                                         return true;
                                 }
                             }
