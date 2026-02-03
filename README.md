@@ -96,6 +96,19 @@ int main() {
 ```
 ---
 
+## Reproducibility
+
+When a benchmark run fails, AGITB stops immediately at the first failing test and reports both the **test number** and the **random generator seed** used for that execution. This makes every failure fully reproducible.
+
+To reproduce the exact scenario, rerun the benchmark with the reported test ID and seed.
+
+For example, if test `#12` fails with seed `4026412173`, you can reproduce it with:
+
+```cpp
+AGITB::run(12, 4026412173);
+```
+---
+
 ## Requirements
 
 To build and run this project, you will need a **C++20-compatible compiler** 
