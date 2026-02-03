@@ -94,6 +94,11 @@ int main() {
     return 0;
 }
 ```
+
+Optionally, for a faster but less thorough check, you can configure AGITB to execute each test only once:
+```cpp
+    AGITB::run(sprogar::AGI::once);
+```
 ---
 
 ## Reproducibility

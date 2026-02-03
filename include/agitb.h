@@ -41,7 +41,7 @@ namespace sprogar {
         const size_t BitsPerInput = 10;         // L
         const time_t SequenceLength = 7;        // N
         enum number_of_competent_trials { RepeatOnce = 1, Repeat100x = 100, RepeatForever = SimulatedInfinity };
-        enum operation_mode { competent = 0, simple = 1, fast = Repeat100x };
+        enum operation_mode { competent = 0, once = 1, fast = Repeat100x };
 
         static_assert(SequenceLength > 1);
         static_assert(BitsPerInput > 1);
@@ -64,7 +64,7 @@ namespace sprogar {
                 for (const auto& [info, repetitions, test] : testbed) {
                     std::clog << info << std::endl;
 
-                    const size_t T =  test_mode == competent ? repetitions : std::min((size_t)repetitions, (size_t)test_mode);
+                    const size_t T = test_mode == competent ? repetitions : std::min((size_t)repetitions, (size_t)test_mode);
                     for (size_t t = 1; t <= T; ++t) {
                         std::clog << t << '/' << T << go_back;
 
