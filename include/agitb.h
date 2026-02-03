@@ -64,7 +64,7 @@ namespace sprogar {
                 for (const auto& [info, repetitions, test] : testbed) {
                     std::clog << info << std::endl;
 
-                    const size_t T = trials(test_mode, repetitions);
+                    const size_t T =  test_mode == competent ? repetitions : std::min((size_t)repetitions, (size_t)test_mode);
                     for (size_t t = 1; t <= T; ++t) {
                         std::clog << t << '/' << T << go_back;
 
@@ -98,7 +98,6 @@ namespace sprogar {
         private:
             static inline const auto all_distinct_inputs = std::views::iota(0, 1 << BitsPerInput)
                 | std::views::transform([](int i) { return Input(i); });
-            static inline size_t trials(operation_mode _mode, size_t repetitions) { return _mode == competent ? repetitions : std::min(repetitions, (size_t)_mode); }
             static inline const std::vector<std::tuple<std::string, number_of_competent_trials, void(*)()>> testbed =
             {
                 {
