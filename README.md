@@ -1,40 +1,66 @@
 # AGITB – Artificial General Intelligence Testbed
 
-This repository contains the official C++ reference implementation of the **Artificial General Intelligence Testbed (AGITB)**, as described in the latest [paper](doc/AGITB.pdf). A corresponding [arXiv](https://arxiv.org/abs/2504.04430) preprint is also available, though it may not reflect the most recent updates.
+A small, self-contained C++ benchmark that evaluates predictive models on raw binary streams, 
+intended as a practical step toward artificial general intelligence.
+
+
+AGITB includes 12 short, intuitive, fully automated tests.
+
+- header-only implementation
+- no dependencies
+- deterministic and reproducible
+- builds in seconds
+
+Specification and design details: [doc/AGITB.pdf](doc/AGITB.pdf)
+
+### Quick start
+
+Compile and run the provided stub model:
+
+```bash
+g++ -std=c++20 stub.cpp -o stub
+$ ./stub
+```
+Example output (the stub fails on test #3):
+```text
+Artificial General Intelligence Testbed
+
+Running 12 tests...
+#1 Uninformed start
+#2 Determinism
+#3 Trace
+1/5000
+
+Assertion failed in agitb.h:149
+std::find(trajectory.begin(), trajectory.end(), A) == trajectory.end()
+
+rng_seed: 830706803
+```
 
 ---
 
-## Thesis
+## Motivation
 
-> **The capacity to pass the AGITB constitutes a necessary condition for moving beyond narrow, task-specific AI.**
+> **The ability to pass AGITB is a necessary condition for moving beyond narrow, task-specific AI.**
 
-While current AI systems often give the impression of intelligence, they lack a grounded understanding and therefore cannot be regarded as genuine instances of AGI. To distinguish between surface-level imitation and measurable progress toward true general intelligence, we need a rigorous, transparent, and actionable benchmark.
+While many current AI systems create the impression of intelligence, they lack grounded understanding and therefore cannot be considered genuine instances of AGI.
 
----
-
-## AGITB Goal
-
-AGITB is a benchmark designed to evaluate artificial general intelligence at its most fundamental level. It consists of a collection of short, intuitive tests that assess whether a system satisfies a set of axioms intended to capture core properties of general intelligence. All tests are fully automated.
-
-Unlike conventional benchmarks that focus on symbolic reasoning, natural language performance, or domain-specific tasks, AGITB operates at the level of binary signal processing. Models interact only with low-level binary inputs and outputs, without access to semantic structure, task descriptions, or pretrained knowledge. This design forces systems to demonstrate genuine adaptation, prediction, and generalisation, rather than relying on memorisation, heuristics, or large-scale pretraining.
-
-By stripping away high-level abstractions, AGITB provides a biologically inspired testing environment that mirrors how intelligence can emerge from raw sensory data. The benchmark is intended to support the **development**, **evaluation**, and **validation** of AGI systems in an architecture-agnostic and implementation-independent manner.
+To distinguish surface-level imitation from measurable progress toward true general intelligence, we need a benchmark that is rigorous, transparent, and actionable.
 
 ---
 
-## The C++ Reference Implementation
 
-AGITB is distributed as a header-only library. Its central abstraction is the class template `TestBed<MyModel>`, where the template parameter `MyModel` denotes 
-the AGI type under evaluation. Each instance of `MyModel` represents a candidate model that, given an input object, is expected to produce a prediction for the 
-next input.
+## Implementation
 
-An input represents a binary input sample originating from (simulated) sensors or actuators. It consists of multiple parallel one-bit channels captured at a single 
-time step. Although AGITB's internal input type is `std::bitset<10>`, a model may instead operate on a custom input type (i.e. `MyInput`), as long as `MyInput` is both 
-constructible from and convertible to `std::bitset<>`.
+AGITB is distributed as a header-only library. Its core component is the class template `TestBed<MyModel>`, where `MyModel` is the AGI type under evaluation. 
+Each instance represents a candidate model that receives an input object and predicts the next one.
 
----
+An input is a binary sample originating from (simulated) sensors or actuators. It consists of multiple parallel one-bit channels captured at a single time step. 
+Internally, AGITB uses `std::bitset<10>`, but models may define a custom input type (e.g. `MyInput`) as long as it is constructible from and convertible 
+to `std::bitset<>` (see below).
 
-## API Requirements for the `MyModel` class
+
+### API Requirements for the `MyModel` class
 
 The `MyModel` class must:
 - Satisfy the `std::regular` concept.
@@ -54,7 +80,7 @@ class MyModel
 public:
     bool operator==(const MyModel& rhs) const {
       // TODO
-      return false;
+      return true;
     }
 
     MyInput operator ()(const MyInput& p) { 
@@ -64,7 +90,9 @@ public:
 };
 ```
 #### Support for a custom `MyInput` class
-If `MyModel` was originally designed to operate on input types other than `std::bitset`, it can still be used, as long as `MyInput` supports construction from and conversion to `std::bitset`:
+If `MyModel` was originally designed to operate on input types other than `std::bitset`, it can still be used, as long as `MyInput` 
+supports construction from and conversion to `std::bitset`:
+
 ```cpp
 struct MyInput
 {
@@ -77,12 +105,10 @@ struct MyInput
 ```
 ---
 
-
 ## Usage
 
-To use the AGITB testbed, include the main header file `agitb.h` and call the static `run()` method of the `TestBed<MyModel>` class, providing your `MyModel` type as template parameter.
-
-### Example
+To use the AGITB testbed, include the main header file `agitb.h` and call the static `run()` method of the `TestBed<MyModel>` class, 
+providing your `MyModel` type as template parameter:
 
 ```cpp
 #include "path/to/agitb.h"
@@ -95,23 +121,42 @@ int main() {
 }
 ```
 
-Optionally, for a faster but less thorough check, you can configure AGITB to execute each test only once:
+For quicker feedback during development, you can adjust the evaluation thoroughness by specifying how many times each test is repeated:
+
 ```cpp
-    AGITB::run(sprogar::AGI::once);
+    AGITB::run(10);	// repeats each test 10 times
 ```
 ---
 
 ## Reproducibility
 
-When a benchmark run fails, AGITB stops immediately at the first failing test and reports both the **test number** and the **random generator seed** used for that execution. This makes every failure fully reproducible.
+When a benchmark run fails, AGITB stops immediately at the first failing test and reports the **random generator seed** used for that run, 
+allowing the exact scenario to be reproduced.
 
-To reproduce the exact scenario, rerun the benchmark with the reported test ID and seed.
+Rerun the benchmark with the reported values to recreate the failure.
 
-For example, if test `#12` fails with seed `4026412173`, you can reproduce it with:
+For example, in case of the Trace `#3` test failure above, you can reproduce it with:
 
 ```cpp
-AGITB::run(12, 4026412173);
+AGITB::run(3, 830706803);
 ```
+---
+
+## Feedback and contributions welcome
+
+AGITB is intended to be small, transparent, and easy to experiment with.
+
+Feedback, bug reports, and improvement ideas are very welcome. In particular:
+
+- unclear or ambiguous tests
+- correctness issues or edge cases
+- performance improvements
+- additional tests or tasks
+- alternative model adapters or integrations
+- results from interesting systems
+
+Issues and pull requests are encouraged.
+
 ---
 
 ## Requirements
@@ -125,6 +170,7 @@ To build and run this project, you will need a **C++20-compatible compiler**
 
 ## License
 
-This implementation is released as **free software** under the **GNU General Public License v3.0 (GPL-3.0)**. You are free to run, study, modify, and share this software under the terms of the license.
+This implementation is released as **free software** under the **GNU General Public License v3.0 (GPL-3.0)**. You are free to run, study, modify, 
+and share this software under the terms of the license.
 
 🔗 [https://github.com/matejsprogar/agitb](https://github.com/matejsprogar/agitb)
