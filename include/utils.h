@@ -189,7 +189,7 @@ inline namespace utils {
         Input operator ()(const Input& p) { return current_prediction = model(p); }
         Model& operator << (const Input& p) { current_prediction = model(p); return *this; }
         ////////////////
-        Input operator()() const { return current_prediction; }
+        Input get_prediction() const { return current_prediction; }
 
         // Sequentially feeds each element of the range to the target.
         template <std::ranges::range Range>
@@ -247,10 +247,9 @@ inline namespace utils {
         {
             return std::views::iota(std::size_t{ 0 }, length)
                 | std::views::transform([&](std::size_t) {
-                    Model& model = *this;
-                    const Input prediction = model();
-                    model << prediction;
-                    return prediction; 
+                    const Input prediction = get_prediction();
+                    *this << prediction;
+                    return prediction;
                 });
         }
 
