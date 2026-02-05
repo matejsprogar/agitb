@@ -1,8 +1,8 @@
 # AGITB – Artificial General Intelligence Testbed
 
 A small, self-contained C++ benchmark that evaluates predictive models on raw binary streams, 
-intended as a practical step toward artificial general intelligence.
-
+intended as a practical step toward artificial general intelligence. Users supply their own model implementation; AGITB runs the test suite against it.
+By design, most systems will not pass. Reports of models that do pass are especially valuable and help improve the benchmark.
 
 AGITB includes 12 short, intuitive, fully automated tests.
 
@@ -148,6 +148,7 @@ AGITB is intended to be small, transparent, and easy to experiment with.
 
 Feedback, bug reports, and improvement ideas are very welcome. In particular:
 
+- models that pass the full test suite
 - unclear or ambiguous tests
 - correctness issues or edge cases
 - performance improvements
