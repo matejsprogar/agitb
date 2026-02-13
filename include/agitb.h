@@ -283,16 +283,16 @@ namespace sprogar {
                     }
                 },
                 {
-                    // An informed model outperforms the best constant baseline at denoising a corrupted input.
+                    // An informed model consistently outperforms any constant baseline at predicting corrupted inputs.
                     "#10 Denoising",
                     RepeatForever,
                     []() {
                         auto corrupt = [](const Input& x, const Input& x_next, const Input& x_prev) -> Input {
-                            Input x_new;
+                            Input x_corrupted;
                             do {
-                                x_new = random<Input>(x_next, x_prev);  // respect Requirement 6
-                            } while (x_new == x);                       // ensure corruption
-                            return x_new;
+                                x_corrupted = random<Input>(x_next, x_prev);  // respect Requirement 6
+                            } while (x_corrupted == x);                       // ensure corruption
+                            return x_corrupted;
                         };
                         const Input all_zeros = Input{}, all_ones = ~all_zeros;
                         size_t model_score = 0, baseline_0_score = 0, baseline_1_score = 0;
@@ -300,25 +300,25 @@ namespace sprogar {
                         const int n = 5 * SequenceLength;               // informing context length
                         for (int i = 0; i < num_of_runs; ++i) {
                             const InputSequence seq(InputSequence::circular_random, SequenceLength);
-                            const Input x1_corrupted = corrupt(seq[0], seq[1], seq.back());
+                            const Input x_corrupted = corrupt(seq[0], seq[1], seq.back());
 
                             Model A;
                             for (int j = 0; j < n; ++j)
                                 A << seq;                                                   // A << seq^n
 
-                            A << x1_corrupted << (seq | std::views::drop(1));               // A << seq'
+                            A << x_corrupted << (seq | std::views::drop(1));                // A << seq'
 
-                            const Input& x1 = seq.front();
-                            model_score += utils::match_score(A.get_prediction(), x1);
-                            baseline_0_score += utils::match_score(all_zeros, x1);
-                            baseline_1_score += utils::match_score(all_ones, x1);
+                            const Input& x_true = seq.front();
+                            model_score += utils::match_score(A.get_prediction(), x_true);
+                            baseline_0_score += utils::match_score(all_zeros, x_true);
+                            baseline_1_score += utils::match_score(all_ones, x_true);
                         }
 
                         ASSERT(model_score > std::max(baseline_0_score, baseline_1_score));
                     }
                 },
                 {
-                    // An informed model predicts previously unseen inputs better than chance.
+                    // After training on a prefix of a structured sequence, a model predicts previously unseen continuations better than chance.
                     "#11 Generalisation",
                     RepeatForever,
                     []() {
@@ -343,7 +343,7 @@ namespace sprogar {
                     }
                 },
                 {
-                    // Each model update completes within a uniform time bound.
+                    // Each model update completes within a fixed wall-clock time bound, independent of the input history.
                     "#12 Real-time liveness",
                     RepeatForever,
                     []() {
