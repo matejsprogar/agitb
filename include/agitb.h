@@ -241,15 +241,15 @@ namespace sprogar {
                         auto adaptation_time_is_input_dependent = []() -> bool {
                             Model B;
                             const InputSequence base_seq = Model::learnable_random_sequence(SequenceLength, SimulatedInfinity);
-                            const time_t base_time = B.time_to_learn(base_seq, SimulatedInfinity);
+                            const time_t time_base_seq = B.time_to_learn(base_seq, SimulatedInfinity);
                             for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
                                 const InputSequence seq(InputSequence::circular_random, SequenceLength); // admissible by construction
 
                                 if (seq != base_seq) {
                                     Model A;
-                                    const time_t seq_time = A.time_to_learn(seq, SimulatedInfinity);
-                                    const bool seq_learnable = seq_time != SimulatedInfinity;
-                                    if (seq_learnable and seq_time != base_time)                         // rejects the null hypothesis
+                                    const time_t time_seq = A.time_to_learn(seq, SimulatedInfinity);
+                                    const bool seq_learnable = time_seq != SimulatedInfinity;
+                                    if (seq_learnable and time_seq != time_base_seq)                         // rejects the null hypothesis
                                         return true;
                                 }
                             }
