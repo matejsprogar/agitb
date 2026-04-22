@@ -116,15 +116,12 @@ namespace sprogar {
                 {
                     // Model evolution is deterministic with respect to input.
                     "#2 Determinism", 
-                    Repeat100x,
+                    RepeatForever,
                     []() {
-                        const InputSequence warm_up(InputSequence::random, utils::random_warm_up_time(SimulatedInfinity));
-                        Model A, B;
-
-                        A << warm_up;
-                        B << warm_up;                                   // B = A would allow RNG duplication.
+                        const Model R(Model::random, utils::random_warm_up_time(SimulatedInfinity));;
 
                         for (const Input& x : all_distinct_inputs) {
+                            Model A = R, B = R;
                             A << x;
                             B << x;
 
@@ -184,7 +181,7 @@ namespace sprogar {
                 },
                 {
                     // A model cannot learn everything there is to learn, except for length-2 sequences.
-                    "#6 Saturation",
+                    "#6 Inevitable saturation",
                     RepeatForever,
                     []() {
                         auto inevitable_saturation = [](Model& A) -> bool {
