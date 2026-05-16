@@ -11,7 +11,7 @@ AGITB includes 12 short, intuitive, fully automated tests.
 - deterministic and reproducible
 - builds in seconds
 
-Specification and design details: [doc/AGITB.pdf](doc/AGITB.pdf)
+Concept paper: [doc/FR4AGI.pdf](doc/FR4AGI.pdf)
 
 ### Quick start
 
