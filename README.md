@@ -2,7 +2,7 @@
 
 A small, self-contained C++ benchmark that evaluates predictive models on raw binary streams, 
 intended as a practical step toward artificial general intelligence. Provide your model and run AGITB.
-By design, most systems will not pass. Reports of models that do pass are especially valuable and help improve the benchmark.
+By design, most systems will not pass.
 
 AGITB includes 12 short, intuitive, fully automated tests.
 
