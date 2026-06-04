@@ -185,9 +185,11 @@ inline namespace utils {
         //Model(Args&&... args) : model(std::forward<Args>(args)...) {}
 
         // Constructs a randomly initialized model by feeding it with random inputs.
-        Model(random_tag, const time_t warm_up) : Model()
+        Model(random_tag, const time_t warm_up_max) : Model()
         {
-            *this << InputSequence(InputSequence::random, warm_up);
+            static std::uniform_int_distribution dist(InputType{}.size(), warm_up_max);
+
+            *this << InputSequence(InputSequence::random, dist(rng));
         }
         
         //////////////
