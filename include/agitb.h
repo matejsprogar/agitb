@@ -284,31 +284,36 @@ namespace sprogar {
                     "#10 Denoising",
                     RepeatForever,
                     []() {
-                        auto corrupt = [](const Input& x, const Input& x_next, const Input& x_prev) -> Input {
-                            Input x_corrupted;
-                            do {
-                                x_corrupted = random<Input>(x_next, x_prev);  // respect Requirement 6
-                            } while (x_corrupted == x);                       // ensure corruption
-                            return x_corrupted;
+                       auto corrupt = [](Input x, const Input& x_next, const Input& x_prev) -> Input {
+                            const Input corruptible_bits = ~(x_prev | x_next);
+                            if (corruptible_bits.any()) {
+                                for (size_t i = 0; i < BitsPerInput; ++i)
+                                    if (corruptible_bits[i])
+                                        x.flip(i);                                  // max possible corruption
+                            }
+                            return x;
                         };
                         const Input all_zeros = Input{}, all_ones = ~all_zeros;
                         size_t model_score = 0, baseline_0_score = 0, baseline_1_score = 0;
-                        const int num_of_runs = 20;                     // within each of 5,000 trials
-                        const int n = 5 * SequenceLength;               // informing context length
+                        const int num_of_runs = 20;                                 // within each of 5,000 trials
+                        const int n = 5 * SequenceLength;                           // informing context length
                         for (int i = 0; i < num_of_runs; ++i) {
                             const InputSequence seq(InputSequence::circular_random, SequenceLength);
-                            const Input x_corrupted = corrupt(seq[0], seq[1], seq.back());
+                            const Input true_elt = seq[0];
+                            const Input corrupted_elt = corrupt(true_elt, seq[1], seq.back());
+                            if (true_elt == corrupted_elt) {                        // is corruption impossible?
+                                i -= 1; continue;                                   // retry
+                            }
 
                             Model A;
                             for (int j = 0; j < n; ++j)
-                                A << seq;                                                   // A << seq^n
+                                A << seq;                                           // (A << seq)^n
 
-                            A << x_corrupted << (seq | std::views::drop(1));                // A << seq'
+                            A << corrupted_elt << (seq | std::views::drop(1));      // A << seq'
 
-                            const Input& x_true = seq.front();
-                            model_score += utils::match_score(A.get_prediction(), x_true);
-                            baseline_0_score += utils::match_score(all_zeros, x_true);
-                            baseline_1_score += utils::match_score(all_ones, x_true);
+                            model_score += utils::match_score(A.get_prediction(), true_elt);
+                            baseline_0_score += utils::match_score(all_zeros, true_elt);
+                            baseline_1_score += utils::match_score(all_ones, true_elt);
                         }
 
                         ASSERT(model_score > std::max(baseline_0_score, baseline_1_score));
