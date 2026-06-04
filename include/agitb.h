@@ -24,11 +24,6 @@
 #include <algorithm>
 #include <chrono>
 
-#define ASSERT(expression) (void)((!!(expression)) || \
-                            (std::cerr << std::format("\n\n{} in {}:{}\n{}\n\nrng_seed: {}\n", \
-                                red("Assertion failed"), __FILE__, __LINE__, #expression, utils::rng_seed), \
-                            exit(-1), 0))
-
 #include "utils.h"
 
 namespace sprogar {

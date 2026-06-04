@@ -29,6 +29,11 @@
 
 namespace sprogar {
 
+#define ASSERT(expression) (void)((!!(expression)) || \
+                            (std::cerr << std::format("\n\n{} in {}:{}\n{}\n\nrng_seed: {}\n", \
+                                red("Assertion failed"), __FILE__, __LINE__, #expression, utils::rng_seed), \
+                            exit(-1), 0))
+
 inline std::string red(const char* msg) { return std::format("\033[91m{}\033[0m", msg); }
 inline std::string green(const char* msg) { return std::format("\033[92m{}\033[0m", msg); }
 inline std::string yellow(const char* msg) { return std::format("\033[93m{}\033[0m", msg); }
