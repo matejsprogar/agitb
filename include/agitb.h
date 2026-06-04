@@ -24,15 +24,14 @@
 #include <algorithm>
 #include <chrono>
 
-#include "utils.h"
-
-
-namespace sprogar {
-
 #define ASSERT(expression) (void)((!!(expression)) || \
                             (std::cerr << std::format("\n\n{} in {}:{}\n{}\n\nrng_seed: {}\n", \
                                 red("Assertion failed"), __FILE__, __LINE__, #expression, utils::rng_seed), \
                             exit(-1), 0))
+
+#include "utils.h"
+
+namespace sprogar {
 
     namespace AGI {
         // AGITB environment settings

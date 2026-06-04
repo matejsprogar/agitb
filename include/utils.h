@@ -209,8 +209,9 @@ inline namespace utils {
                 if (M.learn(in, timeframe))
                     return in;
             }
-            std::cerr << "Error: Couldn't find a learnable sequence.\n";
-            exit(-1);
+
+            const bool learned_at_least_one_sequence = false;
+            ASSERT(learned_at_least_one_sequence);
         }
 
         // Iteratively feeds each model its own predictions and returns true if predictions match over a specified timeframe.
