@@ -331,7 +331,7 @@ inline namespace utils {
         }
 
         const int n = (int)diffs.size();
-        const int min_nonzero_pairs = 20;
+        const int min_nonzero_pairs = 10;
         if (n < min_nonzero_pairs) return false;
 
         std::sort(diffs.begin(), diffs.end(),
