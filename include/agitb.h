@@ -112,7 +112,7 @@ namespace sprogar {
                     "#2 Determinism", 
                     RepeatForever,
                     []() {
-                        const Model R(Model::random, utils::random_warm_up_time(SimulatedInfinity));;
+                        const Model R(Model::random, SimulatedInfinity);;
 
                         for (const Input& x : all_distinct_inputs) {
                             Model A = R, B = R;
@@ -128,7 +128,7 @@ namespace sprogar {
                     "#3 Trace", 
                     RepeatForever,
                     []() {
-                        Model A(Model::random, utils::random_warm_up_time(SimulatedInfinity));
+                        Model A(Model::random, SimulatedInfinity);
 
                         std::vector<Model> trajectory;
                         trajectory.reserve(SimulatedInfinity);
@@ -148,7 +148,7 @@ namespace sprogar {
                     Repeat100x,
                     []() {
                         for (const Input& x : all_distinct_inputs) {
-                            Model A(Model::random, utils::random_warm_up_time(SimulatedInfinity)), B = A;
+                            Model A(Model::random, SimulatedInfinity), B = A;
                             A << x << ~x;
                             B << ~x << x;
 
@@ -261,8 +261,8 @@ namespace sprogar {
                             Model A;
                             const time_t A_time = A.time_to_learn(seq, SimulatedInfinity);
                             for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
-                                Model B(Model::random, 1 + utils::random_warm_up_time(SimulatedInfinity));  // B != A by construction
-
+                                Model B(Model::random, SimulatedInfinity);                                  // even if A == B by chance, a vast majority of 
+                                                                                                            // other models will differ from A
                                 time_t B_time = B.time_to_learn(seq, SimulatedInfinity);
                                 if (A_time != B_time)                                                       // rejects the null hypothesis
                                     return true;

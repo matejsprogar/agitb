@@ -71,12 +71,6 @@ inline namespace utils {
         }
         return count;
     }
-
-    inline size_t random_warm_up_time(time_t hi)
-    {
-        static std::uniform_int_distribution<size_t> dist(0, hi);
-        return dist(rng);
-    }
     
     // Returns an input with spikes at random positions, except where explicitly required to have none.
     template<typename Input, typename... Inputs>
@@ -92,6 +86,8 @@ inline namespace utils {
 
         return input;
     }
+
+
 
     template <typename Input>
     class InputSequence : public std::vector<Input>
