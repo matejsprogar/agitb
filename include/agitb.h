@@ -49,7 +49,7 @@ namespace sprogar {
             using InputSequence = utils::InputSequence<Input>;
             using Model = utils::Model<SystemUnderEvaluation, Input>;
 
-            enum test_repetitions { RepeatOnce = 1, Repeat100x = 100, RepeatForever = SimulatedInfinity };
+            enum test_repetitions { RepeatOnce = 1, Repeat10x = 10, Repeat100x = 100, RepeatForever = SimulatedInfinity };
 
         public:
             // Runs all tests from the testbed using the specified test mode.
@@ -97,6 +97,25 @@ namespace sprogar {
                 | std::views::transform([](int i) { return Input(i); });
             static inline const std::vector<std::tuple<std::string, test_repetitions, void(*)()>> testbed =
             {
+                {
+                    "0 Semantic integrity",
+                    Repeat10x,
+                    []() {
+                        Model A;
+
+                        A << InputSequence(InputSequence::random, SimulatedInfinity);
+                        Model B = A;
+
+                        for (size_t r = 0; r < SimulatedInfinity; ++r) {
+                            const Input any = utils::random<Input>();
+                            A << any;
+                            B << any;
+
+                            ASSERT(A == B);
+                            ASSERT(A.get_prediction() == B.get_prediction());
+                        }
+                    }
+                },
                 {
                     // All instances of a given model type begin transitioning from an identical initial configuration.
                     "#1 Uninformed start", 
