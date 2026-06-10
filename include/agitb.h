@@ -79,7 +79,7 @@ namespace sprogar {
                 utils::rng.seed(utils::rng_seed = seed);
                 ASSERT(test_number > 0 and test_number <= testbed.size());
                 
-                const auto& [info, repetitions, test] = testbed[test_number -1];
+                const auto& [info, repetitions, test] = testbed[test_number];
 
                 std::clog << "Artificial General Intelligence Testbed\nRunning 1 test:\n";
                 std::clog << "Random seed: " << rng_seed << std::endl << std::endl;
@@ -98,7 +98,7 @@ namespace sprogar {
             static inline const std::vector<std::tuple<std::string, test_repetitions, void(*)()>> testbed =
             {
                 {
-                    "0 Semantic integrity",
+                    "* Semantic integrity *",
                     Repeat10x,
                     []() {
                         Model A;
