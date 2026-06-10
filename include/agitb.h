@@ -214,16 +214,13 @@ namespace sprogar {
                     }
                 },
                 {
-                    // The model must be able to learn sequences with varying cycle lengths.
+                    // The model must be able to learn trivial sequences with varying cycle lengths.
                     "#7 Temporal adaptability",
                     RepeatOnce,
                     []() {
-                        const InputSequence seq1(InputSequence::trivial, SequenceLength);       // 00....01
-                        const InputSequence seq2(InputSequence::trivial, SequenceLength + 1);   // 00....001    
                         Model A;
-
-                        ASSERT(A.learn(seq1));
-                        ASSERT(A.learn(seq2));
+                        ASSERT(A.learn(InputSequence(InputSequence::trivial, SequenceLength)));
+                        ASSERT(A.learn(InputSequence(InputSequence::trivial, SimulatedInfinity)));
                     }
                 },
                 {
