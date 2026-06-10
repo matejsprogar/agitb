@@ -171,8 +171,8 @@ namespace sprogar {
 
                             Model A, B;
 
-                            ASSERT(A.learn(no_consecutive_spikes, SimulatedInfinity));
-                            ASSERT(not B.learn(consecutive_spikes, SimulatedInfinity) || !spikes);
+                            ASSERT(A.learn(no_consecutive_spikes));
+                            ASSERT(not B.learn(consecutive_spikes) || !spikes);
                         }
                     }
                 },
@@ -183,9 +183,9 @@ namespace sprogar {
                     []() {
                         auto inevitable_saturation = [](Model& A) -> bool {
                             for (time_t time = 0; time < SimulatedInfinity; ++time) {
-                                const InputSequence learnable_sequence = Model::learnable_random_sequence(SequenceLength, SimulatedInfinity);
+                                const InputSequence learnable_sequence = Model::learnable_random_sequence(SequenceLength);
 
-                                if (not A.learn(learnable_sequence, SimulatedInfinity))
+                                if (not A.learn(learnable_sequence))
                                     return true;
                             }
                             return false;
@@ -200,7 +200,7 @@ namespace sprogar {
 
                                     const InputSequence admissible_length_2_sequence = { x1, x2 };
                                     Model B = A;
-                                    if (!B.learn(admissible_length_2_sequence, SimulatedInfinity))
+                                    if (!B.learn(admissible_length_2_sequence))
                                         return false;
                                 }
                             }
@@ -218,11 +218,12 @@ namespace sprogar {
                     "#7 Temporal adaptability",
                     RepeatOnce,
                     []() {
-                        for (size_t cycle = 1; cycle <= SequenceLength + 1; ++cycle) {
-                            const InputSequence seq(InputSequence::trivial, cycle);
-                            Model A;
-                            ASSERT(A.learn(seq, SimulatedInfinity));
-                        }
+                        const InputSequence seq1(InputSequence::trivial, SequenceLength);       // 00....01
+                        const InputSequence seq2(InputSequence::trivial, SequenceLength + 1);   // 00....001    
+                        Model A;
+
+                        ASSERT(A.learn(seq1));
+                        ASSERT(A.learn(seq2));
                     }
                 },
                 {
@@ -233,14 +234,14 @@ namespace sprogar {
                         // Null Hypothesis: Adaptation time is independent of the input sequence content
                         auto adaptation_time_is_input_dependent = []() -> bool {
                             Model B;
-                            const InputSequence base_seq = Model::learnable_random_sequence(SequenceLength, SimulatedInfinity);
-                            const time_t time_base_seq = B.time_to_learn(base_seq, SimulatedInfinity);
+                            const InputSequence base_seq = Model::learnable_random_sequence(SequenceLength);
+                            const time_t time_base_seq = B.time_to_learn(base_seq);
                             for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
                                 const InputSequence seq(InputSequence::circular_random, SequenceLength);    // admissible by construction
 
                                 if (seq != base_seq) {
                                     Model A;
-                                    const time_t time_seq = A.time_to_learn(seq, SimulatedInfinity);
+                                    const time_t time_seq = A.time_to_learn(seq);
                                     const bool seq_learnable = time_seq != SimulatedInfinity;
                                     if (seq_learnable and time_seq != time_base_seq)                         // rejects the null hypothesis
                                         return true;
@@ -259,13 +260,13 @@ namespace sprogar {
                     []() {
                         // Null Hypothesis: Adaptation time is independent of the model
                         auto adaptation_time_is_model_dependent = []() -> bool {
-                            const InputSequence seq = Model::learnable_random_sequence(SequenceLength, SimulatedInfinity);
+                            const InputSequence seq = Model::learnable_random_sequence(SequenceLength);
                             Model A;
-                            const time_t A_time = A.time_to_learn(seq, SimulatedInfinity);
+                            const time_t A_time = A.time_to_learn(seq);
                             for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
                                 Model B(Model::random);                                                     // even if A == B by chance, a vast majority of 
                                                                                                             // other models will differ from A
-                                time_t B_time = B.time_to_learn(seq, SimulatedInfinity);
+                                time_t B_time = B.time_to_learn(seq);
                                 if (A_time != B_time)                                                       // rejects the null hypothesis
                                     return true;
                             }

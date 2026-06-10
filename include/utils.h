@@ -205,12 +205,12 @@ inline namespace utils {
             return *this;
         }
 
-        static InputSequence learnable_random_sequence(const size_t length, time_t timeframe)
+        static InputSequence learnable_random_sequence(const size_t length)
         {
-            for (time_t time = 0; time < timeframe; time += length) {
+            for (time_t time = 0; time < SimulatedInfinity; time += length) {
                 const InputSequence in = InputSequence(InputSequence::circular_random, length);
                 Model M;
-                if (M.learn(in, timeframe))
+                if (M.learn(in))
                     return in;
             }
 
@@ -219,9 +219,9 @@ inline namespace utils {
         }
 
         // Iteratively feeds each model its own predictions and returns true if predictions match over a specified timeframe.
-        static bool identical_behaviour(Model& A, Model& B, time_t timeframe)
+        static bool identical_behaviour(Model& A, Model& B)
         {
-            for (time_t time = 0; time < timeframe; ++time) {
+            for (time_t time = 0; time < SimulatedInfinity; ++time) {
                 const auto prediction = A();
                 if (prediction != B())
                     return false;
@@ -232,19 +232,19 @@ inline namespace utils {
         }
 
         // Adapts the model to the given input sequence and returns the learning time in atomic steps required to achieve perfect prediction.
-        time_t time_to_learn(const InputSequence& inputs, time_t timeframe)
+        time_t time_to_learn(const InputSequence& inputs)
         {
-            for (time_t tau = 0; tau < timeframe; tau += inputs.size()) {
+            for (time_t tau = 0; tau < SimulatedInfinity; tau += inputs.size()) {
                 if (process(inputs) == inputs)
                     return tau;
             }
-            return timeframe;
+            return SimulatedInfinity;
         }
 
         // Adapts the model to the given input sequence and returns true if perfect prediction is achieved.
-        bool learn(const InputSequence& inputs, time_t timeframe)
+        bool learn(const InputSequence& inputs)
         {
-            return time_to_learn(inputs, timeframe) < timeframe;
+            return time_to_learn(inputs) < SimulatedInfinity;
         }
         
         // Feeds the model its own predictions to generate a sequence of predictions.
