@@ -156,6 +156,7 @@ namespace sprogar {
                             B << ~x << x;
 
                             ASSERT(A != B);
+                            ASSERT(std::ranges::equal(A.generate(SimulatedInfinity), B.generate(SimulatedInfinity)));
                         }
                     }
                 },
