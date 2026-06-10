@@ -218,12 +218,11 @@ namespace sprogar {
                     "#7 Temporal adaptability",
                     RepeatOnce,
                     []() {
-                        const InputSequence seq1(InputSequence::trivial, SequenceLength);       // 00....01
-                        const InputSequence seq2(InputSequence::trivial, SequenceLength + 1);   // 00....001    
-                        Model A;
-
-                        ASSERT(A.learn(seq1, SimulatedInfinity));
-                        ASSERT(A.learn(seq2, SimulatedInfinity));
+                        for (size_t cycle = 1; cycle <= SequenceLength + 1; ++cycle) {
+                            const InputSequence seq(InputSequence::trivial, cycle);
+                            Model A;
+                            ASSERT(A.learn(seq, SimulatedInfinity));
+                        }
                     }
                 },
                 {
