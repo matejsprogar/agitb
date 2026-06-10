@@ -55,22 +55,25 @@ namespace sprogar {
             // Runs all tests from the testbed using the specified test mode.
             static bool run(size_t repetitions_override = 0)
             {
-                std::clog << "Artificial General Intelligence Testbed\n\nRunning 12 tests...\n";
+                std::clog << "Artificial General Intelligence Testbed\n";
+                
+                semantic_integrity();
 
-                const std::string go_back(10, '\b');
+                std::clog << "\n\nRunning 12 tests...\n";
+                const std::string go_back(20, '\b');
                 for (const auto& [info, repetitions, test] : testbed) {
                     std::clog << info << std::endl;
 
                     const size_t test_repetitions = repetitions_override == 0 ? repetitions : std::min((size_t)repetitions, (size_t)repetitions_override);
                     for (size_t r = 1; r <= test_repetitions; ++r) {
-                        std::clog << r << '/' << test_repetitions << go_back;
+                        std::clog << r << '/' << test_repetitions << "   " << go_back;
 
                         utils::rng_seed = utils::rng();
                         test();
                     }
                 }
 
-                std::clog << green("\nPASS\n");
+                std::clog << green("\n\nPASS\n");
                 return true;
             }
             // Runs a specified test from the testbed using the given RNG seed.
@@ -79,7 +82,7 @@ namespace sprogar {
                 utils::rng.seed(utils::rng_seed = seed);
                 ASSERT(test_number > 0 and test_number <= testbed.size());
                 
-                const auto& [info, repetitions, test] = testbed[test_number];
+                const auto& [info, repetitions, test] = testbed[test_number-1];
 
                 std::clog << "Artificial General Intelligence Testbed\nRunning 1 test:\n";
                 std::clog << "Random seed: " << rng_seed << std::endl << std::endl;
@@ -97,25 +100,6 @@ namespace sprogar {
                 | std::views::transform([](int i) { return Input(i); });
             static inline const std::vector<std::tuple<std::string, test_repetitions, void(*)()>> testbed =
             {
-                {
-                    "* Semantic integrity *",
-                    Repeat10x,
-                    []() {
-                        Model A;
-
-                        A << InputSequence(InputSequence::random, SimulatedInfinity);
-                        Model B = A;
-
-                        for (size_t r = 0; r < SimulatedInfinity; ++r) {
-                            const Input any = utils::random<Input>();
-                            A << any;
-                            B << any;
-
-                            ASSERT(A == B);
-                            ASSERT(A.get_prediction() == B.get_prediction());
-                        }
-                    }
-                },
                 {
                     // All instances of a given model type begin transitioning from an identical initial configuration.
                     "#1 Uninformed start", 
@@ -415,6 +399,22 @@ namespace sprogar {
                     }
                 }
             };
+            static void semantic_integrity()
+            {
+                Model A;
+
+                A << InputSequence(InputSequence::random, SimulatedInfinity);
+                Model B = A;
+
+                for (size_t r = 0; r < SimulatedInfinity; ++r) {
+                    const Input any = utils::random<Input>();
+                    A << any;
+                    B << any;
+
+                    bool semantic_integrity = A == B && A.get_prediction() == B.get_prediction();
+                    ASSERT(semantic_integrity);
+                }
+            }
         };
     }
 }
