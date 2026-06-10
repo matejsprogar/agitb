@@ -47,7 +47,7 @@ namespace sprogar {
         {
             using Input = std::bitset<BitsPerInput>;
             using InputSequence = utils::InputSequence<Input>;
-            using Model = utils::Model<SystemUnderEvaluation, Input>;
+            using Model = utils::Model<SystemUnderEvaluation, Input, SimulatedInfinity>;
 
             enum test_repetitions { RepeatOnce = 1, Repeat10x = 10, Repeat100x = 100, RepeatForever = SimulatedInfinity };
 
@@ -115,7 +115,7 @@ namespace sprogar {
                     "#2 Determinism", 
                     RepeatForever,
                     []() {
-                        const Model R(Model::random, SimulatedInfinity);;
+                        const Model R(Model::random);
 
                         for (const Input& x : all_distinct_inputs) {
                             Model A = R, B = R;
@@ -131,7 +131,7 @@ namespace sprogar {
                     "#3 Trace", 
                     RepeatForever,
                     []() {
-                        Model A(Model::random, SimulatedInfinity);
+                        Model A(Model::random);
 
                         std::vector<Model> trajectory;
                         trajectory.reserve(SimulatedInfinity);
@@ -151,12 +151,11 @@ namespace sprogar {
                     Repeat100x,
                     []() {
                         for (const Input& x : all_distinct_inputs) {
-                            Model A(Model::random, SimulatedInfinity), B = A;
+                            Model A(Model::random), B = A;
                             A << x << ~x;
                             B << ~x << x;
 
                             ASSERT(A != B);
-                            ASSERT(std::ranges::equal(A.generate(SimulatedInfinity), B.generate(SimulatedInfinity)));
                         }
                     }
                 },
@@ -238,7 +237,7 @@ namespace sprogar {
                             const InputSequence base_seq = Model::learnable_random_sequence(SequenceLength, SimulatedInfinity);
                             const time_t time_base_seq = B.time_to_learn(base_seq, SimulatedInfinity);
                             for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
-                                const InputSequence seq(InputSequence::circular_random, SequenceLength); // admissible by construction
+                                const InputSequence seq(InputSequence::circular_random, SequenceLength);    // admissible by construction
 
                                 if (seq != base_seq) {
                                     Model A;
@@ -265,7 +264,7 @@ namespace sprogar {
                             Model A;
                             const time_t A_time = A.time_to_learn(seq, SimulatedInfinity);
                             for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
-                                Model B(Model::random, SimulatedInfinity);                                  // even if A == B by chance, a vast majority of 
+                                Model B(Model::random);                                                     // even if A == B by chance, a vast majority of 
                                                                                                             // other models will differ from A
                                 time_t B_time = B.time_to_learn(seq, SimulatedInfinity);
                                 if (A_time != B_time)                                                       // rejects the null hypothesis
@@ -325,7 +324,7 @@ namespace sprogar {
                         size_t score = 0;
                         const int num_of_runs = 20, ratio = 10;                                     // |prefix| = ratio * |continuation|
                         for (int i = 0; i < num_of_runs; ++i) {
-                            Model G(Model::random, SimulatedInfinity);                              // unknown random rule
+                            Model G(Model::random);                                                 // unknown random rule
                             const auto prefix = G.generate(ratio * SequenceLength);
                             const auto continuation = G.generate(1 * SequenceLength);
 
@@ -371,7 +370,7 @@ namespace sprogar {
                             blank_times.reserve(num_batches);
                             complex_times.reserve(num_batches);
 
-                            const Model blank, complex(Model::random, SimulatedInfinity);
+                            const Model blank, complex(Model::random);
 
                             const size_t structured_batches = num_batches / 4;      // structured:random = 1:4
                             for (size_t batch_id = 0; batch_id < num_batches; ++batch_id) {
@@ -390,7 +389,7 @@ namespace sprogar {
                         };
 
                         const size_t num_of_batches = 100;
-                        const size_t batch_size = std::max(autotune_batch_size(Model()), autotune_batch_size(Model(Model::random, SimulatedInfinity)));
+                        const size_t batch_size = std::max(autotune_batch_size(Model()), autotune_batch_size(Model(Model::random)));
                         const auto [blank_times, complex_times] = measure_times(num_of_batches, batch_size);
 
                         const time_t absolute_non_liveness_guard = 10 * utils::median(blank_times);
@@ -402,9 +401,7 @@ namespace sprogar {
             };
             static void semantic_integrity()
             {
-                Model A;
-
-                A << InputSequence(InputSequence::random, SimulatedInfinity);
+                Model A(Model::random, SimulatedInfinity);
                 Model B = A;
 
                 for (size_t r = 0; r < SimulatedInfinity; ++r) {
@@ -412,8 +409,9 @@ namespace sprogar {
                     A << any;
                     B << any;
 
-                    bool semantic_integrity = A == B && A.get_prediction() == B.get_prediction();
-                    ASSERT(semantic_integrity);
+                    ASSERT(A == B);
+                    bool equality_implies_equal_behaviour = std::ranges::equal(A.generate(SimulatedInfinity), B.generate(SimulatedInfinity));
+                    ASSERT(equality_implies_equal_behaviour);
                 }
             }
         };

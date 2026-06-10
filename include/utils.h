@@ -161,7 +161,7 @@ inline namespace utils {
         }
     };
 
-    template <typename ModelUnderTest, typename InputType>
+    template <typename ModelUnderTest, typename InputType, size_t SimulatedInfinity>
     requires InputPredictor<ModelUnderTest, InputType>
     class Model
     {
@@ -176,16 +176,17 @@ inline namespace utils {
         Model(Model&& src) = default;
         Model& operator=(const Model& src) = default;
         bool operator==(const Model& rhs) const = default;
-    
+
         //template<typename... Args>
         //Model(Args&&... args) : model(std::forward<Args>(args)...) {}
 
         // Constructs a randomly initialized model by feeding it with random inputs.
-        Model(random_tag, const time_t warm_up_max) : Model()
+        Model(random_tag, const time_t warm_up) : Model()
         {
-            static std::uniform_int_distribution dist(InputType{}.size(), warm_up_max);
-
-            *this << InputSequence(InputSequence::random, dist(rng));
+            *this << InputSequence(InputSequence::random, warm_up);
+        }
+        Model(random_tag) : Model(random, std::uniform_int_distribution{InputType{}.size(), SimulatedInfinity}(rng))
+        {
         }
         
         //////////////
