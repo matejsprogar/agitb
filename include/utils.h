@@ -231,12 +231,12 @@ inline namespace utils {
             return A() == B();
         }
 
-        // Adapts the model to the given input sequence and returns the learning time in atomic steps required to achieve perfect prediction.
+        // Adapts the model to the given input sequence and returns the number of iterations needed to learn the sequence.
         time_t time_to_learn(const InputSequence& inputs)
         {
-            for (time_t tau = 0; tau < SimulatedInfinity; tau += inputs.size()) {
+            for (time_t iteration = 0; iteration < SimulatedInfinity; ++iteration) {
                 if (process(inputs) == inputs)
-                    return tau;
+                    return iteration;
             }
             return SimulatedInfinity;
         }
