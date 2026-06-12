@@ -169,7 +169,7 @@ namespace sprogar {
                             const InputSequence consecutive_spikes = { x, x };
                             const bool spikes = x.any();
 
-                            Model A, B;
+                            Model A(Model::random), B = A;
 
                             ASSERT(A.learn(no_consecutive_spikes));
                             ASSERT(not B.learn(consecutive_spikes) || !spikes);
@@ -219,8 +219,9 @@ namespace sprogar {
                     RepeatOnce,
                     []() {
                         Model A;
-                        ASSERT(A.learn(InputSequence(InputSequence::trivial, SequenceLength)));
-                        ASSERT(A.learn(InputSequence(InputSequence::trivial, SimulatedInfinity)));
+
+                        // ASSERT(A.learn(InputSequence(InputSequence::trivial, SequenceLength))) can go against #6.b
+                        ASSERT(A.learn(InputSequence(InputSequence::trivial, SimulatedInfinity)));  // A.learn(short_sequence) already in #5
                     }
                 },
                 {
@@ -230,17 +231,16 @@ namespace sprogar {
                     []() {
                         // Null Hypothesis: Adaptation time is independent of the input sequence content
                         auto adaptation_time_is_input_dependent = []() -> bool {
-                            Model B;
+                            Model A(Model::random), _A_ = A;
                             const InputSequence base_seq = Model::learnable_random_sequence(SequenceLength);
-                            const time_t time_base_seq = B.time_to_learn(base_seq);
+                            const time_t time_base_seq = _A_.time_to_learn(base_seq);
                             for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
-                                const InputSequence seq(InputSequence::circular_random, SequenceLength);    // admissible by construction
+                                const InputSequence seq(InputSequence::circular_random, SequenceLength);
 
                                 if (seq != base_seq) {
-                                    Model A;
-                                    const time_t time_seq = A.time_to_learn(seq);
-                                    const bool seq_learnable = time_seq != SimulatedInfinity;
-                                    if (seq_learnable and time_seq != time_base_seq)                         // rejects the null hypothesis
+                                    Model B = A;
+                                    const time_t time_other_seq = B.time_to_learn(seq);
+                                    if (time_base_seq != time_other_seq)                                    // rejects the null hypothesis
                                         return true;
                                 }
                             }
@@ -258,13 +258,13 @@ namespace sprogar {
                         // Null Hypothesis: Adaptation time is independent of the model
                         auto adaptation_time_is_model_dependent = []() -> bool {
                             const InputSequence seq = Model::learnable_random_sequence(SequenceLength);
-                            Model A;
-                            const time_t A_time = A.time_to_learn(seq);
+                            Model A(Model::random), _A_ = A;
+                            const time_t time_base_model = _A_.time_to_learn(seq);
                             for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
-                                Model B(Model::random);                                                     // even if A == B by chance, a vast majority of 
-                                                                                                            // other models will differ from A
-                                time_t B_time = B.time_to_learn(seq);
-                                if (A_time != B_time)                                                       // rejects the null hypothesis
+                                Model B(Model::random);
+                    
+                                const time_t time_other_model = B.time_to_learn(seq);
+                                if (A != B and time_base_model != time_other_model)                         // rejects the null hypothesis
                                     return true;
                             }
                             return false;
@@ -314,11 +314,14 @@ namespace sprogar {
                     }
                 },
                 {
-                    // After training on a prefix of a structured sequence, a model predicts previously unseen continuations better than chance.
+                    // After training on a prefix of a structured sequence, a model predicts previously unseen continuations better than baselines.
                     "#11 Generalisation",
                     RepeatForever,
                     []() {
-                        size_t score = 0;
+                        const InputSequence all_zeros(SequenceLength, Input{}),
+                                            all_ones(SequenceLength, ~Input{});
+                        
+                        size_t score = 0, baseline_0_score = 0, baseline_1_score = 0;;
                         const int num_of_runs = 20, ratio = 10;                                     // |prefix| = ratio * |continuation|
                         for (int i = 0; i < num_of_runs; ++i) {
                             Model G(Model::random);                                                 // unknown random rule
@@ -330,12 +333,12 @@ namespace sprogar {
 
                             const auto continuation_star = A.generate(continuation.size());
                             score += utils::match_score(continuation_star, continuation);
+                            baseline_0_score += utils::match_score(all_zeros, continuation);
+                            baseline_1_score += utils::match_score(all_ones, continuation);
                         }
-                        // total_bits = num_of_runs * continuation.size() * L
-                        const size_t total_bits = num_of_runs * SequenceLength * BitsPerInput;
-                        const size_t random_chance = total_bits / 2;
+                        const size_t baseline = std::max(baseline_0_score, baseline_1_score);
 
-                        ASSERT(score > random_chance);
+                        ASSERT(score > baseline);
                     }
                 },
                 {

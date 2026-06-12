@@ -34,6 +34,7 @@ namespace sprogar {
                                 red("Assertion failed"), __FILE__, __LINE__, #expression, utils::rng_seed), \
                             exit(-1), 0))
 
+
 inline std::string red(const char* msg) { return std::format("\033[91m{}\033[0m", msg); }
 inline std::string green(const char* msg) { return std::format("\033[92m{}\033[0m", msg); }
 inline std::string yellow(const char* msg) { return std::format("\033[93m{}\033[0m", msg); }
@@ -69,6 +70,8 @@ inline namespace utils {
         for (; it1 != end1; ++it1, ++it2) {
             count += match_score(*it1, *it2);
         }
+        assert(it2 == std::ranges::end(r2));
+        
         return count;
     }
     
@@ -102,8 +105,8 @@ inline namespace utils {
         InputSequence() {}
         InputSequence(std::initializer_list<Input> il) : std::vector<Input>(il) {}
 
-        //template<typename... Args>
-        //Model(Args&&... args) : model(std::forward<Args>(args)...) {}
+        template<typename... Args>
+        InputSequence(Args&&... args) : base(std::forward<Args>(args)...) {}
 
         // constructs a random sequence of inputs with a specified length.
         InputSequence(random_tag, time_t length)
@@ -165,6 +168,8 @@ inline namespace utils {
     requires InputPredictor<ModelUnderTest, InputType>
     class Model
     {
+        const time_t Infinity = std::numeric_limits<time_t>::max();
+        
     public:
         using Input = InputType;
         using InputSequence = utils::InputSequence<Input>;
@@ -185,7 +190,7 @@ inline namespace utils {
         {
             *this << InputSequence(InputSequence::random, warm_up);
         }
-        Model(random_tag) : Model(random, std::uniform_int_distribution{InputType{}.size(), SimulatedInfinity}(rng))
+        Model(random_tag) : Model(random, std::uniform_int_distribution<size_t>{0, SimulatedInfinity}(rng))
         {
         }
         
@@ -218,33 +223,20 @@ inline namespace utils {
             ASSERT(learned_at_least_one_sequence);
         }
 
-        // Iteratively feeds each model its own predictions and returns true if predictions match over a specified timeframe.
-        static bool identical_behaviour(Model& A, Model& B)
-        {
-            for (time_t time = 0; time < SimulatedInfinity; ++time) {
-                const auto prediction = A();
-                if (prediction != B())
-                    return false;
-                A << prediction;
-                B << prediction;
-            }
-            return A() == B();
-        }
-
-        // Adapts the model to the given input sequence and returns the number of iterations needed to learn the sequence.
+        // Adapts the model to the given input sequence and returns the number of timesteps needed to learn the sequence.
         time_t time_to_learn(const InputSequence& inputs)
         {
-            for (time_t iteration = 0; iteration < SimulatedInfinity; ++iteration) {
+            for (size_t iteration = 0; iteration < SimulatedInfinity; ++iteration) {
                 if (process(inputs) == inputs)
-                    return iteration;
+                    return iteration * inputs.size();
             }
-            return SimulatedInfinity;
+            return Infinity;
         }
 
         // Adapts the model to the given input sequence and returns true if perfect prediction is achieved.
         bool learn(const InputSequence& inputs)
         {
-            return time_to_learn(inputs) < SimulatedInfinity;
+            return time_to_learn(inputs) < Infinity;
         }
         
         // Feeds the model its own predictions to generate a sequence of predictions.
@@ -268,7 +260,7 @@ inline namespace utils {
             InputSequence predictions; predictions.reserve(inputs.size());
 
             for (const Input& in : inputs) {
-                predictions.push_back(current_prediction);
+                predictions.push_back(get_prediction());
                 *this << in;
             }
             return predictions;
