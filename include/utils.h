@@ -62,9 +62,8 @@ inline namespace utils {
     size_t match_score(const R1& r1, const R2& r2)
     {
         size_t count = 0;
-        for (const auto [x1, x2] : std::views::zip(r1, r2)) {
+        for (const auto& [x1, x2] : std::views::zip(r1, r2))
             count += match_score(x1, x2);
-        }
 
         return count;
     }
