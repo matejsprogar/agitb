@@ -165,7 +165,7 @@ inline namespace utils {
         {
             *this << InputSequence(InputSequence::random, warm_up);
         }
-        Model(random_tag) : Model(random, rand(0, SimulatedInfinity))
+        Model(random_tag) : Model(random, utils::random(0, SimulatedInfinity))
         {
         }
         
