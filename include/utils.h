@@ -61,15 +61,10 @@ inline namespace utils {
     template <std::ranges::input_range R1, std::ranges::input_range R2>
     size_t match_score(const R1& r1, const R2& r2)
     {
-        auto it1 = std::ranges::begin(r1);
-        auto it2 = std::ranges::begin(r2);
-        auto end1 = std::ranges::end(r1);
-
         size_t count = 0;
-        for (; it1 != end1; ++it1, ++it2) {
-            count += match_score(*it1, *it2);
+        for (const auto [x1, x2] : std::views::zip(r1, r2)) {
+            count += match_score(x1, x2);
         }
-        assert(it2 == std::ranges::end(r2));
 
         return count;
     }
