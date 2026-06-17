@@ -18,7 +18,7 @@ Concept paper: [doc/FR4AGI.pdf](doc/FR4AGI.pdf)
 Compile and run the provided stub model:
 
 ```bash
-g++ -std=c++20 stub.cpp -o stub
+g++ -std=c++23 stub.cpp -o stub
 $ ./stub
 ```
 Example output (the stub fails on test #3):
@@ -163,10 +163,10 @@ Issues and pull requests are encouraged.
 
 ## Requirements
 
-To build and run this project, you will need a **C++20-compatible compiler** 
+To build and run this project, you will need a **C++23-compatible compiler** 
 
-> 💡 Make sure your build environment is configured to enable C++20 support  
-> (e.g., use `-std=c++20` with `g++` or `clang++`).
+> 💡 Make sure your build environment is configured to enable C++23 support  
+> (e.g., use `-std=c++23` with `g++` or `clang++`).
 
 ---
 
