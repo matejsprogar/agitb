@@ -34,7 +34,6 @@ namespace sprogar {
                                 red("Assertion failed"), __FILE__, __LINE__, #expression, utils::rng_seed), \
                             exit(-1), 0))
 
-
 inline std::string red(const char* msg) { return std::format("\033[91m{}\033[0m", msg); }
 inline std::string green(const char* msg) { return std::format("\033[92m{}\033[0m", msg); }
 inline std::string yellow(const char* msg) { return std::format("\033[93m{}\033[0m", msg); }
@@ -71,7 +70,7 @@ inline namespace utils {
             count += match_score(*it1, *it2);
         }
         assert(it2 == std::ranges::end(r2));
-        
+
         return count;
     }
     
@@ -90,6 +89,12 @@ inline namespace utils {
         return input;
     }
 
+    size_t random(size_t min, size_t max)
+    {
+        std::uniform_int_distribution<size_t> dist(min, max);
+        return dist(rng);
+    }
+
 
 
     template <typename Input>
@@ -100,7 +105,6 @@ inline namespace utils {
         enum random_tag { random = 0 };
         enum circular_random_tag { circular_random = 0 };
         enum trivial_tag { trivial = 0 };
-        enum structured_tag { structured = 0 };
 
         InputSequence() {}
         InputSequence(std::initializer_list<Input> il) : std::vector<Input>(il) {}
@@ -109,20 +113,20 @@ inline namespace utils {
         InputSequence(Args&&... args) : base(std::forward<Args>(args)...) {}
 
         // constructs a random sequence of inputs with a specified length.
-        InputSequence(random_tag, time_t length)
+        InputSequence(random_tag, time_t length, Input start=utils::random<Input>())
         {
             if (0 == length)
                 return;
 
             base::reserve(length);
 
-            base::push_back(utils::random<Input>());
+            base::push_back(start);
             while (base::size() < length)
                 base::push_back(utils::random<Input>(base::back()));
         }
         // constructs a random sequence of inputs with a specified length, exhibiting a circular property 
         // where the first input incorporates refractory periods for the last input in the sequence.
-        InputSequence(circular_random_tag, time_t length) : InputSequence(random, length) {
+        InputSequence(circular_random_tag, time_t length, Input start=utils::random<Input>()) : InputSequence(random, length, start) {
             base::pop_back();
             base::push_back(utils::random<Input>(base::back(), base::front()));
         }
@@ -132,35 +136,6 @@ inline namespace utils {
         {
             base::resize( length );
             base::back() = ~Input{};                // [{0...0}, {0...0}, ..., {0...0}, {1...1}]
-        }
-
-        // deterministically constructs a stress batch of structured inputs
-        InputSequence(structured_tag, time_t length, const size_t id)
-        {
-            base::reserve(length+1);
-
-            const size_t predefined_patterns = 8;
-            const size_t L = Input{}.size();
-            const Input half_bits_set = (~Input()) >> (L / 2);              // 0b0000011111 @ L=10
-
-            const int choice = id % predefined_patterns;
-            const Input arp = choice != 7 ? Input{} : ~half_bits_set;       // absolute refractory-period
-
-            while (base::size() < length) {
-                const size_t shift = (base::size() / 2) % L;
-                switch (choice)
-                {
-                case 0: base::push_back(Input{}); break;                    // 0 0 0 0 0...
-                case 1: base::push_back(~Input{}); break;                   // ~0 0 ~0 0 ~0...
-                case 2: base::push_back(Input{1}); break;                   // 1 0 1 0 1...
-                case 3: base::push_back(Input{2}); break;                   // 2 0 2 0 2...
-                case 4: base::push_back(Input{1ull << shift}); break;       // 1 0 2 0 4...
-                case 5: base::push_back(Input{3ull << shift}); break;       // 3 0 6 0 12...
-                case 6: base::push_back(half_bits_set); break;              // h 0 h 0 h...
-                case 7: base::push_back(half_bits_set); break;              // h ~h h ~h h...
-                }
-                base::push_back(arp);
-            }
         }
     };
 
@@ -190,7 +165,7 @@ inline namespace utils {
         {
             *this << InputSequence(InputSequence::random, warm_up);
         }
-        Model(random_tag) : Model(random, std::uniform_int_distribution<size_t>{0, SimulatedInfinity}(rng))
+        Model(random_tag) : Model(random, rand(0, SimulatedInfinity))
         {
         }
         
@@ -304,7 +279,10 @@ inline namespace utils {
  *      = 2.326  strong evidence   (1% significance)
  *      = 1.645  standard choice   (5% significance)    
  **/
-    bool consistently_greater_second_value(const std::vector<time_t>& V1, const std::vector<time_t>& V2,
+    template <std::ranges::range Range1, std::ranges::range Range2>
+        requires std::same_as<std::ranges::range_value_t<Range1>, time_t> &&
+                 std::same_as<std::ranges::range_value_t<Range2>, time_t>
+    bool consistently_greater_second_value(Range1&& V1, Range2&& V2,
         const double one_sided_z_threshold = 3.090)
     {
         assert(V1.size() == V2.size());
@@ -312,11 +290,10 @@ inline namespace utils {
         struct SignedAbsDiff { size_t abs_diff; int sign; };
         std::vector<SignedAbsDiff> diffs; diffs.reserve(V1.size());
 
-        for (size_t i = 0; i < V1.size(); ++i) {
-            const time_t v1 = V1[i], v2 = V2[i];
+        for (const auto [v1, v2] : std::views::zip(V1, V2)) {
             if (v1 == v2) continue;
-            if (v2 > v1)    diffs.emplace_back(v2 - v1, +1);
-            else            diffs.emplace_back(v1 - v2, -1);
+            if (v2 > v1) diffs.emplace_back(v2 - v1, +1);
+            else         diffs.emplace_back(v1 - v2, -1);
         }
 
         const int n = (int)diffs.size();
@@ -351,17 +328,28 @@ inline namespace utils {
         return z > one_sided_z_threshold;   // true => evidence that V2 tends to be greater than V1
     }
 
-    template <typename T>
-    inline T median(const std::vector<T>& times)
+    template <std::ranges::range Range>
+        //requires std::same_as<std::ranges::range_value_t<Range>, double>
+    auto percentiles(Range times)
     {
-        std::vector<T> sorted_times = times;
-        std::sort(sorted_times.begin(), sorted_times.end());
-        const size_t n = sorted_times.size();
-        if (n % 2 == 1)
-            return sorted_times[n / 2];
-        else
-            return (sorted_times[n / 2 - 1] + sorted_times[n / 2]) / 2;
+        std::ranges::sort(times);
+        const size_t n = times.size();
+
+        const auto p50 = (n % 2 == 1) ? times[n / 2] : (times[n / 2 - 1] + times[n / 2]) / 2;
+        const auto p95 = times[static_cast<int>(0.95 * (n - 1))];
+
+        return std::make_tuple(p50, p95);
     }
+
+    template <typename Func>
+    time_t time_it(Func&& f) 
+    {
+        const auto start = std::chrono::steady_clock::now();
+        f();
+        const auto stop = std::chrono::steady_clock::now();
+        return (time_t)std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count();
+    }
+
 }   // utils
 }   // AGI
 }   // sprogar

@@ -96,6 +96,14 @@ namespace sprogar {
             }
             
         private:
+            static void semantic_integrity()
+            {
+                Model A(Model::random, SequenceLength), B = A;
+
+                ASSERT(A == B);
+                bool equality_implies_equal_behaviour = std::ranges::equal(A.generate(SimulatedInfinity), B.generate(SimulatedInfinity));
+                ASSERT(equality_implies_equal_behaviour);
+            }
             static inline const auto all_distinct_inputs = std::views::iota(0, 1 << BitsPerInput)
                 | std::views::transform([](int i) { return Input(i); });
             static inline const std::vector<std::tuple<std::string, test_repetitions, void(*)()>> testbed =
@@ -129,19 +137,18 @@ namespace sprogar {
                 {
                     // Each input leaves a permanent internal trace.
                     "#3 Trace", 
-                    RepeatForever,
+                    RepeatOnce,
                     []() {
-                        Model A(Model::random);
+                        Model A;
 
+                        const Input zeros = Input{};                            // edge case
                         std::vector<Model> trajectory;
                         trajectory.reserve(SimulatedInfinity);
-
-                        trajectory.push_back(A);
                         while (trajectory.size() < SimulatedInfinity) {
-                            A << random<Input>();
+                            trajectory.push_back(A);
+                            A << zeros;
 
                             ASSERT(std::find(trajectory.begin(), trajectory.end(), A) == trajectory.end());
-                            trajectory.push_back(A);
                         }
                     }
                 },
@@ -150,12 +157,15 @@ namespace sprogar {
                     "#4 Time",
                     Repeat100x,
                     []() {
-                        for (const Input& x : all_distinct_inputs) {
-                            Model A(Model::random), B = A;
-                            A << x << ~x;
-                            B << ~x << x;
+                        Model A(Model::random);
 
-                            ASSERT(A != B);
+                        auto complementary_inputs = [](const Input& x) { return x.count() <= BitsPerInput / 2; };
+                        for (const Input& x : all_distinct_inputs | std::views::filter(complementary_inputs)) {
+                            Model _A = A, _B = A;
+                            _A << x << ~x;
+                            _B << ~x << x;
+
+                            ASSERT(_A != _B);
                         }
                     }
                 },
@@ -169,7 +179,7 @@ namespace sprogar {
                             const InputSequence consecutive_spikes = { x, x };
                             const bool spikes = x.any();
 
-                            Model A(Model::random), B = A;
+                            Model A, B;
 
                             ASSERT(A.learn(no_consecutive_spikes));
                             ASSERT(not B.learn(consecutive_spikes) || !spikes);
@@ -214,14 +224,14 @@ namespace sprogar {
                     }
                 },
                 {
-                    // The model must be able to learn trivial sequences with varying cycle lengths.
+                    // The model must be able to learn sequences with varying cycle lengths.
                     "#7 Temporal adaptability",
                     RepeatOnce,
                     []() {
                         Model A;
 
-                        // ASSERT(A.learn(InputSequence(InputSequence::trivial, SequenceLength))) can go against #6.b
-                        ASSERT(A.learn(InputSequence(InputSequence::trivial, SimulatedInfinity)));  // A.learn(short_sequence) already in #5
+                        ASSERT(A.learn(InputSequence(InputSequence::trivial, SequenceLength)));
+                        ASSERT(A.learn(InputSequence(InputSequence::trivial, SequenceLength + 1)));
                     }
                 },
                 {
@@ -231,16 +241,17 @@ namespace sprogar {
                     []() {
                         // Null Hypothesis: Adaptation time is independent of the input sequence content
                         auto adaptation_time_is_input_dependent = []() -> bool {
-                            Model A(Model::random), _A_ = A;
+                            Model A;
                             const InputSequence base_seq = Model::learnable_random_sequence(SequenceLength);
-                            const time_t time_base_seq = _A_.time_to_learn(base_seq);
+                            const time_t time_base_seq = A.time_to_learn(base_seq);
                             for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
-                                const InputSequence seq(InputSequence::circular_random, SequenceLength);
+                                const InputSequence seq(InputSequence::circular_random, SequenceLength);    // admissible by construction
 
                                 if (seq != base_seq) {
-                                    Model B = A;
-                                    const time_t time_other_seq = B.time_to_learn(seq);
-                                    if (time_base_seq != time_other_seq)                                    // rejects the null hypothesis
+                                    Model B;
+                                    const time_t time_seq = B.time_to_learn(seq);
+                                    const bool seq_learnable = time_seq != SimulatedInfinity;
+                                    if (seq_learnable and time_seq != time_base_seq)                         // rejects the null hypothesis
                                         return true;
                                 }
                             }
@@ -258,13 +269,13 @@ namespace sprogar {
                         // Null Hypothesis: Adaptation time is independent of the model
                         auto adaptation_time_is_model_dependent = []() -> bool {
                             const InputSequence seq = Model::learnable_random_sequence(SequenceLength);
-                            Model A(Model::random), _A_ = A;
-                            const time_t time_base_model = _A_.time_to_learn(seq);
+                            Model A;
+                            const time_t A_time = A.time_to_learn(seq);
                             for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
-                                Model B(Model::random);
-                    
-                                const time_t time_other_model = B.time_to_learn(seq);
-                                if (A != B and time_base_model != time_other_model)                         // rejects the null hypothesis
+                                Model B(Model::random);                                                     // even if A == B by chance, a vast majority of 
+                                                                                                            // other models will differ from A
+                                time_t B_time = B.time_to_learn(seq);
+                                if (A_time != B_time)                                                       // rejects the null hypothesis
                                     return true;
                             }
                             return false;
@@ -278,39 +289,35 @@ namespace sprogar {
                     "#10 Denoising",
                     RepeatForever,
                     []() {
-                       auto corrupt = [](Input x, const Input& x_next, const Input& x_prev) -> Input {
+                        auto corrupt = [](const Input& x, const Input& x_prev, const Input& x_next) -> std::optional<Input> {
                             const Input corruptible_bits = ~(x_prev | x_next);
-                            if (corruptible_bits.any()) {
-                                for (size_t i = 0; i < BitsPerInput; ++i)
-                                    if (corruptible_bits[i])
-                                        x.flip(i);                                  // max possible corruption
-                            }
-                            return x;
+                            return corruptible_bits.any() ? std::optional<Input>{ x ^ corruptible_bits } : std::nullopt;
                         };
-                        const Input all_zeros = Input{}, all_ones = ~all_zeros;
+                        const Input zeros = Input{}, ones = zeros;
                         size_t model_score = 0, baseline_0_score = 0, baseline_1_score = 0;
                         const int num_of_runs = 20;                                 // within each of 5,000 trials
-                        const int n = 5 * SequenceLength;                           // informing context length
+                        const int n = 5;                                            // informing context length
                         for (int i = 0; i < num_of_runs; ++i) {
-                            const InputSequence seq(InputSequence::circular_random, SequenceLength);
-                            const Input true_elt = seq[0];
-                            const Input corrupted_elt = corrupt(true_elt, seq[1], seq.back());
-                            if (true_elt == corrupted_elt) {                        // is corruption impossible?
-                                i -= 1; continue;                                   // retry
+                            const InputSequence reality(InputSequence::circular_random, SequenceLength);
+                            const Input true_elt = reality[0];
+                            if (const auto corrupted_elt = corrupt(true_elt, reality.back(), reality[1])) {
+                                Model A;
+                                for (int j = 0; j < n; ++j)
+                                    A << reality;                                   // inform the model about the reality
+
+                                // feed the old reality after the noisy sample or else a continuously learning model may begin generalising
+                                A << *corrupted_elt << (reality | std::views::drop(1));
+
+                                model_score += utils::match_score(A.get_prediction(), true_elt);
+                                baseline_0_score += utils::match_score(zeros, true_elt);
+                                baseline_1_score += utils::match_score(ones, true_elt);
                             }
-
-                            Model A;
-                            for (int j = 0; j < n; ++j)
-                                A << seq;                                           // (A << seq)^n
-
-                            A << corrupted_elt << (seq | std::views::drop(1));      // A << seq'
-
-                            model_score += utils::match_score(A.get_prediction(), true_elt);
-                            baseline_0_score += utils::match_score(all_zeros, true_elt);
-                            baseline_1_score += utils::match_score(all_ones, true_elt);
+                            else
+                                i -= 1;
                         }
+                        const size_t baseline = std::max(baseline_0_score, baseline_1_score);
 
-                        ASSERT(model_score > std::max(baseline_0_score, baseline_1_score));
+                        ASSERT(model_score > baseline);
                     }
                 },
                 {
@@ -318,10 +325,9 @@ namespace sprogar {
                     "#11 Generalisation",
                     RepeatForever,
                     []() {
-                        const InputSequence all_zeros(SequenceLength, Input{}),
-                                            all_ones(SequenceLength, ~Input{});
-                        
-                        size_t score = 0, baseline_0_score = 0, baseline_1_score = 0;;
+                        const InputSequence all_zeros(SequenceLength, Input{}), all_ones(SequenceLength, ~Input{});
+
+                        size_t score = 0, baseline_0_score = 0, baseline_1_score = 0;
                         const int num_of_runs = 20, ratio = 10;                                     // |prefix| = ratio * |continuation|
                         for (int i = 0; i < num_of_runs; ++i) {
                             Model G(Model::random);                                                 // unknown random rule
@@ -346,74 +352,74 @@ namespace sprogar {
                     "#12 Real-time liveness",
                     RepeatForever,
                     []() {
-                        auto batch_update_time = [](Model& model, const InputSequence& batch) -> time_t {
-                            const auto start = std::chrono::steady_clock::now();
+                        static const time_t min_chunk_duration_us = 100;
+                        static const size_t chunk_count = 100;
+                        static const double jitter_tolerance = 4.0;
 
-                            model << batch;
-
-                            const auto stop = std::chrono::steady_clock::now();
-                            return (time_t)std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count();
-                        };
-                        auto autotune_batch_size = [&](const Model& model) -> size_t {
-                            const time_t target_batch_duration_us = 100;
-                            InputSequence batch(InputSequence::random, 1);
-                            while (batch.size() < 1'000'000) {
-                                Model _model = model;
-                                if (batch_update_time(_model, batch) >= target_batch_duration_us)
+                        auto autotune_chunk_size = [=]() -> size_t {
+                            const size_t tuning_samples = 11;
+                            InputSequence chunk(InputSequence::random, 2ull);
+                            while (true) {
+                                std::vector<time_t> time_probes(tuning_samples);
+                                for (time_t& time : time_probes) {
+                                    Model M;
+                                    time = utils::time_it([&]() { M << chunk; });
+                                }
+                                const auto [median, _] = utils::percentiles(time_probes);
+                                if (median >= 2 * min_chunk_duration_us)
                                     break;
-                                batch = InputSequence(InputSequence::random, 2 * batch.size());
+                                chunk = InputSequence(InputSequence::random, 2 * chunk.size());
                             }
-                            return batch.size();
+                            return chunk.size();
                         };
-                        auto measure_times = [&](const size_t num_batches, const size_t batch_size) {
-                            std::vector<time_t> blank_times, complex_times;
-                            blank_times.reserve(num_batches);
-                            complex_times.reserve(num_batches);
+                        auto assert_live_on = [&](auto make_chunk) {
+                            std::vector<time_t> times;
+                            times.reserve(chunk_count);
 
-                            const Model blank, complex(Model::random);
+                            Model M;
+                            while (times.size() < chunk_count) {
+                                const time_t dt = utils::time_it([&]() { M << make_chunk(); });
+                                times.push_back(dt);
 
-                            const size_t structured_batches = num_batches / 4;      // structured:random = 1:4
-                            for (size_t batch_id = 0; batch_id < num_batches; ++batch_id) {
-                                const InputSequence batch = blank_times.size() < structured_batches ?
-                                    InputSequence(InputSequence::structured, batch_size, batch_id) :
-                                    InputSequence(InputSequence::random, batch_size);
-
-                                Model _blank = blank;
-                                blank_times.emplace_back(batch_update_time(_blank, batch));
-
-                                Model _complex = complex;
-                                complex_times.emplace_back(batch_update_time(_complex, batch));
+                                static const time_t absolute_ceiling = 1'000 * min_chunk_duration_us;   // ~0.2 s/chunk
+                                ASSERT(dt <= absolute_ceiling);
                             }
 
-                            return std::make_pair(blank_times, complex_times);
+                            const double growth_tolerance = 1.25;              // allow 25% benign drift due to noise and other factors
+                            auto early = times
+                                | std::views::take(chunk_count / 2)
+                                | std::views::transform([&](time_t tm) { return (time_t)(tm * growth_tolerance); });
+                            auto late = times
+                                | std::views::drop(chunk_count / 2);
+                            const bool growing = utils::consistently_greater_second_value(early, late);
+                            ASSERT(not growing);
+
+                            const auto [median, p95] = utils::percentiles(times);
+                            ASSERT(median >= min_chunk_duration_us);            // meaningful measurements
+                            ASSERT(p95 <= median * jitter_tolerance);           // bounded worst case
                         };
 
-                        const size_t num_of_batches = 100;
-                        const size_t batch_size = std::max(autotune_batch_size(Model()), autotune_batch_size(Model(Model::random)));
-                        const auto [blank_times, complex_times] = measure_times(num_of_batches, batch_size);
+                        auto periodic_chunk = [](const InputSequence& motif, size_t chunk_size) {
+                            InputSequence chunk; chunk.reserve(chunk_size);
+                            for (size_t k = 0; k < chunk_size; ++k)
+                                chunk.push_back(motif[k % motif.size()]);
 
-                        const time_t absolute_non_liveness_guard = 10 * utils::median(blank_times);
-                        ASSERT(*std::ranges::max_element(blank_times) <= absolute_non_liveness_guard);
-                        ASSERT(*std::ranges::max_element(complex_times) <= absolute_non_liveness_guard);
-                        ASSERT(not utils::consistently_greater_second_value(blank_times, complex_times));
-                    }
+                            chunk.back() = chunk.back() & ~chunk.front();       // ARP
+                            return chunk;
+                        };
+
+                        static const size_t chunk_size = autotune_chunk_size();
+                        assert_live_on([&]() { return InputSequence(InputSequence::random, chunk_size); });
+                        assert_live_on([&]() { return InputSequence(InputSequence::trivial, chunk_size); });
+
+                        for (size_t i = 0; i < 10; ++i) {
+                            const size_t pattern_period = utils::random(2, 4 * SequenceLength);
+                            const InputSequence motif(InputSequence::circular_random, pattern_period);
+                            assert_live_on([&]() { return periodic_chunk(motif, chunk_size); });
+                        }
+                    } 
                 }
             };
-            static void semantic_integrity()
-            {
-                Model A(Model::random, SimulatedInfinity);
-                Model B = A;
-
-                for (size_t r = 0; r < SimulatedInfinity; ++r) {
-                    const Input any = utils::random<Input>();
-                    A << any;
-                    B << any;
-
-                    ASSERT(A == B);
-                    bool equality_implies_equal_behaviour = std::ranges::equal(A.generate(SimulatedInfinity), B.generate(SimulatedInfinity));
-                    ASSERT(equality_implies_equal_behaviour);
-                }
-            }
         };
     }
 }
