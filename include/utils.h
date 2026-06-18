@@ -68,27 +68,35 @@ inline namespace utils {
         return count;
     }
     
-    // Returns an input with spikes at random positions, except where explicitly required to have none.
+    size_t random() { return rng(); }
+    bool random(double p) { 
+        std::bernoulli_distribution bd(p);
+        return bd(rng); 
+    }
+    size_t random(size_t min, size_t max_inclusive)
+    {
+        std::uniform_int_distribution<size_t> dist(min, max_inclusive);
+        return dist(rng);
+    }
+    // Returns an input with spikes at random positions with given probability, except where explicitly required to have none.
     template<typename Input, typename... Inputs>
     requires (std::same_as<Input, Inputs> && ...)
-    Input random(const Inputs&... turn_off)
+    Input random_p(double p, const Inputs&... turn_off)
     {
-        static std::bernoulli_distribution bd(0.5);
-
         Input input{};
         for (size_t i = 0; i < Input{}.size(); ++i)
             if (!(false | ... | turn_off[i]))
-                input[i] = bd(rng);
+                input[i] = random(p);
 
         return input;
     }
-
-    size_t random(size_t min, size_t max)
+    // Returns an input with spikes at random positions, except where explicitly required to have none.
+    template<typename Input, typename... Inputs>
+        requires (std::same_as<Input, Inputs> && ...)
+    Input random(const Inputs&... turn_off)
     {
-        std::uniform_int_distribution<size_t> dist(min, max);
-        return dist(rng);
+        return random_p<Input>(0.5, turn_off...);
     }
-
 
 
     template <typename Input>
@@ -131,7 +139,7 @@ inline namespace utils {
             base::resize( length );
             base::back() = ~Input{};                // [{0...0}, {0...0}, ..., {0...0}, {1...1}]
         }
-    };
+     };
 
     template <typename ModelUnderTest, typename InputType, size_t SimulatedInfinity>
     requires InputPredictor<ModelUnderTest, InputType>
