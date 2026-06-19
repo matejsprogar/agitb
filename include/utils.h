@@ -352,6 +352,42 @@ inline namespace utils {
         return (time_t)std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count();
     }
 
+    template <typename Input>
+    class Generator
+    {
+        static constexpr int L = static_cast<int>(Input{}.size());
+        Input row;
+
+        Input rule90()
+        {
+            Input new_row;
+            for (int i = 0; i < L; ++i) {
+                const bool left = (i > 0) && row.test(i - 1);
+                const bool right = (i + 1 < L) && row.test(i + 1);
+                if (left ^ right) 
+                    new_row.set(i);
+            }
+            Input starting_row = row;
+            row = new_row;
+            return starting_row;
+        }
+
+    public:
+        Generator() : row(0b1010101010)
+        {
+            row >>= random(0, 5);
+            row <<= random(0, 5);
+        }
+
+        auto generate(size_t length)
+        {
+            std::vector<Input> stream;
+            stream.reserve(length);
+            while (stream.size() < length)
+                stream.push_back(rule90());
+            return stream;
+        }
+    };
 }   // utils
 }   // AGI
 }   // sprogar

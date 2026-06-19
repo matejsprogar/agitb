@@ -326,65 +326,25 @@ namespace sprogar {
                     "#11 Generalisation",
                     RepeatForever,
                     []() {
-                        const size_t states = 12;               // size of the order-1 context alphabet.
-                        const double P_spikes = 0.2;            // how many bits per pattern
-                        const double P_deterministic = 0.80;
+                        const InputSequence all_zeros(SequenceLength, Input{});
 
-                        const size_t burn_in = 500;             // unscored: the model learns the conditional here
-                        const size_t scored_window = 1000;      // scored: predictions on not-yet-seen input
+                        size_t score = 0;
+                        const int num_of_runs = 20, prefix_len = BitsPerInput - 1;
+                        for (int i = 0; i < num_of_runs; ++i) {
+                            utils::Generator<Input> G;
+                            const InputSequence stream = G.generate(prefix_len + 1);
+                            const auto prefix = stream | std::views::take(prefix_len);
+                            const auto continuation = (stream | std::views::drop(prefix_len))[0];
 
-                        std::vector<Input> pattern;
-                        while (pattern.size() < states) {
-                            Input p = utils::random_p<Input>(P_spikes);
-                            if (std::find(pattern.begin(), pattern.end(), p) == pattern.end())
-                                pattern.push_back(p);
+                            Model A;
+                            A << prefix;
+
+                            const auto continuation_star = A.get_prediction();
+
+                            score += continuation_star == continuation;
                         }
 
-                        std::vector<std::vector<size_t>> successors;
-                        for (const Input& x : pattern) {
-                            successors.emplace_back();
-                            for (size_t i = 0; i < pattern.size(); ++i)
-                                if ((x & pattern[i]).none())
-                                    successors.back().push_back(i);
-                            if (successors.back().empty()) {
-                                successors.back().push_back(pattern.size());
-                                pattern.push_back(utils::random_p<Input>(P_spikes, x));
-                            }
-                        }
-
-                        Model A;
-                        size_t cur = utils::random(0ull, states-1);
-
-                        double model_match = 0, baseline_match = 0, period2_match = 0, oracle_match = 0;
-                        Input prev1{}, prev2{};
-
-                        for (size_t t = 0; t < burn_in + scored_window; ++t) {
-
-                            const Input prediction = A.get_prediction();
-                            const std::vector<size_t>& succ = successors[cur];
-
-                            if (utils::random(P_deterministic) || succ.size() == 1)
-                                cur = succ[0];
-                            else
-                                cur = succ[utils::random(1, succ.size() - 1)];
-
-                            const Input& actual = pattern[cur];
-
-                            if (t >= burn_in) {
-                                model_match += utils::match_score(prediction, actual);
-                                baseline_match += utils::match_score(Input{},    actual);
-                                period2_match += utils::match_score(prev2,      actual);
-                            }
-
-                            A << actual;
-                            prev2 = prev1; prev1 = actual;
-                        }
-                        const double model = model_match / scored_window;
-                        const double baseline = baseline_match / scored_window;
-                        const double period2 = period2_match / scored_window;
-
-                        ASSERT(model > baseline);
-                        ASSERT(model > period2);
+                        ASSERT(score > num_of_runs / 2);
                     }
                 },
                 {
