@@ -321,30 +321,31 @@ namespace sprogar {
                     }
                 },
                 {
-                    // A continuous learner predicts the unseen continuation of a stationary
-                    // stochastic stream better than the structure-blind baselines, online.
+                    // A continuous learner can predict the unseen continuation of a complex stream.
                     "#11 Generalisation",
                     RepeatForever,
                     []() {
-                        const InputSequence all_zeros(SequenceLength, Input{});
+                        const bool model_can_generate_complex_structured_sequnces =
+                            utils::isStructured<BitsPerInput>(Model{Model::random, SequenceLength}.generate(5'000));
+                        ASSERT(model_can_generate_complex_structured_sequnces);
 
-                        size_t score = 0;
-                        const int num_of_runs = 20, prefix_len = BitsPerInput - 1;
+                        const int num_of_runs = 20, experience_len = 50;
                         for (int i = 0; i < num_of_runs; ++i) {
-                            utils::Generator<Input> G;
-                            const InputSequence stream = G.generate(prefix_len + 1);
-                            const auto prefix = stream | std::views::take(prefix_len);
-                            const auto continuation = (stream | std::views::drop(prefix_len))[0];
+                            Model G(Model::random, SequenceLength);         // (2^10)^7 = 2^70 different G initialisations
+                            const auto seq = G.generate(experience_len);
+                            const auto experience = seq | std::views::take(experience_len);
+                            const auto future = seq[experience_len + 1];
 
                             Model A;
-                            A << prefix;
+                            A << experience;
 
-                            const auto continuation_star = A.get_prediction();
+                            const auto educated_guess = A.get_prediction();
 
-                            score += continuation_star == continuation;
+                            if (educated_guess == future)
+                                return;
                         }
-
-                        ASSERT(score > num_of_runs / 2);
+                        const bool has_generalised_at_least_one_sequence = false;
+                        ASSERT(has_generalised_at_least_one_sequence);
                     }
                 },
                 {

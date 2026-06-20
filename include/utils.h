@@ -26,6 +26,7 @@
 #include <ranges>
 #include <random>
 #include <cassert>
+#include <valarray>
 
 namespace sprogar {
 
@@ -68,7 +69,6 @@ inline namespace utils {
         return count;
     }
     
-    size_t random() { return rng(); }
     bool random(double p) { 
         std::bernoulli_distribution bd(p);
         return bd(rng); 
@@ -332,7 +332,7 @@ inline namespace utils {
 
     template <std::ranges::range Range>
         //requires std::same_as<std::ranges::range_value_t<Range>, double>
-    auto percentiles(Range times)
+    auto percentiles(Range&& times)
     {
         std::ranges::sort(times);
         const size_t n = times.size();
@@ -352,42 +352,73 @@ inline namespace utils {
         return (time_t)std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count();
     }
 
-    template <typename Input>
-    class Generator
+    template <size_t BITS, std::ranges::range Range>
+        requires std::same_as<std::ranges::range_value_t<Range>, std::bitset<BITS>>
+    bool isStructured(Range&& seq)
     {
-        static constexpr int L = static_cast<int>(Input{}.size());
-        Input row;
+        const size_t N = seq.size();
+        const double hmax = 1.0;            // hmax = log_2(|{0,1}|) = log_2(2)
 
-        Input rule90()
+        if (N < 2)
+            return false;
+
+        double ones[BITS] = { 0.0 };
+        double same[BITS] = { 0.0 };
+        double changes[BITS] = { 0.0 };
+
+        auto old = seq[0];
+        for (const auto& elt : seq | std::views::drop(1))
         {
-            Input new_row;
-            for (int i = 0; i < L; ++i) {
-                const bool left = (i > 0) && row.test(i - 1);
-                const bool right = (i + 1 < L) && row.test(i + 1);
-                if (left ^ right) 
-                    new_row.set(i);
+            for (int b = 0; b < BITS; b++)
+            {
+                bool curr = elt.test(b);
+                bool prev = old.test(b);
+
+                ones[b] += curr;
+                same[b] += (curr == prev);
+                changes[b] += (curr != prev);
             }
-            Input starting_row = row;
-            row = new_row;
-            return starting_row;
+            old = elt;
         }
 
-    public:
-        Generator() : row(0b1010101010)
+        double hmu = 0.0;
+        double autocorr = 0.0;
+        double instability = 0.0;
+
+        for (int b = 0; b < BITS; b++)
         {
-            row >>= random(0, 5);
-            row <<= random(0, 5);
+            double p1 = ones[b] / N;
+            double p0 = 1.0 - p1;
+
+            double Hb = 0.0;
+            if (p1 > 0) Hb -= p1 * std::log2(p1);
+            if (p0 > 0) Hb -= p0 * std::log2(p0);
+
+            hmu += Hb;
+            autocorr += same[b] / (N - 1);
+            instability += changes[b] / (N - 1);
         }
 
-        auto generate(size_t length)
-        {
-            std::vector<Input> stream;
-            stream.reserve(length);
-            while (stream.size() < length)
-                stream.push_back(rule90());
-            return stream;
-        }
-    };
+        hmu /= BITS;
+        autocorr /= BITS;
+        instability /= BITS;
+
+        // normalize entropy (max per bit = 1)
+        const double r = hmu / hmax;
+
+        // --------------------------------------------------------
+        // Structure score:
+        // - high entropy alone is NOT structure
+        // - need correlation + intermediate entropy
+        // --------------------------------------------------------
+        const double structure =
+            (1.0 - std::abs(2.0 * r - 1.0)) *
+            autocorr *
+            (1.0 - instability);
+
+        const double empirical_threshold = 0.25;
+        return structure > empirical_threshold;
+    }
 }   // utils
 }   // AGI
 }   // sprogar
