@@ -315,6 +315,15 @@ namespace sprogar {
                     "#11 Generalisation",
                     RepeatForever,
                     []() {
+                        /*
+                        The generalisation test is problematic because a prototype model cannot be expected 
+                        to generalise to every kind of sequence. Some sequence it could generalise surely 
+                        exists — but the test has no way of knowing which one, and so may demand generalisation 
+                        the model was never capable of. Even sequences the model generates itself are unsuitable, 
+                        since such a sequence must be the product of a mature model, and we cannot expect an 
+                        empty model to acquire a mature generator's knowledge merely by observing its outputs.
+                        */
+
                         // Under construction
                         ASSERT(true);
                     }
