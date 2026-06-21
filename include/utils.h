@@ -219,12 +219,13 @@ inline namespace utils {
         // Feeds the model its own predictions to generate a sequence of predictions.
         auto generate(size_t length)
         {
-            return std::views::iota(std::size_t{ 0 }, length)
-                | std::views::transform([&](std::size_t) {
-                    const Input prediction = get_prediction();
-                    *this << prediction;
-                    return prediction;
-                });
+            InputSequence seq;
+            seq.reserve(length);
+            while (seq.size() < length) {
+                seq.push_back(get_prediction());
+                *this << seq.back();
+            }
+            return seq;
         }
 
     private:
@@ -352,72 +353,25 @@ inline namespace utils {
         return (time_t)std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count();
     }
 
-    template <size_t BITS, std::ranges::range Range>
-        requires std::same_as<std::ranges::range_value_t<Range>, std::bitset<BITS>>
-    bool isStructured(Range&& seq)
-    {
-        const size_t N = seq.size();
-        const double hmax = 1.0;            // hmax = log_2(|{0,1}|) = log_2(2)
+    template <typename T>
+    bool is_periodic(const std::vector<T>& seq) {
+        size_t n = seq.size();
 
-        if (N < 2)
-            return false;
+        for (size_t p = 1; p <= n; ++p) {
+            bool period = true;
 
-        double ones[BITS] = { 0.0 };
-        double same[BITS] = { 0.0 };
-        double changes[BITS] = { 0.0 };
-
-        auto old = seq[0];
-        for (const auto& elt : seq | std::views::drop(1))
-        {
-            for (int b = 0; b < BITS; b++)
-            {
-                bool curr = elt.test(b);
-                bool prev = old.test(b);
-
-                ones[b] += curr;
-                same[b] += (curr == prev);
-                changes[b] += (curr != prev);
+            for (size_t i = p; i < n; ++i) {
+                if (seq[i] != seq[i % p]) {
+                    period = false;
+                    break;
+                }
             }
-            old = elt;
+
+            if (period)
+                return true;
         }
 
-        double hmu = 0.0;
-        double autocorr = 0.0;
-        double instability = 0.0;
-
-        for (int b = 0; b < BITS; b++)
-        {
-            double p1 = ones[b] / N;
-            double p0 = 1.0 - p1;
-
-            double Hb = 0.0;
-            if (p1 > 0) Hb -= p1 * std::log2(p1);
-            if (p0 > 0) Hb -= p0 * std::log2(p0);
-
-            hmu += Hb;
-            autocorr += same[b] / (N - 1);
-            instability += changes[b] / (N - 1);
-        }
-
-        hmu /= BITS;
-        autocorr /= BITS;
-        instability /= BITS;
-
-        // normalize entropy (max per bit = 1)
-        const double r = hmu / hmax;
-
-        // --------------------------------------------------------
-        // Structure score:
-        // - high entropy alone is NOT structure
-        // - need correlation + intermediate entropy
-        // --------------------------------------------------------
-        const double structure =
-            (1.0 - std::abs(2.0 * r - 1.0)) *
-            autocorr *
-            (1.0 - instability);
-
-        const double empirical_threshold = 0.25;
-        return structure > empirical_threshold;
+        return false;
     }
 }   // utils
 }   // AGI

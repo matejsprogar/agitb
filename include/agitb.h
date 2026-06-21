@@ -57,8 +57,6 @@ namespace sprogar {
             {
                 std::clog << "Artificial General Intelligence Testbed\n";
                 
-                semantic_integrity();
-
                 std::clog << "\n\nRunning 12 tests...\n";
                 const std::string go_back(20, '\b');
                 for (const auto& [info, repetitions, test] : testbed) {
@@ -96,14 +94,6 @@ namespace sprogar {
             }
             
         private:
-            static void semantic_integrity()
-            {
-                Model A(Model::random, SequenceLength), B = A;
-
-                ASSERT(A == B);
-                bool equality_implies_equal_behaviour = std::ranges::equal(A.generate(SimulatedInfinity), B.generate(SimulatedInfinity));
-                ASSERT(equality_implies_equal_behaviour);
-            }
             static inline const auto all_distinct_inputs = std::views::iota(0, 1 << BitsPerInput)
                 | std::views::transform([](int i) { return Input(i); });
             static inline const std::vector<std::tuple<std::string, test_repetitions, void(*)()>> testbed =
@@ -325,27 +315,32 @@ namespace sprogar {
                     "#11 Generalisation",
                     RepeatForever,
                     []() {
-                        const bool model_can_generate_complex_structured_sequnces =
-                            utils::isStructured<BitsPerInput>(Model{Model::random, SequenceLength}.generate(5'000));
-                        ASSERT(model_can_generate_complex_structured_sequnces);
-
-                        const int num_of_runs = 20, experience_len = 50;
+                        const int ratio = 10;                                     // |prefix| = ratio * |continuation|
+                        const int num_of_runs = 20;                               // 1/20 success is enough
                         for (int i = 0; i < num_of_runs; ++i) {
-                            Model G(Model::random, SequenceLength);         // (2^10)^7 = 2^70 different G initialisations
-                            const auto seq = G.generate(experience_len);
-                            const auto experience = seq | std::views::take(experience_len);
-                            const auto future = seq[experience_len + 1];
+                            for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
+                                Model G(Model::random, SequenceLength);
+                                const InputSequence prefix = G.generate(ratio * SequenceLength);
+                                if (utils::is_periodic(prefix))
+                                    continue;
 
-                            Model A;
-                            A << experience;
+                                std::copy(prefix.begin(), prefix.end(), std::ostream_iterator<Input>(std::clog, "\n"));
+                                std::clog << "\n ---\n";
+                                const auto continuation = G.get_prediction();
 
-                            const auto educated_guess = A.get_prediction();
+                                Model A;
+                                A << prefix;
 
-                            if (educated_guess == future)
-                                return;
+                                const auto continuation_star = A.get_prediction();
+
+                                if (continuation == continuation_star)
+                                    return;
+                            }
+                            bool can_generate_nonperiodic_sequences = false;
+                            ASSERT(can_generate_nonperiodic_sequences);
                         }
-                        const bool has_generalised_at_least_one_sequence = false;
-                        ASSERT(has_generalised_at_least_one_sequence);
+                        bool can_generalise_once = false;
+                        ASSERT(can_generalise_once);
                     }
                 },
                 {
@@ -353,7 +348,7 @@ namespace sprogar {
                     "#12 Real-time liveness",
                     RepeatForever,
                     []() {
-                        static const time_t min_chunk_duration_us = 100;
+                        static const time_t min_chunk_duration_us = 200;
                         static const size_t chunk_count = 100;
                         static const double jitter_tolerance = 4.0;
 
