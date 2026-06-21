@@ -164,7 +164,7 @@ namespace sprogar {
                     "#5 Absolute refractory period",
                     RepeatForever,
                     []() {
-                        const Input x = random<Input>();
+                        const Input x = random<Input>();    // for(x:all_distinct_inputs) is best but slow on ::run(1)
                         if (x.any()) {
                             const InputSequence no_consecutive_spikes = { x, ~x };
                             const InputSequence consecutive_spikes = { x, x };
