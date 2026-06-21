@@ -175,7 +175,7 @@ inline namespace utils {
         Input operator ()(const Input& p) { return current_prediction = model(p); }
         Model& operator << (const Input& p) { current_prediction = model(p); return *this; }
         ////////////////
-        Input get_prediction() const { return current_prediction; }
+        const Input& get_prediction() const { return current_prediction; }
 
         // Sequentially feeds each element of the range to the target.
         template <std::ranges::range Range>

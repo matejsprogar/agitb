@@ -315,29 +315,32 @@ namespace sprogar {
                     "#11 Generalisation",
                     RepeatForever,
                     []() {
-                        const int ratio = 10;                                     // |prefix| = ratio * |continuation|
-                        const int num_of_runs = 20;                               // 1/20 success is enough
-                        for (int i = 0; i < num_of_runs; ++i) {
-                            for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
-                                Model G(Model::random, SequenceLength);
-                                const InputSequence prefix = G.generate(ratio * SequenceLength);
-                                if (utils::is_periodic(prefix))
-                                    continue;
-
-                                std::copy(prefix.begin(), prefix.end(), std::ostream_iterator<Input>(std::clog, "\n"));
-                                std::clog << "\n ---\n";
-                                const auto continuation = G.get_prediction();
-
-                                Model A;
-                                A << prefix;
-
-                                const auto continuation_star = A.get_prediction();
-
-                                if (continuation == continuation_star)
-                                    return;
+                        auto autotune_generator = [](size_t length) {
+                            Model G;
+                            Input last = random<Input>();
+                            for (size_t attempt = 1; attempt <= SimulatedInfinity; ++attempt) {
+                                G << last;
+                                Model X = G;
+                                InputSequence seq = X.generate(length);
+                                if (not utils::is_periodic(seq))
+                                    return std::make_pair(seq, X.get_prediction());
+                                last = random<Input>(last);
                             }
                             bool can_generate_nonperiodic_sequences = false;
                             ASSERT(can_generate_nonperiodic_sequences);
+                        };
+                        const int experience_len = 1 * SequenceLength;
+                        const int num_of_runs = 20;                                 // 1/20 is enough
+                        for (int i = 0; i < num_of_runs; ++i) {
+                            auto [experience, continuation] = autotune_generator(experience_len);
+
+                            Model A;
+                            A << experience;
+
+                            const auto prediction = A.get_prediction();
+
+                            if (continuation == prediction)                         // 1/1024 lucky chance
+                                return;
                         }
                         bool can_generalise_once = false;
                         ASSERT(can_generalise_once);
