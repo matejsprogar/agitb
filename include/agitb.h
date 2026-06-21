@@ -316,12 +316,12 @@ namespace sprogar {
                     RepeatForever,
                     []() {
                         /*
-                        Test #11 is currently not operational because we have no way to supply it 
-                        with a valid generalisation target.
+                        Test #11 is currently not operational because we have no way to supply it with a 
+                        valid generalisation target.
 
                         A prototype model cannot be expected to generalise to every kind of sequence. Some 
                         sequence it could generalise surely exists — but the test has no way of knowing 
-                        which one, and so may demand generalisation, the model was never capable of. 
+                        which one, and so may demand generalisation the model was never capable of. 
                         Choosing the target sequence externally, therefore, risks handing the model a 
                         problem outside its reach, and failure would say nothing about the capability under 
                         test.
