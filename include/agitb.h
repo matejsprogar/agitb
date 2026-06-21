@@ -162,17 +162,17 @@ namespace sprogar {
                 {
                     // A model can learn a cyclic sequence only if the sequence satisfies the absolute refractory-period constraint.
                     "#5 Absolute refractory period",
-                    RepeatOnce,
+                    RepeatForever,
                     []() {
-                        for (const Input x : all_distinct_inputs) {
+                        const Input x = random<Input>();
+                        if (x.any()) {
                             const InputSequence no_consecutive_spikes = { x, ~x };
                             const InputSequence consecutive_spikes = { x, x };
-                            const bool spikes = x.any();
 
                             Model A, B;
 
                             ASSERT(A.learn(no_consecutive_spikes));
-                            ASSERT(not B.learn(consecutive_spikes) || !spikes);
+                            ASSERT(not B.learn(consecutive_spikes));
                         }
                     }
                 },
