@@ -315,7 +315,7 @@ namespace sprogar {
                     "#11 Generalisation",
                     RepeatForever,
                     []() {
-                        auto autotune_generator = [](size_t length) {
+                        auto generate = [](size_t length) {
                             Model G;
                             Input last = random<Input>();
                             for (size_t attempt = 1; attempt <= SimulatedInfinity; ++attempt) {
@@ -332,7 +332,7 @@ namespace sprogar {
                         const int experience_len = 1 * SequenceLength;
                         const int num_of_runs = 20;                                 // 1/20 is enough
                         for (int i = 0; i < num_of_runs; ++i) {
-                            auto [experience, continuation] = autotune_generator(experience_len);
+                            auto [experience, continuation] = generate(experience_len);
 
                             Model A;
                             A << experience;

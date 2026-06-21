@@ -43,6 +43,8 @@ namespace AGI {
 inline namespace utils {
     using time_t = size_t;
 
+    constexpr time_t Infinity = std::numeric_limits<time_t>::max();
+
     static unsigned rng_seed = std::random_device{}();
     static std::mt19937 rng(rng_seed);
 
@@ -145,7 +147,6 @@ inline namespace utils {
     requires InputPredictor<ModelUnderTest, InputType>
     class Model
     {
-        const time_t Infinity = std::numeric_limits<time_t>::max();
         
     public:
         using Input = InputType;
