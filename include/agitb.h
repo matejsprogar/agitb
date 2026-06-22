@@ -60,7 +60,7 @@ namespace sprogar {
                 std::clog << "\n\nRunning 12 tests...\n";
                 const std::string go_back(20, '\b');
                 for (const auto& [info, repetitions, test] : testbed) {
-                    std::clog << info << std::endl;
+                    std::clog << info << "  " << std::endl;
 
                     const size_t test_repetitions = repetitions_override == 0 ? repetitions : std::min((size_t)repetitions, (size_t)repetitions_override);
                     for (size_t r = 1; r <= test_repetitions; ++r) {
@@ -127,16 +127,18 @@ namespace sprogar {
                 {
                     // Each input leaves a permanent internal trace.
                     "#3 Trace", 
-                    RepeatOnce,
+                    RepeatForever,
                     []() {
                         Model A;
 
-                        const Input zeros = Input{};                            // edge case
                         std::vector<Model> trajectory;
                         trajectory.reserve(SimulatedInfinity);
-                        while (trajectory.size() < SimulatedInfinity) {
+                        for (Input x = utils::random<Input>();
+                            trajectory.size() < SimulatedInfinity;
+                            x = utils::random<Input>(x)) 
+                        {
                             trajectory.push_back(A);
-                            A << zeros;
+                            A << x;
 
                             ASSERT(std::find(trajectory.begin(), trajectory.end(), A) == trajectory.end());
                         }
