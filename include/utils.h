@@ -229,6 +229,18 @@ inline namespace utils {
             return seq;
         }
 
+        bool behaves_identically(Model& B)
+        {
+            Input x = utils::random<Input>();
+            for (size_t i = 0; i < SimulatedInfinity; ++i)
+            {
+                if ((*this)(x) != B(x))
+                    return false;
+                x = utils::random<Input>(x);
+            }
+            return true;
+        }
+
     private:
         ModelUnderTest model;
         Input current_prediction;
