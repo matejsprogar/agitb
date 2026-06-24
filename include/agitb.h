@@ -144,14 +144,13 @@ private:
                 }
                
                 // try to detect false A==B implementations
-                Model A = Model{};
-                for (size_t i=0; i<SequenceLength+1; ++i)               // enough for A to converge
-                    A << Input{};                                       // edge case: x = Input{}
+                A = Model{};
+                A << std::views::repeat(Input{}, SimulatedInfinity);    // edge case: 5,000 x Input{}
                 Model B = A;
                 B << Input{};
 
                 ASSERT(A != B);                                         // this can be cheated easily
-                ASSERT(!A.behaves_identically(B));                      // but a trace must have consequences
+                ASSERT(not A.behaves_identically(B));                   // but a trace must have consequences
             }
         },
         {
