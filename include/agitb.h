@@ -144,7 +144,7 @@ private:
                 }
                
                 // try to detect false A==B implementations
-                Model A = Model{};
+                A = Model{};
                 for (size_t i=0; i<SequenceLength+1; ++i)               // enough for A to converge
                     A << Input{};                                       // edge case: x = Input{}
                 Model B = A;
