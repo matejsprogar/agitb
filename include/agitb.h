@@ -143,16 +143,15 @@ private:
                     ASSERT(std::find(trajectory.begin(), trajectory.end(), A) == trajectory.end());
                 }
                
-                {
-                    Model A;
-                    for (size_t i=0; i<SequenceLength+1; ++i)               // enough for A to converge
-                        A << Input{};                                       // edge case: x = Input{}
-                    Model B = A;
-                    B << Input{};
+                // try to detect false A==B implementations
+                Model A = Model{};
+                for (size_t i=0; i<SequenceLength+1; ++i)               // enough for A to converge
+                    A << Input{};                                       // edge case: x = Input{}
+                Model B = A;
+                B << Input{};
 
-                    ASSERT(A != B);                                         // this can be cheated easily
-                    ASSERT(!A.behaves_identically(B));                      // but a trace must have consequences
-                }
+                ASSERT(A != B);                                         // this can be cheated easily
+                ASSERT(!A.behaves_identically(B));                      // but a trace must have consequences
             }
         },
         {
