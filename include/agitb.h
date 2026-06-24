@@ -121,6 +121,7 @@ private:
                     B << x;
 
                     ASSERT(A == B);
+                    ASSERT(A.get_prediction() == B.get_prediction());       // state determines behaviour
                 }
             }
         },
@@ -144,13 +145,13 @@ private:
                
                 {
                     Model A;
-                    for (size_t i=0; i<SequenceLength+1; ++i)
-                        A << Input{};                                       // enough for A to converge
+                    for (size_t i=0; i<SequenceLength+1; ++i)               // enough for A to converge
+                        A << Input{};                                       // edge case: x = Input{}
                     Model B = A;
-                    B << Input{};                                           // edge case: x = Input{}
+                    B << Input{};
 
                     ASSERT(A != B);                                         // this can be cheated easily
-                    ASSERT(!A.behaves_identically(B));                      // a trace must have consequences
+                    ASSERT(!A.behaves_identically(B));                      // but a trace must have consequences
                 }
             }
         },
