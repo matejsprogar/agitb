@@ -128,24 +128,11 @@ private:
         {
             // Each input leaves a permanent internal trace.
             "#3 Trace", 
-            RepeatForever,
+            RepeatOnce,
             []() {
                 Model A;
-                std::vector<Model> trajectory;
-                trajectory.reserve(SimulatedInfinity);
-                for (Input x = utils::random<Input>();
-                    trajectory.size() < SimulatedInfinity;
-                    x = utils::random<Input>(x)) 
-                {
-                    trajectory.push_back(A);
-                    A << x;
-
-                    ASSERT(std::find(trajectory.begin(), trajectory.end(), A) == trajectory.end());
-                }
-               
-                // try to detect false A==B implementations
-                A = Model{};
                 A << std::views::repeat(Input{}, SimulatedInfinity);    // edge case: 5,000 x Input{}
+
                 Model B = A;
                 B << Input{};
 

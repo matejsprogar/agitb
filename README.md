@@ -32,10 +32,10 @@ Running 12 tests...
 #3 Trace
 1/5000
 
-Assertion failed in agitb.h:149
-std::find(trajectory.begin(), trajectory.end(), A) == trajectory.end()
+Assertion failed in C:\Users\matej\Projects\library\sprogar\include\agitb.h:139
+A != B
 
-rng_seed: 830706803
+rng_seed: 2140661623
 ```
 
 ---
@@ -141,6 +141,17 @@ For example, in case of the Trace `#3` test failure above, you can reproduce it 
 ```cpp
 AGITB::run(3, 830706803);
 ```
+---
+##Cheating the Benchmark
+
+Because AGITB's individual tests are intentionally simple and transparent, it is theoretically possible to tailor a model specifically to the benchmark rather than to the underlying capabilities it is intended to measure. For example, one could modify the model comparison function or otherwise exploit knowledge of the testbed's implementation. Such strategies do not demonstrate general learning ability — they merely exploit the benchmark itself.
+
+While AGITB could be made more resistant to this type of manipulation, doing so would inevitably reduce its transparency, interpretability, and ease of inspection. Since one of the benchmark's primary goals is to help researchers understand and improve their models, the reference implementation deliberately prioritizes readability over adversarial robustness. Some safeguards against trivial exploitation are already in place, but they are not intended to obscure the benchmark's operation.
+
+A more subtle form of gaming the benchmark would be to construct a model that succeeds only because AGITB approximates conditions that are, in principle, unbounded. Although this value is necessarily finite, it has proven sufficient in combination with the current benchmark configuration (temporal patterns consisting of seven 10-bit input signals) to distinguish promising approaches from those that fail to exhibit the required behaviour. At the same time, it keeps execution times low enough to support rapid experimentation and iterative model development.
+
+For these reasons, the AGITB reference implementation is intentionally kept simple, readable, and efficient. Unless a practical method of exploiting the benchmark is demonstrated, introducing additional complexity solely to make the implementation harder to game would offer little benefit while diminishing its value as a research tool.
+
 ---
 
 ## Feedback and contributions welcome

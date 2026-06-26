@@ -26,7 +26,6 @@
 #include <ranges>
 #include <random>
 #include <cassert>
-#include <valarray>
 
 namespace sprogar {
 
@@ -215,18 +214,6 @@ inline namespace utils {
         bool learn(const InputSequence& inputs)
         {
             return time_to_learn(inputs) < Infinity;
-        }
-        
-        // Feeds the model its own predictions to generate a sequence of predictions.
-        auto generate(size_t length)
-        {
-            InputSequence seq;
-            seq.reserve(length);
-            while (seq.size() < length) {
-                seq.push_back(get_prediction());
-                *this << seq.back();
-            }
-            return seq;
         }
 
         bool behaves_identically(Model& B)
