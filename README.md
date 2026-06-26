@@ -142,7 +142,7 @@ For example, in case of the Trace `#3` test failure above, you can reproduce it 
 AGITB::run(3, 830706803);
 ```
 ---
-##Cheating the Benchmark
+## Cheating the Benchmark
 
 Because AGITB's individual tests are intentionally simple and transparent, it is theoretically possible to tailor a model specifically to the benchmark rather than to the underlying capabilities it is intended to measure. For example, one could modify the model comparison function or otherwise exploit knowledge of the testbed's implementation. Such strategies do not demonstrate general learning ability — they merely exploit the benchmark itself.
 
