@@ -130,14 +130,14 @@ private:
             "#3 Trace", 
             RepeatOnce,
             []() {
-                Model A;
-                A << std::views::repeat(Input{}, SimulatedInfinity);    // edge case: 5,000 x Input{}
-
-                Model B = A;
-                B << Input{};
-
-                ASSERT(A != B);                                         // this can be cheated easily
-                ASSERT(not A.behaves_identically(B));                   // but a trace must have consequences
+                Input mark; mark.set(0);
+                Model A; A << mark;
+                Model B; B << Input{};
+                A << std::views::repeat(Input{}, SimulatedInfinity);
+                B << std::views::repeat(Input{}, SimulatedInfinity);
+            
+                ASSERT(A != B);                                      // necessary, but cheap (a counter passes it)
+                ASSERT(not A.behaves_identically(B));                // the *old* mark must still change behaviour
             }
         },
         {
