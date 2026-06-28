@@ -105,7 +105,7 @@ private:
             []() {
                 Model A, B;
 
-                ASSERT(A == B);				                    // A_0 == B_0
+                ASSERT(A == B);				                            // A_0 == B_0
             }
         },
         {
@@ -121,7 +121,7 @@ private:
                     B << x;
 
                     ASSERT(A == B);
-                    ASSERT(A.get_prediction() == B.get_prediction());       // state determines behaviour
+                    ASSERT(A.get_prediction() == B.get_prediction());   // state determines behaviour
                 }
             }
         },
@@ -130,14 +130,28 @@ private:
             "#3 Trace", 
             RepeatOnce,
             []() {
-                Input mark; mark.set(0);
-                Model A; A << mark;
-                Model B; B << Input{};
-                A << std::views::repeat(Input{}, SimulatedInfinity);
-                B << std::views::repeat(Input{}, SimulatedInfinity);
+                Model A;                                                // edge case Input{}^5000
+                std::vector<Model> trajectory;
+                trajectory.reserve(SimulatedInfinity);
+                
+                while (trajectory.size() < SimulatedInfinity) {         // A << std::views::repeat(Input{}, SimulatedInfinity);
+                    trajectory.push_back(A);
+                    A << Input{};
+
+                    ASSERT(std::find(trajectory.begin(), trajectory.end(), A) == trajectory.end());
+                }
+
+                Model B; 
+                B << Input{1} << std::views::repeat(Input{}, SimulatedInfinity-1);
             
-                ASSERT(A != B);                                      // necessary, but cheap (a counter passes it)
-                ASSERT(not A.behaves_identically(B));                // the *old* mark must still change behaviour
+                Model C = A, D = A;
+                C << Input{};
+
+                ASSERT(A != B);                                         // necessary, but cheap (a counter passes it)
+                ASSERT(not A.behaves_identically(B));                   // the first input must still affect behaviour
+
+                ASSERT(C != D);
+                ASSERT(not C.behaves_identically(D));                   // the last input must also affect behaviour
             }
         },
         {
