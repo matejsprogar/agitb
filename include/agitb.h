@@ -340,6 +340,8 @@ private:
 
                 // Under construction
                 ASSERT(true);
+		},
+		{
             "#11 Generalisation",
             RepeatForever,
             []() {
