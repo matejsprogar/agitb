@@ -309,6 +309,9 @@ private:
             }
         },
         {
+            "#11 Generalisation",
+            RepeatForever,
+            []() {
                 /*
                 Test #11 is currently not operational because we have no way to supply it with a 
                 valid generalisation target.
@@ -340,23 +343,6 @@ private:
 
                 // Under construction
                 ASSERT(true);
-		},
-		{
-            "#11 Generalisation",
-            RepeatForever,
-            []() {
-                const InputSequence seq = Model::learnable_random_sequence(SequenceLength);
-
-                Model A;
-                A << std::views::repeat(seq, SimulatedInfinity);
-
-                for (size_t i = 0; i < SimulatedInfinity; ++i) {
-                    if (seq != A.generate(seq.size()))
-                        return;
-                }
-
-                const bool must_generalise_not_repeat_indefinitely = false;
-                ASSERT(must_generalise_not_repeat_indefinitely);
             }
         },
         {
