@@ -179,7 +179,7 @@ inline namespace utils {
 
         // Sequentially feeds each element of the range to the target.
         template <std::ranges::range Range>
-            requires std::same_as<std::ranges::range_value_t<Range>, Input>
+            //requires std::same_as<std::ranges::range_value_t<Range>, Input>
         Model& operator << (Range&& range)
         {
             for (auto&& elt : range)
@@ -226,6 +226,17 @@ inline namespace utils {
                 x = utils::random<Input>(x);
             }
             return true;
+        }
+
+        auto generate(size_t length)
+        {
+            InputSequence self_generated_sequence;
+            self_generated_sequence.reserve(length);
+            while (self_generated_sequence.size() < length) {
+                self_generated_sequence.push_back(get_prediction());
+                *this << self_generated_sequence.back();
+            }
+            return self_generated_sequence;
         }
 
     private:
@@ -354,10 +365,10 @@ inline namespace utils {
     }
 
     template <typename T>
-    bool is_periodic(const std::vector<T>& seq) {
+    int period(const std::vector<T>& seq) {
         size_t n = seq.size();
 
-        for (size_t p = 1; p <= n; ++p) {
+        for (size_t p = 1; p < n; ++p) {
             bool period = true;
 
             for (size_t i = p; i < n; ++i) {
@@ -368,10 +379,10 @@ inline namespace utils {
             }
 
             if (period)
-                return true;
+                return p;
         }
 
-        return false;
+        return n;
     }
 }   // utils
 }   // AGI

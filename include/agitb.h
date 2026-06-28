@@ -309,41 +309,24 @@ private:
             }
         },
         {
-            // A continuous learner can predict the unseen continuation of a complex stream.
+            // A continuous learner cannot learn the original stream's rule;
+            // generalisation refers to the model's inability to fully replicate the inputs
+            // perfect replication of a stream whose causes cannot be determined is undesired.
             "#11 Generalisation",
             RepeatForever,
             []() {
-                /*
-                Test #11 is currently not operational because we have no way to supply it with a 
-                valid generalisation target.
+                const InputSequence seq = Model::learnable_random_sequence(SequenceLength);
 
-                A prototype model cannot be expected to generalise to every kind of sequence. Some 
-                sequence it could generalise surely exists — but the test has no way of knowing 
-                which one, and so may demand generalisation the model was never capable of. 
-                Choosing the target sequence externally, therefore, risks handing the model a 
-                problem outside its reach, and failure would say nothing about the capability under 
-                test.
+                Model A;
+                A << std::views::repeat(seq, SimulatedInfinity);
 
-                Letting the model generate its own target does not resolve this. The test would 
-                have a fresh model observe a sequence produced by another model of the same kind 
-                and predict its continuation, on the assumption that a model should always be able 
-                to learn what its own kind can generate. But a finite prefix does not determine the 
-                rule that produced it. Many different rules — all within the fresh model's reach — 
-                agree on the prefix yet differ on what follows. The fresh model can only invent a 
-                rule that fits what it has already seen; it cannot recover the generator's actual 
-                rule, and wherever the two diverge past the prefix, the prediction fails — not 
-                because the model is too weak, but because the prefix never said enough to choose. 
-                No fixed prefix length repairs this, since a generator can always hide a difference 
-                that surfaces only beyond that length.
+                for (size_t i = 0; i < SimulatedInfinity; ++i) {
+                    if (seq != A.generate(seq.size()))
+                        return;
+                }
 
-                So neither route gives the test a target it can fairly demand: an external sequence 
-                may lie outside the model's reach, and a self-generated one underdetermines its own 
-                generator. Until that is resolved, test #11 cannot be made to hold for every 
-                genuinely generalising model, and remains disabled.
-                */
-
-                // Under construction
-                ASSERT(true);
+                const bool must_generalise_not_repeat_indefinitely = false;
+                ASSERT(must_generalise_not_repeat_indefinitely);
             }
         },
         {
