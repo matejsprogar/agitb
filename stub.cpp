@@ -20,6 +20,6 @@ int main()
 {
     using AGITB = sprogar::AGI::TestBed<MyAGI>;
 
-    AGITB::run();
+    AGITB::run(11, 12345);
     return 0;
 }

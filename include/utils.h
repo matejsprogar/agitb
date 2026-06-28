@@ -228,15 +228,15 @@ inline namespace utils {
             return true;
         }
 
+        // Feeds the model its own predictions to generate a sequence of predictions.
         auto generate(size_t length)
         {
-            InputSequence self_generated_sequence;
-            self_generated_sequence.reserve(length);
-            while (self_generated_sequence.size() < length) {
-                self_generated_sequence.push_back(get_prediction());
-                *this << self_generated_sequence.back();
-            }
-            return self_generated_sequence;
+            return std::views::iota(std::size_t{ 0 }, length)
+                | std::views::transform([&](std::size_t) {
+                const Input prediction = get_prediction();
+                *this << prediction;
+                return prediction;
+                    });
         }
 
     private:
@@ -362,27 +362,6 @@ inline namespace utils {
         f();
         const auto stop = std::chrono::steady_clock::now();
         return (time_t)std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count();
-    }
-
-    template <typename T>
-    int period(const std::vector<T>& seq) {
-        size_t n = seq.size();
-
-        for (size_t p = 1; p < n; ++p) {
-            bool period = true;
-
-            for (size_t i = p; i < n; ++i) {
-                if (seq[i] != seq[i % p]) {
-                    period = false;
-                    break;
-                }
-            }
-
-            if (period)
-                return p;
-        }
-
-        return n;
     }
 }   // utils
 }   // AGI
