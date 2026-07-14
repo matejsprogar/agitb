@@ -330,9 +330,9 @@ private:
                 // Measure a batch of updates instead of a single update to reduce timing noise and improve measurement accuracy.
                 const time_t min_batch_duration_us = 200;
                 const size_t measurements_count = 100;
-                const size_t timing_passes = 5;             // Number of independent timing passes to filter outliers and reduce noise
+                const size_t timing_passes = 10;            // Number of independent timing passes to filter outliers and reduce noise
                 const time_t absolute_ceiling = 1'000 * min_batch_duration_us;   // ~0.2 s/batch
-                const double max_relative_growth = 1.0;     // 100% growth is a reasonable upper bound for the worst-case chunk time relative to the median chunk time.
+                const double max_relative_growth = 1.0;     // 100% growth is a reasonable upper bound for the worst-case batch time relative to the median
 
                 auto autotune_batch_size = [=]() -> size_t {
                     const size_t tuning_samples = 11;

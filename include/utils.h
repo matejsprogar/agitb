@@ -274,6 +274,28 @@ inline namespace utils {
     * z-score for a monotone INCREASING trend; z > threshold is significant growth.
     * Same conservative thresholds as elsewhere (3.090 = 0.1%).
     */
+    /**
+     * Mann-Kendall trend test: a non-parametric test for a monotone trend in a
+     * single time-ordered series.
+     *
+     * Unlike consistently_greater_second_value (a PAIRED signed-rank test that needs
+     * two index-matched samples), Mann-Kendall operates on ONE ordered series
+     * x_0, x_1, ..., x_{n-1} and asks whether it drifts up or down over its own
+     * index.
+     *
+     * The statistic S sums the sign of (x_j - x_i) over all i<j; a large positive S
+     * means later values tend to exceed earlier ones. Under the null (no trend) S is
+     * approximately normal with mean 0 and a variance carrying a tie correction. The
+     * returned value is the continuity-corrected standard-normal z; compare it to a
+     * one-sided threshold (e.g. 3.090 for 0.1%).
+     *
+     * The test is:
+     *   - Single-series (no pairing of two samples)
+     *   - Non-parametric (no distributional assumptions)
+     *   - Robust to outliers (only the SIGN of each pairwise difference is used)
+     *
+     * Return value: true signals a significant upward trend, false otherwise.
+     **/
     bool mann_kendall_grow(const std::vector<time_t>& V, const double mann_kendall_significance_threshold = 3.090)
     {
         const int n = (int)V.size();
