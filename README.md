@@ -4,7 +4,7 @@ A small, self-contained C++ benchmark that evaluates predictive models on raw bi
 intended as a practical step toward artificial general intelligence. Provide your model and run AGITB.
 By design, most systems will not pass.
 
-AGITB includes 12 short, intuitive, fully automated tests.
+AGITB includes 11 short, intuitive, fully automated tests.
 
 - header-only implementation
 - no dependencies
@@ -25,7 +25,7 @@ Example output (the stub fails on test #3):
 ```text
 Artificial General Intelligence Testbed
 
-Running 12 tests...
+Running the tests...
 0 Semantic integrity
 #1 Uninformed start
 #2 Determinism

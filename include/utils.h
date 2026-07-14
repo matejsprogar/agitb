@@ -40,7 +40,7 @@ inline std::string yellow(const char* msg) { return std::format("\033[93m{}\033[
 
 namespace AGI {
 inline namespace utils {
-    using time_t = size_t;
+    using time_t = std::time_t;
 
     constexpr time_t Infinity = std::numeric_limits<time_t>::max();
 
@@ -116,7 +116,7 @@ inline namespace utils {
         InputSequence(Args&&... args) : base(std::forward<Args>(args)...) {}
 
         // constructs a random sequence of inputs with a specified length.
-        InputSequence(random_tag, time_t length, Input start=utils::random<Input>())
+        InputSequence(random_tag, size_t length, Input start=utils::random<Input>())
         {
             if (0 == length)
                 return;
@@ -129,13 +129,13 @@ inline namespace utils {
         }
         // constructs a random sequence of inputs with a specified length, exhibiting a circular property 
         // where the first input incorporates refractory periods for the last input in the sequence.
-        InputSequence(circular_random_tag, time_t length, Input start=utils::random<Input>()) : InputSequence(random, length, start) {
+        InputSequence(circular_random_tag, size_t length, Input start=utils::random<Input>()) : InputSequence(random, length, start) {
             base::pop_back();
             base::push_back(utils::random<Input>(base::back(), base::front()));
         }
 
         // constructs a simple, easily adaptable sequence of inputs with a specified length.
-        InputSequence(trivial_tag, time_t length)
+        InputSequence(trivial_tag, size_t length)
         {
             base::resize( length );
             base::back() = ~Input{};                // [{0...0}, {0...0}, ..., {0...0}, {1...1}]
@@ -256,103 +256,67 @@ inline namespace utils {
         }
     };
 
- /**
- * Tests whether the second of two paired sequences of elapsed times is consistently 
- * worse (i.e., larger) than the first, using a one-sided Wilcoxon signed-rank test.
- *
- * This function implements a one-sided Wilcoxon signed-rank test on paired data and
- * returns a boolean indicating whether there is statistically significant evidence
- * that values in the second sequence (V2) tend to be greater than the corresponding
- * values in the first sequence (V1). It intentionally ignores effect size and
- * variability; it answers only whether the direction of the difference is stable
- * across pairs.
- *
- * The test is:
- *   - Paired (each observation in V1 corresponds to one in V2)
- *   - Non-parametric (no distributional assumptions)
- *   - Robust to outliers and heavy-tailed noise
- *   - Directional (specifically tests for V2 > V1)
- *
- * Given paired observations (V1_i, V2_i), the Wilcoxon signed-rank test evaluates the
- * null hypothesis that the median of the paired differences (V2_i - V1_i) is zero,
- * against the alternative hypothesis that the median of the paired difference is positive.
- *
- * Return value:
- *  (1) false if fewer than 10 non-zero paired differences are available;
- *  (2) true if there is statistically significant evidence that V2 > V1
- *      (z-score exceeds the one-sided threshold);
- *  (3) false otherwise.
- *
- * Parameters:
- *  V1, V2: index-paired observations (V1_i, V2_i)
- *
- *  one_sided_z_threshold
- *      Threshold applied to the z-score from the normal approximation.
- *      Common one-sided values:
- *      = 3.090  very conservative (0.1% significance) = AGITB setting
- *      = 2.326  strong evidence   (1% significance)
- *      = 1.645  standard choice   (5% significance)    
- **/
-    template <std::ranges::range Range1, std::ranges::range Range2>
-        requires std::same_as<std::ranges::range_value_t<Range1>, time_t> &&
-                 std::same_as<std::ranges::range_value_t<Range2>, time_t>
-    bool consistently_greater_second_value(Range1&& V1, Range2&& V2,
-        const double one_sided_z_threshold = 3.090)
+    template <typename T>   
+    auto median(const std::vector<T> vec)
     {
-        assert(V1.size() == V2.size());
+        const size_t n = vec.size();
+        if (n == 0) return T{};
 
-        struct SignedAbsDiff { size_t abs_diff; int sign; };
-        std::vector<SignedAbsDiff> diffs; diffs.reserve(V1.size());
+        std::vector<T> sorted = vec;
+        std::sort(sorted.begin(), sorted.end());
 
-        for (const auto [v1, v2] : std::views::zip(V1, V2)) {
-            if (v1 == v2) continue;
-            if (v2 > v1) diffs.emplace_back(v2 - v1, +1);
-            else         diffs.emplace_back(v1 - v2, -1);
-        }
-
-        const int n = (int)diffs.size();
-        const int min_nonzero_pairs = 10;
-        if (n < min_nonzero_pairs) return false;
-
-        std::sort(diffs.begin(), diffs.end(),
-            [](const auto& x, const auto& y) { return x.abs_diff < y.abs_diff; });
-
-        double Wplus = 0.0, tieCorr = 0.0;
-        for (int i = 0; i < n; ) {
-            int j = i + 1;
-            while (j < n && diffs[j].abs_diff == diffs[i].abs_diff)
-                ++j;
-            int t = j - i;
-            double avgRank = 0.5 * ((i + 1) + j);
-            for (int k = i; k < j; ++k)
-                if (diffs[k].sign > 0)
-                    Wplus += avgRank;
-            if (t > 1)
-                tieCorr += (double)t * ((double)t * t - 1); // t^3-t
-            i = j;
-        }
-
-        const double mu = n * (n + 1.0) / 4.0;
-        const double var = n * (n + 1.0) * (2.0 * n + 1.0) / 24.0 - tieCorr / 48.0;
-        if (var <= 0.0) return false;
-
-        const double cc = (Wplus > mu) ? 0.5 : 0.0;
-        double z = (Wplus - mu - cc) / std::sqrt(var);
-
-        return z > one_sided_z_threshold;   // true => evidence that V2 tends to be greater than V1
+        return (n % 2 == 1) ? sorted[n/2] : (sorted[n/2 - 1] + sorted[n/2]) / 2;
     }
 
-    template <std::ranges::range Range>
-        //requires std::same_as<std::ranges::range_value_t<Range>, double>
-    auto percentiles(Range&& times)
+    /*
+    * Mann-Kendall trend test (one-sided, tie- and continuity-corrected).
+    * Input: observations in TEMPORAL order. Returns the normal-approximation
+    * z-score for a monotone INCREASING trend; z > threshold is significant growth.
+    * Same conservative thresholds as elsewhere (3.090 = 0.1%).
+    */
+    bool mann_kendall_grow(const std::vector<time_t>& V, const double mann_kendall_significance_threshold = 3.090)
     {
-        std::ranges::sort(times);
-        const size_t n = times.size();
+        const int n = (int)V.size();
+        if (n < 3) return false;
 
-        const auto p50 = (n % 2 == 1) ? times[n / 2] : (times[n / 2 - 1] + times[n / 2]) / 2;
-        const auto p95 = times[static_cast<int>(0.95 * (n - 1))];
+        long long S = 0;
+        for (int i = 0; i < n - 1; ++i)
+            for (int j = i + 1; j < n; ++j)
+                S += (V[j] > V[i]) - (V[j] < V[i]);
 
-        return std::make_tuple(p50, p95);
+        std::vector<time_t> sorted(V);
+        std::sort(sorted.begin(), sorted.end());
+        double tie_term = 0.0;
+        for (int i = 0; i < n; ) {
+            int j = i + 1;
+            while (j < n && sorted[j] == sorted[i]) ++j;
+            const auto t = j - i;
+            if (t > 1) tie_term += (double)t * (t - 1) * (2 * t + 5);
+            i = j;
+        }
+        const double variance = ((double)n * (n - 1) * (2 * n + 5) - tie_term) / 18.0;
+        if (variance <= 0.0) return false;
+
+        const double numerator = S > 0 ? (double)(S - 1) : (S < 0 ? (double)(S + 1) : 0.0);
+        return numerator / std::sqrt(variance) > mann_kendall_significance_threshold;
+    }
+
+    /*
+    * Sen's slope: the median of all pairwise slopes (x_j - x_i)/(j - i), i < j.
+    * A robust estimate of trend magnitude in value-per-step; pairs with the
+    * Mann-Kendall test to answer "how large is the trend", not just "is there one".
+    */
+    double sen_slope(const std::vector<time_t>& V)
+    {
+        const int n = (int)V.size();
+        std::vector<double> slopes;
+        slopes.reserve((size_t)n * (n - 1) / 2);
+        for (int i = 0; i < n - 1; ++i)
+            for (int j = i + 1; j < n; ++j)
+                slopes.push_back(((double)V[j] - (double)V[i]) / (double)(j - i));
+        if (slopes.empty()) return 0.0;
+
+        return median(slopes);
     }
 
     template <typename Func>
