@@ -285,18 +285,17 @@ inline namespace utils {
      *
      * The statistic S sums the sign of (x_j - x_i) over all i<j; a large positive S
      * means later values tend to exceed earlier ones. Under the null (no trend) S is
-     * approximately normal with mean 0 and a variance carrying a tie correction. The
-     * returned value is the continuity-corrected standard-normal z; compare it to a
-     * one-sided threshold (e.g. 3.090 for 0.1%).
+     * approximately normal with mean 0 and a variance carrying a tie correction. 
      *
      * The test is:
      *   - Single-series (no pairing of two samples)
      *   - Non-parametric (no distributional assumptions)
      *   - Robust to outliers (only the SIGN of each pairwise difference is used)
      *
-     * Return value: true signals a significant upward trend, false otherwise.
+     * Return value: the continuity-corrected standard-normal z; compare it to a
+     * one-sided threshold (e.g. 3.090 for 0.1%).
      **/
-    bool mann_kendall_grow(const std::vector<time_t>& V, const double mann_kendall_significance_threshold = 3.090)
+    double mann_kendall_z(const std::vector<time_t>& V)
     {
         const int n = (int)V.size();
         if (n < 3) return false;
@@ -320,7 +319,7 @@ inline namespace utils {
         if (variance <= 0.0) return false;
 
         const double numerator = S > 0 ? (double)(S - 1) : (S < 0 ? (double)(S + 1) : 0.0);
-        return numerator / std::sqrt(variance) > mann_kendall_significance_threshold;
+        return numerator / std::sqrt(variance);
     }
 
     /*

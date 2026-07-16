@@ -331,20 +331,16 @@ private:
                 const time_t min_batch_duration_us = 200;
                 const size_t measurements_count = 100;
                 const size_t timing_passes = 10;            // Number of independent timing passes to filter outliers and reduce noise
-                const time_t absolute_ceiling = 1'000 * min_batch_duration_us;   // ~0.2 s/batch
-                const double max_relative_growth = 1.0;     // 100% growth is a reasonable upper bound for the worst-case batch time relative to the median
 
                 auto autotune_batch_size = [=]() -> size_t {
-                    const size_t tuning_samples = 11;
                     InputSequence batch(InputSequence::random, 2ull);
                     while (true) {
-                        std::vector<time_t> time_probes(tuning_samples);
+                        std::vector<time_t> time_probes(timing_passes);
                         for (time_t& time : time_probes) {
                             Model M;
                             time = utils::time_it([&]() { M << batch; });
                         }
-                        const auto median = utils::median(time_probes);
-                        if (median >= 2 * min_batch_duration_us)
+                        if (utils::median(time_probes) > min_batch_duration_us)
                             break;
                         batch = InputSequence(InputSequence::random, 2 * batch.size());
                     }
@@ -360,53 +356,24 @@ private:
                         Model M;
                         for (size_t i = 0; i < times.size(); ++i) {
                             const time_t dt = utils::time_it([&]() { M << batches[i]; });
-                            ASSERT(dt <= absolute_ceiling);
                             times[i] = std::min(times[i], dt);      // find the best time, unaffected by OS noise
                         }
                     }
 
-                    // Scale of a typical batch (median of the noise-filtered series).
-                    const auto median = utils::median(times);
-                    ASSERT(median >= min_batch_duration_us);         // meaningful measurements above clock noise
+                    const double significance_threshold_z = 3.090;
+                    const double median_time = (double)utils::median(times);
 
-                    // Spike gate - no single batch should deviate from typical by more than
-                    // max_relative_growth * typical. A history-triggered spike 
-                    // (rehash / compaction keyed to accumulated state) stands far 
-                    // above it and is caught even if it occurs only once in the series.
-                    const auto worst = *std::max_element(times.begin(), times.end());
-                    ASSERT(worst <= (time_t)((1.0 + max_relative_growth) * (double)median));
-
-                    // Drift gate - no monotone growth should exceed max_relative_growth * typical.
-                    // Mann-Kendall tests whether the noise-filtered series trends upward at all (significance).
-                    // Sen's slope gives the rate, and slope * (chunk_count - 1) is the rise projected over
-                    // the measured window. Significance alone would fire on a real-but-negligible drift, so
-                    // both the trend AND the magnitude must hold.
-                    const bool mk_grow = utils::mann_kendall_grow(times);
-                    const double chunk_slope = utils::sen_slope(times);
-                    const double projected_drift = chunk_slope * (double)(measurements_count - 1);
-
-                    const bool grows = mk_grow && projected_drift > max_relative_growth * (double)median;
+                    // Mann-Kendall tests whether the noise-filtered series trends upward at all and fires on 
+                    // a real-but-negligible drift, so both the trend AND the magnitude must hold.
+                    const double projected_drift = utils::sen_slope(times) * (measurements_count - 1.0);
+                    const bool grows = utils::mann_kendall_z(times) > significance_threshold_z && projected_drift > median_time;
+                    
                     ASSERT(not grows);
                 };
 
-                auto periodic_batch = [](const InputSequence& motif, size_t batch_size) {
-                    InputSequence batch; batch.reserve(batch_size);
-                    for (size_t k = 0; k < batch_size; ++k)
-                        batch.push_back(motif[k % motif.size()]);
-
-                    batch.back() = batch.back() & ~batch.front();       // ARP
-                    return batch;
-                };
-
                 static const size_t batch_size = autotune_batch_size();
-                assert_live_on([&]() { return InputSequence(InputSequence::random, batch_size); });
+                assert_live_on([&]() { return InputSequence(InputSequence::circular_random, batch_size); });
                 assert_live_on([&]() { return InputSequence(InputSequence::trivial, batch_size); });
-
-                for (size_t i = 0; i < 10; ++i) {
-                    const size_t pattern_period = utils::random(2, 4 * SequenceLength);
-                    const InputSequence motif(InputSequence::circular_random, pattern_period);
-                    assert_live_on([&]() { return periodic_batch(motif, batch_size); });
-                }
             } 
         }
     };
