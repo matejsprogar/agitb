@@ -112,9 +112,6 @@ inline namespace utils {
         InputSequence() {}
         InputSequence(std::initializer_list<Input> il) : std::vector<Input>(il) {}
 
-        template<typename... Args>
-        InputSequence(Args&&... args) : base(std::forward<Args>(args)...) {}
-
         // constructs a random sequence of inputs with a specified length.
         InputSequence(random_tag, size_t length, Input start=utils::random<Input>())
         {
@@ -190,7 +187,7 @@ inline namespace utils {
         static InputSequence learnable_random_sequence(const size_t length)
         {
             for (time_t time = 0; time < SimulatedInfinity; time += length) {
-                const InputSequence in = InputSequence(InputSequence::circular_random, length);
+                const InputSequence in(InputSequence::circular_random, length);
                 Model M;
                 if (M.learn(in))
                     return in;
