@@ -40,7 +40,7 @@ inline std::string yellow(const char* msg) { return std::format("\033[93m{}\033[
 
 namespace AGI {
 inline namespace utils {
-    using time_t = std::time_t;
+    using time_t = size_t;
 
     constexpr time_t Infinity = std::numeric_limits<time_t>::max();
 
