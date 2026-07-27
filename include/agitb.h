@@ -333,7 +333,7 @@ private:
                 const size_t timing_passes = 10;            // Number of independent timing passes to filter outliers and reduce noise
 
                 auto autotune_batch_size = [=]() -> size_t {
-                    InputSequence batch(InputSequence::random, 2ull);
+                    InputSequence batch(InputSequence::random, 2uz);
                     while (true) {
                         std::vector<time_t> time_probes(timing_passes);
                         for (time_t& time : time_probes) {
