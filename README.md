@@ -32,7 +32,7 @@ Running the tests...
 #3 Trace
 1/5000
 
-Assertion failed in C:\Users\matej\Projects\library\sprogar\include\agitb.h:139
+Assertion failed in agitb.h:139
 A != B
 
 rng_seed: 2140661623
