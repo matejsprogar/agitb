@@ -176,10 +176,10 @@ private:
             "#5 Absolute refractory period",
             RepeatForever,
             []() {
-                const Input x = random<Input>();    // for(Input x : all_distinct_inputs) is better but extremely slow
+                const Input x = random<Input>();    // for (Input x : all_distinct_inputs) is better but extremely slow
                 if (x.any()) {
-                    const InputSequence no_consecutive_spikes = { x, ~x };
-                    const InputSequence consecutive_spikes = { x, x };
+                    InputSequence no_consecutive_spikes = { x, ~x };
+                    InputSequence consecutive_spikes = { x, x };
 
                     Model A, B;
 
@@ -195,7 +195,7 @@ private:
             []() {
                 auto inevitable_saturation = [](Model& A) -> bool {
                     for (time_t time = 0; time < SimulatedInfinity; ++time) {
-                        const InputSequence learnable_sequence = Model::learnable_random_sequence(SequenceLength);
+                        InputSequence learnable_sequence = Model::learnable_random_sequence(SequenceLength);
 
                         if (not A.learn(learnable_sequence))
                             return true;
@@ -210,7 +210,7 @@ private:
                             if (!admissible(x1, x2))
                                 continue;
 
-                            const InputSequence admissible_length_2_sequence = { x1, x2 };
+                            InputSequence admissible_length_2_sequence = { x1, x2 };
                             Model B = A;
                             if (!B.learn(admissible_length_2_sequence))
                                 return false;
@@ -247,12 +247,12 @@ private:
                     const InputSequence base_seq = Model::learnable_random_sequence(SequenceLength);
                     const time_t time_base_seq = A.time_to_learn(base_seq);
                     for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
-                        const InputSequence seq(InputSequence::circular_random, SequenceLength);    // admissible by construction
+                        InputSequence seq(InputSequence::circular_random, SequenceLength);          // admissible by construction
 
                         if (seq != base_seq) {
                             Model B;
-                            const time_t time_seq = B.time_to_learn(seq);
-                            const bool seq_learnable = time_seq != SimulatedInfinity;
+                            time_t time_seq = B.time_to_learn(seq);
+                            bool seq_learnable = time_seq != SimulatedInfinity;
                             if (seq_learnable and time_seq != time_base_seq)                         // rejects the null hypothesis
                                 return true;
                         }
@@ -317,63 +317,49 @@ private:
                     else
                         i -= 1;
                 }
-                const size_t baseline = std::max(baseline_0_score, baseline_1_score);
+                size_t baseline = std::max(baseline_0_score, baseline_1_score);
 
                 ASSERT(model_score > baseline);
             }
         },
         {
             // Each model update completes within a fixed wall-clock time bound, independent of the input history.
+            // 
+            // Here, a model is considered to exhibit real-time liveness if its measured update time does not exhibit 
+            // significant scaling with input-history length.
             "#11 Real-time liveness",
             RepeatForever,
             []() {
-                // Measure a batch of updates instead of a single update to reduce timing noise and improve measurement accuracy.
-                const time_t min_batch_duration_us = 200;
-                const size_t measurements_count = 100;
-                const size_t timing_passes = 10;            // Number of independent timing passes to filter outliers and reduce noise
-
+                // Measure a batch of updates instead of a single update to reduce timing noise.
                 auto autotune_batch_size = [=]() -> size_t {
-                    InputSequence batch(InputSequence::random, 2uz);
+                    const time_t min_batch_duration_us = 100;
+
+                    InputSequence batch(InputSequence::circular_random, 2uz);
                     while (true) {
-                        std::vector<time_t> time_probes(timing_passes);
-                        for (time_t& time : time_probes) {
-                            Model M;
-                            time = utils::time_it([&]() { M << batch; });
-                        }
-                        if (utils::median(time_probes) > min_batch_duration_us)
-                            break;
-                        batch = InputSequence(InputSequence::random, 2 * batch.size());
-                    }
-                    return batch.size();
-                };
-                auto assert_live_on = [&](auto make_batch) {
-                    std::vector<InputSequence> batches(measurements_count);
-                    for (auto& batch : batches)
-                        batch = make_batch();   
-
-                    std::vector<time_t> times(measurements_count, std::numeric_limits<time_t>::max());
-                    for (size_t pass = 0; pass < timing_passes; ++pass) {
                         Model M;
-                        for (size_t i = 0; i < times.size(); ++i) {
-                            const time_t dt = utils::time_it([&]() { M << batches[i]; });
-                            times[i] = std::min(times[i], dt);      // find the best time, unaffected by OS noise
-                        }
+                        time_t time = utils::time_it([&]() { M << batch; });
+                        if (time > min_batch_duration_us)
+                            return batch.size();
+                        batch = InputSequence(InputSequence::circular_random, 2 * batch.size());
                     }
-
-                    const double significance_threshold_z = 3.090;
-                    const double median_time = (double)utils::median(times);
-
-                    // Mann-Kendall tests whether the noise-filtered series trends upward at all and fires on 
-                    // a real-but-negligible drift, so both the trend AND the magnitude must hold.
-                    const double projected_drift = utils::sen_slope(times) * (measurements_count - 1.0);
-                    const bool grows = utils::mann_kendall_z(times) > significance_threshold_z && projected_drift > median_time;
-                    
-                    ASSERT(not grows);
                 };
 
-                static const size_t batch_size = autotune_batch_size();
-                assert_live_on([&]() { return InputSequence(InputSequence::circular_random, batch_size); });
-                assert_live_on([&]() { return InputSequence(InputSequence::trivial, batch_size); });
+                const size_t batch_size = autotune_batch_size();
+                const InputSequence timed_batch(InputSequence::circular_random, batch_size);
+
+                Model M;
+                time_t batch_time_pre = utils::time_it([&]() { M << timed_batch; });
+                    
+                // a long random history (can violate #5 ARP)
+                for (size_t i = 0; i < SimulatedInfinity; ++i) 
+                    M << InputSequence(InputSequence::circular_random, batch_size);
+
+                time_t batch_time_post = utils::time_it([&]() { M << timed_batch; });
+
+                double R = static_cast<double>(batch_time_post) / batch_time_pre;
+                double R_tolerated = 2;   // tolerate 100% noise, caching, allocation, etc. (R should be close to 1)  
+                    
+                ASSERT(R < R_tolerated);
             } 
         }
     };
