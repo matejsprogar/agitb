@@ -189,10 +189,10 @@ private:
                     }
                     return false;
                 };
-                auto universal_learnability_of_length_2_sequences = [](const Model& A) -> bool {
-                    InputSequence admissible_length_2_sequence(InputSequence::random, 2);
+                auto universal_learnability_of_length_2_sequences = [](Model& A) -> bool {
+                    InputSequence admissible_length_2_sequence(InputSequence::circular_random, 2);
 
-                    if (!A.learn(admissible_length_2_sequence))
+                    if (not A.learn(admissible_length_2_sequence))
                         return false;
                     return true;
                 };
