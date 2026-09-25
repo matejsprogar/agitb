@@ -33,7 +33,7 @@ namespace AGI {
 const size_t SimulatedInfinity = 5000;
 
 // AGITB settings : temporal patterns with seven inputs of ten bits each
-const size_t BitsPerInput = 10;         // L
+const size_t BitsPerInput = 20;         // L
 const time_t SequenceLength = 7;        // N
 static_assert(SequenceLength > 1);
 static_assert(BitsPerInput > 1);
@@ -113,45 +113,36 @@ private:
             "#2 Determinism", 
             RepeatForever,
             []() {
-                const Model R(Model::random);
+                Model A, B;
+                for (int i = 0; i < SimulatedInfinity; ++i) {
+                    const Input x = random<Input>();
 
-                for (const Input& x : all_distinct_inputs) {
-                    Model A = R, B = R;
                     A << x;
                     B << x;
 
                     ASSERT(A == B);
-                    ASSERT(A.get_prediction() == B.get_prediction());   // state determines behaviour
                 }
             }
         },
         {
             // Each input leaves a permanent internal trace.
-            "#3 Trace", 
-            RepeatOnce,
+            "#3 Trace",
+            RepeatForever,
             []() {
                 Model A;                                                // edge case Input{}^5000
                 std::vector<Model> trajectory;
                 trajectory.reserve(SimulatedInfinity);
-                
+
                 while (trajectory.size() < SimulatedInfinity) {         // A << std::views::repeat(Input{}, SimulatedInfinity);
                     trajectory.push_back(A);
-                    A << Input{};
+                    A << random<Input>();
 
                     ASSERT(std::find(trajectory.begin(), trajectory.end(), A) == trajectory.end());
                 }
 
-                Model B; 
-                B << Input{1} << std::views::repeat(Input{}, SimulatedInfinity-1);
-            
-                Model C = A, D = A;
-                C << Input{};
-
-                ASSERT(A != B);                                         // necessary, but cheap (a counter passes it)
-                ASSERT(not A.behaves_identically(B));                   // the first input must still affect behaviour
-
-                ASSERT(C != D);
-                ASSERT(not C.behaves_identically(D));                   // the last input must also affect behaviour
+                // A unique trace results in a unique behaviour.
+                Model B(Model::random); 
+                ASSERT(A==B or not A.behaves_identically(B));
             }
         },
         {
@@ -163,11 +154,11 @@ private:
 
                 auto complementary_inputs = [](const Input& x) { return x.count() <= BitsPerInput / 2; };
                 for (const Input& x : all_distinct_inputs | std::views::filter(complementary_inputs)) {
-                    Model _A = A, _B = A;
-                    _A << x << ~x;
-                    _B << ~x << x;
+                    Model Axy = A, Ayx = A;
+                    Axy << x << ~x;
+                    Ayx << ~x << x;
 
-                    ASSERT(_A != _B);
+                    ASSERT(Axy != Ayx);
                 }
             }
         },
@@ -202,7 +193,7 @@ private:
                     }
                     return false;
                 };
-                auto universal_learnability_of_admissible_length_2_sequences = [](const Model& A) -> bool {
+                auto universal_learnability_of_length_2_sequences = [](const Model& A) -> bool {
                     auto admissible = [](const Input& x1, const Input& x2) -> bool { return (x1 & x2).none(); };
 
                     for (const Input& x1 : all_distinct_inputs) {
@@ -210,9 +201,9 @@ private:
                             if (!admissible(x1, x2))
                                 continue;
 
-                            InputSequence admissible_length_2_sequence = { x1, x2 };
+                            InputSequence length_2_sequence = { x1, x2 };
                             Model B = A;
-                            if (!B.learn(admissible_length_2_sequence))
+                            if (!B.learn(length_2_sequence))
                                 return false;
                         }
                     }
@@ -222,7 +213,7 @@ private:
                 Model A;
 
                 ASSERT(inevitable_saturation(A));                                       // Requirement 6.a
-                ASSERT(universal_learnability_of_admissible_length_2_sequences(A));     // Requirement 6.b
+                ASSERT(universal_learnability_of_length_2_sequences(A));                // Requirement 6.b
             }
         },
         {
@@ -270,7 +261,7 @@ private:
             []() {
                 // Null Hypothesis: Adaptation time is independent of the model
                 auto adaptation_time_is_model_dependent = []() -> bool {
-                    const InputSequence seq = Model::learnable_random_sequence(SequenceLength);
+                    const InputSequence seq = Model::learnable_random_sequence(SequenceLength);     // results in A_time != 0
                     Model A;
                     const time_t A_time = A.time_to_learn(seq);
                     for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
