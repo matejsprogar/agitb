@@ -31,8 +31,8 @@ Running the tests...
 #3 Trace
 1/5000
 
-Assertion failed in agitb.h:139
-A != B
+Assertion failed in agitb.h:154
+ASSERT(A==B or not A.behaves_identically(B))
 
 rng_seed: 2140661623
 ```
@@ -75,7 +75,7 @@ The `MyModel` class must:
 ```cpp
 class MyModel
 {
-	using MyInput = std::bitset<10>;  // or a custom input type satisfying the requirements below
+	using MyInput = std::bitset<20>;  // or a custom input type satisfying the requirements below
 
 public:
     bool operator==(const MyModel& rhs) const {
@@ -121,11 +121,26 @@ int main() {
 }
 ```
 
-For quicker feedback during development, you can adjust the evaluation thoroughness by specifying how many times each test is repeated:
+For faster feedback during development, you can reduce the input size and stream length by specifying them as template parameters.
+
+For example, to use 10-bit input streams with a length of 5 bits, define the test bed as follows:
 
 ```cpp
-    AGITB::run(10);	// repeats each test 10 times
+using AGITB = sprogar::AGI::TestBed<
+    MyModel,
+    sprogar::AGI::testbed_traits<10, 5>_
+>;  // L = 10, N = 5
 ```
+
+You can also control the thoroughness of the evaluation by specifying the number of repetitions for each test:
+
+```cpp
+AGITB::run(10);  // Repeat each test 10 times
+```
+
+Increasing the number of repetitions improves the thoroughness of the evaluation, while reducing the input size and stream length can significantly shorten execution time during development.
+
+
 ---
 
 ## Reproducibility
@@ -147,7 +162,7 @@ Because AGITB's individual tests are intentionally simple and transparent, it is
 
 A more subtle form of gaming the benchmark would exploit the fact that the unbounded criteria cannot be verified in finite time. In such cases, the benchmark only approximates an otherwise indefinite evaluation process with 5,000 iterations, keeping execution times reasonably low to support rapid experimentation and iterative model development.
 
-While AGITB could be made more resistant to different types of manipulation, doing so would inevitably reduce its transparency, interpretability, and ease of inspection. Since one of the benchmark's primary goals is to help researchers understand and improve their models, the reference implementation deliberately prioritises readability over adversarial robustness. Some safeguards against trivial exploitation are already in place, but they are not intended to obscure the benchmark's operation.
+While AGITB could be made more resistant to different types of manipulation, doing so would inevitably reduce its transparency, interpretability, and ease of inspection. Since one of the benchmark's primary goals is to help researchers understand and improve their models, the reference implementation deliberately prioritises readability over adversarial robustness. Some safeguards against trivial exploitation are already in place if they do not obscure the benchmark's operation.
 
 For these reasons, the AGITB reference implementation is intentionally kept simple, readable, and efficient. Unless a practical method of exploiting the benchmark is demonstrated, introducing additional complexity solely to make the implementation harder to game would offer little benefit while diminishing its value as a research tool.
 

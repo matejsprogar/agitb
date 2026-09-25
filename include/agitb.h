@@ -32,16 +32,8 @@ namespace AGI {
 // AGITB environment settings
 const size_t SimulatedInfinity = 5000;
 
-// AGITB settings : temporal patterns with seven inputs of ten bits each
-const size_t BitsPerInput = 20;         // L
-const time_t SequenceLength = 7;        // N
-static_assert(SequenceLength > 1);
-static_assert(BitsPerInput > 1);
-
-
-
 // Artificial General Intelligence TestBed
-template <typename SystemUnderEvaluation>
+template <typename SystemUnderEvaluation, size_t BitsPerInput=20, size_t SequenceLength=7>
     requires utils::InputPredictor<SystemUnderEvaluation, std::bitset<BitsPerInput>>
 class TestBed
 {
@@ -49,14 +41,19 @@ class TestBed
     using InputSequence = utils::InputSequence<Input>;
     using Model = utils::Model<SystemUnderEvaluation, Input, SimulatedInfinity>;
 
-    enum test_repetitions { RepeatOnce = 1, Repeat10x = 10, Repeat100x = 100, RepeatForever = SimulatedInfinity };
+    enum test_repetitions { RepeatOnce = 1, RepeatForever = SimulatedInfinity };
+
+    static_assert(BitsPerInput > 1);
+    static_assert(SequenceLength > 1);
 
 public:
     // Runs all tests from the testbed using the specified test mode.
     static bool run(size_t repetitions_override = 0)
     {
-        std::clog << "Artificial General Intelligence Testbed\n";
+        std::clog << yellow("Artificial General Intelligence Testbed");
 
+        std::clog << "\nBitsPerInput = " << BitsPerInput;
+        std::clog << "\nSequenceLength = " << SequenceLength;
         std::clog << "\n\nRunning the tests...\n";
         const std::string go_back(20, '\b');
         for (const auto& [info, repetitions, test] : testbed) {
@@ -67,7 +64,18 @@ public:
                 std::clog << r << '/' << test_repetitions << "   " << go_back;
 
                 utils::rng_seed = utils::rng();
-                test();
+
+                try {
+                    test();
+                }
+                catch (const std::exception& e) {
+                    std::cerr << "\n\n" << "Test failed with exception: " << red(e.what()) << std::endl;
+                    return false;
+                }
+                catch (...) {
+                    std::cerr << "\n\n" << red("Test failed with unknown exception.") << std::endl;
+                    return false;
+                }
             }
         }
 
@@ -82,9 +90,10 @@ public:
                 
         const auto& [info, repetitions, test] = testbed[test_number-1];
 
-        std::clog << "Artificial General Intelligence Testbed\nRunning 1 test:\n";
-        std::clog << "Random seed: " << rng_seed << std::endl << std::endl;
-        std::clog << info << std::endl;
+        std::clog << yellow("Artificial General Intelligence Testbed");
+        std::clog << "\nRunning the test #" << test_number;
+        std::clog << "\nRandom seed: " << rng_seed;
+        std::clog << "\n\n" << info << std::endl;
 
         // Run once
         test();
@@ -101,7 +110,7 @@ private:
         {
             // All instances of a given model type begin transitioning from an identical initial configuration.
             "#1 Uninformed start", 
-            Repeat100x,
+            RepeatOnce,
             []() {
                 Model A, B;
 
