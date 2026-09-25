@@ -194,19 +194,10 @@ private:
                     return false;
                 };
                 auto universal_learnability_of_length_2_sequences = [](const Model& A) -> bool {
-                    auto admissible = [](const Input& x1, const Input& x2) -> bool { return (x1 & x2).none(); };
+                    InputSequence admissible_length_2_sequence(InputSequence::random, 2);
 
-                    for (const Input& x1 : all_distinct_inputs) {
-                        for (const Input& x2 : all_distinct_inputs) {
-                            if (!admissible(x1, x2))
-                                continue;
-
-                            InputSequence length_2_sequence = { x1, x2 };
-                            Model B = A;
-                            if (!B.learn(length_2_sequence))
-                                return false;
-                        }
-                    }
+                    if (!A.learn(admissible_length_2_sequence))
+                        return false;
                     return true;
                 };
 
