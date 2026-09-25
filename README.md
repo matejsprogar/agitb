@@ -26,7 +26,6 @@ Example output (the stub fails on test #3):
 Artificial General Intelligence Testbed
 
 Running the tests...
-0 Semantic integrity
 #1 Uninformed start
 #2 Determinism
 #3 Trace
