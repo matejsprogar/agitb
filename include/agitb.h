@@ -148,18 +148,14 @@ private:
         {
             // Model evolution depends on input order.
             "#4 Time",
-            Repeat100x,
+            RepeatForever,
             []() {
-                Model A(Model::random);
+                const Input x = random<Input>();
+                Model Axy(Model::random), Ayx = Axy;
+                Axy << x << ~x;
+                Ayx << ~x << x;
 
-                auto complementary_inputs = [](const Input& x) { return x.count() <= BitsPerInput / 2; };
-                for (const Input& x : all_distinct_inputs | std::views::filter(complementary_inputs)) {
-                    Model Axy = A, Ayx = A;
-                    Axy << x << ~x;
-                    Ayx << ~x << x;
-
-                    ASSERT(Axy != Ayx);
-                }
+                ASSERT(Axy != Ayx);
             }
         },
         {
@@ -167,7 +163,7 @@ private:
             "#5 Absolute refractory period",
             RepeatForever,
             []() {
-                const Input x = random<Input>();    // for (Input x : all_distinct_inputs) is better but extremely slow
+                const Input x = random<Input>();
                 if (x.any()) {
                     InputSequence no_consecutive_spikes = { x, ~x };
                     InputSequence consecutive_spikes = { x, x };
