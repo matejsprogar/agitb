@@ -273,11 +273,12 @@ private:
                 size_t informed_score = 0, uninformed_score = 0;
                 for (int i = 0; i < 20; ++i) {
                     const InputSequence reality(InputSequence::circular_random, SequenceLength);
-                    InputSequence noisy = reality;                          // the familiar sequence, one spike missing at the end
-                    if (noisy.back().none()) { --i; continue; }
+                    InputSequence noisy = reality;                          // the familiar sequence, one bit flipped at the end
+                    const Input flippable = noisy.back() | ~(reality[SequenceLength - 2] | reality[0]);   // flips that keep it admissible
+                    if (flippable.none()) { --i; continue; }
                     size_t bit;
-                    do bit = utils::random(0uz, BitsPerInput - 1); while (not noisy.back()[bit]);
-                    noisy.back().reset(bit);
+                    do bit = utils::random(0uz, BitsPerInput - 1); while (not flippable[bit]);
+                    noisy.back().flip(bit);
 
                     Model informed = adult, uninformed = adult;
                     informed << reality << reality << noisy;                // two passes reveal the cycle
