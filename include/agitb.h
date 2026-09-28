@@ -264,7 +264,7 @@ private:
             }
         },
         {
-            // An informed model consistently outperforms any constant baseline at predicting corrupted inputs.
+            // An informed model consistently outperforms its uninformed self at predicting corrupted inputs.
             "#10 Denoising",
             RepeatForever,
             []() {
@@ -280,38 +280,36 @@ private:
                 // an informed model: one that has lived a lifetime of learning, successful or not
                 static const Model adult = []() {
                     const auto rng_state = utils::rng;
-                    utils::rng.seed(SimulatedInfinity);                     // the same life in every run keeps failures reproducible
+                    utils::rng.seed();                                      // the same life in every run keeps failures reproducible
                     Model M;
                     for (size_t i = 0; i < 50; ++i)
-                        M.learn(Model::learnable_random_sequence(SequenceLength));
+                        M.learn(InputSequence(InputSequence::circular_random, SequenceLength));
                     utils::rng = rng_state;
                     return M;
                 }();
-                const Input zeros = Input{}, ones = ~zeros;
-                size_t model_score = 0, baseline_0_score = 0, baseline_1_score = 0;
+                size_t informed_score = 0, uninformed_score = 0;
                 const int num_of_runs = 20;                                 // within each of 5,000 trials
                 const int n = 5;                                            // informing context length
                 for (int i = 0; i < num_of_runs; ++i) {
                     const InputSequence reality(InputSequence::circular_random, SequenceLength);
                     const Input true_elt = reality[0];
                     if (const auto corrupted_elt = corrupt(reality.back(), reality[SequenceLength - 2], reality[0])) {
-                        Model A = adult;
+                        Model informed = adult, uninformed = adult;
                         for (int j = 0; j < n; ++j)
-                            A << reality;                                   // inform the model about the reality
+                            informed << reality;                            // inform the model about the reality
 
                         // the noisy input is the most recent context, so the familiar pattern must be recognised despite the noise
-                        A << (reality | std::views::take(SequenceLength - 1)) << *corrupted_elt;
+                        const auto noisy_pass = [&](Model& M) { M << (reality | std::views::take(SequenceLength - 1)) << *corrupted_elt; };
+                        noisy_pass(informed);
+                        noisy_pass(uninformed);
 
-                        model_score += utils::match_score(A.get_prediction(), true_elt);
-                        baseline_0_score += utils::match_score(zeros, true_elt);
-                        baseline_1_score += utils::match_score(ones, true_elt);
+                        informed_score += utils::match_score(informed.get_prediction(), true_elt);
+                        uninformed_score += utils::match_score(uninformed.get_prediction(), true_elt);
                     }
                     else
                         i -= 1;
                 }
-                size_t baseline = std::max(baseline_0_score, baseline_1_score);
-
-                ASSERT(model_score > baseline);
+                ASSERT(informed_score > uninformed_score);
             }
         },
         {
