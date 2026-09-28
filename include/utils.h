@@ -197,6 +197,25 @@ inline namespace utils {
             ASSERT(learned_at_least_one_sequence);
         }
 
+        // Constructs an adult: a model that has reached its capacity (see #6a) and then lived as long again, but never
+        // shorter than a minimal life, so that a model cannot shorten its own test by failing early.
+        // Every run lives the same life, which keeps failures reproducible; the caller's random state is left untouched.
+        static Model adult(const size_t length)
+        {
+            const auto rng_state = rng;
+            rng.seed();
+
+            Model M;
+            time_t youth = 0;                                       // sequences learned before the first failure
+            while (youth < SimulatedInfinity and M.learn(learnable_random_sequence(length)))
+                ++youth;
+            for (time_t time = youth + 1; time < std::max(50uz, 2 * youth); ++time)     // successful or not
+                M.learn(learnable_random_sequence(length));
+
+            rng = rng_state;
+            return M;
+        }
+
         // Adapts the model to the given input sequence and returns the number of timesteps needed to learn the sequence.
         time_t time_to_learn(const InputSequence& inputs)
         {

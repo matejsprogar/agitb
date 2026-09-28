@@ -268,49 +268,23 @@ private:
             "#10 Denoising",
             RepeatForever,
             []() {
-                // flips one random bit of x, keeping the sequence admissible
-                auto corrupt = [](Input x, const Input& x_prev, const Input& x_next) -> std::optional<Input> {
-                    const Input flippable = x | ~(x_prev | x_next);
-                    if (flippable.none())
-                        return std::nullopt;
-                    size_t bit;
-                    do bit = utils::random(0uz, BitsPerInput - 1); while (not flippable[bit]);
-                    return x.flip(bit);
-                };
-                // an informed model: an adult that has reached its capacity (#6a) and then lived as long again,
-                // but never shorter than a minimal life, so that a model cannot shorten its own test by failing early
-                static const Model adult = []() {
-                    const auto rng_state = utils::rng;
-                    utils::rng.seed();                                      // the same life in every run keeps failures reproducible
-                    Model M;
-                    time_t youth = 0;                                       // sequences learned before the first failure
-                    while (youth < SimulatedInfinity and M.learn(Model::learnable_random_sequence(SequenceLength)))
-                        ++youth;
-                    const time_t lifetime = std::max(50uz, 2 * youth);
-                    for (time_t time = youth + 1; time < lifetime; ++time)  // successful or not
-                        M.learn(Model::learnable_random_sequence(SequenceLength));
-                    utils::rng = rng_state;
-                    return M;
-                }();
+                static const Model adult = Model::adult(SequenceLength);   // has lived a lifetime of learning (see utils.h)
+
                 size_t informed_score = 0, uninformed_score = 0;
-                const int num_of_runs = 20;                                 // within each of 5,000 trials
-                for (int i = 0; i < num_of_runs; ++i) {
+                for (int i = 0; i < 20; ++i) {
                     const InputSequence reality(InputSequence::circular_random, SequenceLength);
-                    const Input true_elt = reality[0];
-                    if (const auto corrupted_elt = corrupt(reality.back(), reality[SequenceLength - 2], reality[0])) {
-                        Model informed = adult, uninformed = adult;
-                        informed << reality << reality;                     // the minimal stream that reveals the cycle
+                    InputSequence noisy = reality;                          // the familiar sequence, one spike missing at the end
+                    if (noisy.back().none()) { --i; continue; }
+                    size_t bit;
+                    do bit = utils::random(0uz, BitsPerInput - 1); while (not noisy.back()[bit]);
+                    noisy.back().reset(bit);
 
-                        // the noisy input is the most recent context, so the familiar pattern must be recognised despite the noise
-                        const auto noisy_pass = [&](Model& M) { M << (reality | std::views::take(SequenceLength - 1)) << *corrupted_elt; };
-                        noisy_pass(informed);
-                        noisy_pass(uninformed);
+                    Model informed = adult, uninformed = adult;
+                    informed << reality << reality << noisy;                // two passes reveal the cycle
+                    uninformed << noisy;
 
-                        informed_score += utils::match_score(informed.get_prediction(), true_elt);
-                        uninformed_score += utils::match_score(uninformed.get_prediction(), true_elt);
-                    }
-                    else
-                        i -= 1;
+                    informed_score += utils::match_score(informed.get_prediction(), reality[0]);
+                    uninformed_score += utils::match_score(uninformed.get_prediction(), reality[0]);
                 }
                 ASSERT(informed_score > uninformed_score);
             }
