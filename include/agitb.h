@@ -277,6 +277,16 @@ private:
                     do bit = utils::random(0uz, BitsPerInput - 1); while (not flippable[bit]);
                     return x.flip(bit);
                 };
+                // an informed model: one that has lived a lifetime of learning, successful or not
+                static const Model adult = []() {
+                    const auto rng_state = utils::rng;
+                    utils::rng.seed(SimulatedInfinity);                     // the same life in every run keeps failures reproducible
+                    Model M;
+                    for (size_t i = 0; i < 50; ++i)
+                        M.learn(Model::learnable_random_sequence(SequenceLength));
+                    utils::rng = rng_state;
+                    return M;
+                }();
                 const Input zeros = Input{}, ones = ~zeros;
                 size_t model_score = 0, baseline_0_score = 0, baseline_1_score = 0;
                 const int num_of_runs = 20;                                 // within each of 5,000 trials
@@ -285,7 +295,7 @@ private:
                     const InputSequence reality(InputSequence::circular_random, SequenceLength);
                     const Input true_elt = reality[0];
                     if (const auto corrupted_elt = corrupt(reality.back(), reality[SequenceLength - 2], reality[0])) {
-                        Model A;
+                        Model A = adult;
                         for (int j = 0; j < n; ++j)
                             A << reality;                                   // inform the model about the reality
 
