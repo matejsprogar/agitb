@@ -289,14 +289,12 @@ private:
                 }();
                 size_t informed_score = 0, uninformed_score = 0;
                 const int num_of_runs = 20;                                 // within each of 5,000 trials
-                const int n = 5;                                            // informing context length
                 for (int i = 0; i < num_of_runs; ++i) {
                     const InputSequence reality(InputSequence::circular_random, SequenceLength);
                     const Input true_elt = reality[0];
                     if (const auto corrupted_elt = corrupt(reality.back(), reality[SequenceLength - 2], reality[0])) {
                         Model informed = adult, uninformed = adult;
-                        for (int j = 0; j < n; ++j)
-                            informed << reality;                            // inform the model about the reality
+                        informed << reality << reality;                     // the minimal stream that reveals the cycle
 
                         // the noisy input is the most recent context, so the familiar pattern must be recognised despite the noise
                         const auto noisy_pass = [&](Model& M) { M << (reality | std::views::take(SequenceLength - 1)) << *corrupted_elt; };
