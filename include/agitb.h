@@ -223,15 +223,14 @@ private:
                 auto adaptation_time_is_input_dependent = []() -> bool {
                     Model A;
                     const InputSequence base_seq = Model::learnable_random_sequence(SequenceLength);
-                    const time_t time_base_seq = A.time_to_learn(base_seq);
+                    const time_t A_time = A.time_to_learn(base_seq);
                     for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
                         InputSequence seq(InputSequence::circular_random, SequenceLength);          // admissible by construction
 
                         if (seq != base_seq) {
                             Model B;
-                            time_t time_seq = B.time_to_learn(seq);
-                            bool seq_learnable = time_seq != SimulatedInfinity;
-                            if (seq_learnable and time_seq != time_base_seq)                         // rejects the null hypothesis
+                            time_t B_time = B.time_to_learn(seq);
+                            if (B_time < Infinity and A_time != B_time)
                                 return true;
                         }
                     }
@@ -248,14 +247,14 @@ private:
             []() {
                 // Null Hypothesis: Adaptation time is independent of the model
                 auto adaptation_time_is_model_dependent = []() -> bool {
-                    const InputSequence seq = Model::learnable_random_sequence(SequenceLength);     // results in A_time != 0
+                    const InputSequence seq = Model::learnable_random_sequence(SequenceLength);     // A_time < Infinity
                     Model A;
                     const time_t A_time = A.time_to_learn(seq);
                     for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
-                        Model B(Model::random);                                                     // even if A == B by chance, a vast majority of 
-                                                                                                    // other models will differ from A
+                        Model B(Model::random); 
+                        
                         time_t B_time = B.time_to_learn(seq);
-                        if (A_time != B_time and B_time < Infinity)
+                        if (B_time < Infinity and A_time != B_time)
                             return true;
                     }
                     return false;
