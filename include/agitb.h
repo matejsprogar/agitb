@@ -277,7 +277,8 @@ private:
                     do bit = utils::random(0uz, BitsPerInput - 1); while (not flippable[bit]);
                     return x.flip(bit);
                 };
-                // an informed model: an adult that has reached its capacity (#6a) and then lived as long again
+                // an informed model: an adult that has reached its capacity (#6a) and then lived as long again,
+                // but never shorter than a minimal life, so that a model cannot shorten its own test by failing early
                 static const Model adult = []() {
                     const auto rng_state = utils::rng;
                     utils::rng.seed();                                      // the same life in every run keeps failures reproducible
@@ -285,7 +286,8 @@ private:
                     time_t youth = 0;                                       // sequences learned before the first failure
                     while (youth < SimulatedInfinity and M.learn(Model::learnable_random_sequence(SequenceLength)))
                         ++youth;
-                    for (time_t time = 0; time < youth; ++time)             // successful or not
+                    const time_t lifetime = std::max(50uz, 2 * youth);
+                    for (time_t time = youth + 1; time < lifetime; ++time)  // successful or not
                         M.learn(Model::learnable_random_sequence(SequenceLength));
                     utils::rng = rng_state;
                     return M;
