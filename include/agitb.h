@@ -269,9 +269,14 @@ private:
             "#10 Denoising",
             RepeatForever,
             []() {
-                auto corrupt = [](const Input& x, const Input& x_prev, const Input& x_next) -> std::optional<Input> {
-                    const Input corruptible_bits = ~(x_prev | x_next);
-                    return corruptible_bits.any() ? std::optional<Input>{ x ^ corruptible_bits } : std::nullopt;
+                // flips one random bit of x, keeping the sequence admissible
+                auto corrupt = [](Input x, const Input& x_prev, const Input& x_next) -> std::optional<Input> {
+                    const Input flippable = x | ~(x_prev | x_next);
+                    if (flippable.none())
+                        return std::nullopt;
+                    size_t bit;
+                    do bit = utils::random(0uz, BitsPerInput - 1); while (not flippable[bit]);
+                    return x.flip(bit);
                 };
                 const Input zeros = Input{}, ones = ~zeros;
                 size_t model_score = 0, baseline_0_score = 0, baseline_1_score = 0;
@@ -280,13 +285,13 @@ private:
                 for (int i = 0; i < num_of_runs; ++i) {
                     const InputSequence reality(InputSequence::circular_random, SequenceLength);
                     const Input true_elt = reality[0];
-                    if (const auto corrupted_elt = corrupt(true_elt, reality.back(), reality[1])) {
+                    if (const auto corrupted_elt = corrupt(reality.back(), reality[SequenceLength - 2], reality[0])) {
                         Model A;
                         for (int j = 0; j < n; ++j)
                             A << reality;                                   // inform the model about the reality
 
-                        // feed the old reality after the noisy input or else a continuously learning model may begin generalising
-                        A << *corrupted_elt << (reality | std::views::drop(1));
+                        // the noisy input is the most recent context, so the familiar pattern must be recognised despite the noise
+                        A << (reality | std::views::take(SequenceLength - 1)) << *corrupted_elt;
 
                         model_score += utils::match_score(A.get_prediction(), true_elt);
                         baseline_0_score += utils::match_score(zeros, true_elt);
