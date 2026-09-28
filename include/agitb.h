@@ -57,11 +57,11 @@ public:
         for (const auto& [info, repetitions, test] : testbed) {
             std::clog << info << "  " << std::endl;
 
-            const size_t test_repetitions = repetitions_override == 0 ? repetitions : std::min((size_t)repetitions, (size_t)repetitions_override);
+            const size_t test_repetitions = repetitions_override == 0 ? (size_t)repetitions : std::min((size_t)repetitions, repetitions_override);
             for (size_t r = 1; r <= test_repetitions; ++r) {
                 std::clog << r << '/' << test_repetitions << "   " << go_back;
 
-                utils::rng_seed = utils::rng();
+                utils::rng.seed(utils::rng_seed = utils::rng());
 
                 test();
             }
@@ -111,7 +111,7 @@ private:
             RepeatForever,
             []() {
                 Model A, B;
-                for (int i = 0; i < SimulatedInfinity; ++i) {
+                for (size_t i = 0; i < SimulatedInfinity; ++i) {
                     const Input x = random<Input>();
 
                     A << x;
@@ -255,7 +255,7 @@ private:
                         Model B(Model::random);                                                     // even if A == B by chance, a vast majority of 
                                                                                                     // other models will differ from A
                         time_t B_time = B.time_to_learn(seq);
-                        if (A_time != B_time)                                                       // rejects the null hypothesis
+                        if (A_time != B_time and B_time < Infinity)
                             return true;
                     }
                     return false;
