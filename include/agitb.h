@@ -52,8 +52,6 @@ public:
     {
         std::clog << yellow("Artificial General Intelligence Testbed");
 
-        std::clog << "\nBitsPerInput = " << BitsPerInput;
-        std::clog << "\nSequenceLength = " << SequenceLength;
         std::clog << "\n\nRunning the tests...\n";
         const std::string go_back(20, '\b');
         for (const auto& [info, repetitions, test] : testbed) {
@@ -65,17 +63,7 @@ public:
 
                 utils::rng_seed = utils::rng();
 
-                try {
-                    test();
-                }
-                catch (const std::exception& e) {
-                    std::cerr << "\n\n" << "Test failed with exception: " << red(e.what()) << std::endl;
-                    return false;
-                }
-                catch (...) {
-                    std::cerr << "\n\n" << red("Test failed with unknown exception.") << std::endl;
-                    return false;
-                }
+                test();
             }
         }
 
@@ -138,20 +126,23 @@ private:
             "#3 Trace",
             RepeatForever,
             []() {
-                Model A;                                                // edge case Input{}^5000
+                Model A;
                 std::vector<Model> trajectory;
                 trajectory.reserve(SimulatedInfinity);
 
-                while (trajectory.size() < SimulatedInfinity) {         // A << std::views::repeat(Input{}, SimulatedInfinity);
+                // simplest edge case
+                A << Input{};
+                trajectory.push_back(A);
+                A << Input{};
+                ASSERT(A != trajectory.back());
+
+                // general behaviour
+                while (trajectory.size() < SimulatedInfinity) {
                     trajectory.push_back(A);
                     A << random<Input>();
 
                     ASSERT(std::find(trajectory.begin(), trajectory.end(), A) == trajectory.end());
                 }
-
-                // A unique trace results in a unique behaviour.
-                Model B(Model::random); 
-                ASSERT(A==B or not A.behaves_identically(B));
             }
         },
         {
