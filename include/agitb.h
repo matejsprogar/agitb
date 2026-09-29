@@ -208,7 +208,7 @@ private:
             "#7 Temporal adaptability",
             RepeatOnce,
             []() {
-                Model A;
+                Model A = Model::adult(SequenceLength);                 // an experienced model, not a fresh one
 
                 ASSERT(A.learn(InputSequence(InputSequence::trivial, SequenceLength)));
                 ASSERT(A.learn(InputSequence(InputSequence::trivial, SequenceLength + 1)));

@@ -210,7 +210,7 @@ inline namespace utils {
             while (youth < SimulatedInfinity and M.learn(learnable_random_sequence(length)))
                 ++youth;
             for (time_t time = youth + 1; time < std::max(50uz, 2 * youth); ++time)     // successful or not
-                M.learn(learnable_random_sequence(length));
+                M.learn(InputSequence(InputSequence::circular_random, length));
 
             rng = rng_state;
             return M;
