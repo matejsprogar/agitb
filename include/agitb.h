@@ -31,9 +31,11 @@ namespace sprogar {
 namespace AGI {
 // AGITB environment settings
 const size_t SimulatedInfinity = 5000;
+const size_t BitsPerInput = 10;
+const size_t SequenceLength = 7;
 
 // Artificial General Intelligence TestBed
-template <typename SystemUnderEvaluation, size_t BitsPerInput=20, size_t SequenceLength=7>
+template <typename SystemUnderEvaluation>
     requires utils::InputPredictor<SystemUnderEvaluation, std::bitset<BitsPerInput>>
 class TestBed
 {
@@ -210,10 +212,10 @@ private:
             []() {
                 size_t informed_score = 0, uninformed_score = 0;
                 for (int i = 0; i < 20; ++i) {
-                    const InputSequence rhythm(InputSequence::rhythm, SequenceLength + 1);   // one step longer than usual
+                    const InputSequence rhythm(InputSequence::rhythm, SequenceLength + 1);      // a period-8 sequence
                     const auto until_last = rhythm | std::views::take(SequenceLength);
 
-                    Model informed = adult(), uninformed = adult();                     // life with 
+                    Model informed = adult(), uninformed = adult();                     // lived on period-7 sequences
                     informed << rhythm << rhythm << until_last;                         // two passes reveal the period
                     uninformed << until_last;
 
@@ -322,14 +324,25 @@ private:
                 const size_t batch_size = autotune_batch_size();
                 const InputSequence timed_batch(InputSequence::circular_random, batch_size);
 
+                // the fastest of several timings of the same batch, each on a copy, so that a single interruption
+                // by the operating system cannot decide the test
+                auto batch_time = [&](const Model& M) {
+                    time_t fastest = Infinity;
+                    for (int i = 0; i < 5; ++i) {
+                        Model C = M;
+                        fastest = std::min(fastest, utils::time_it([&]() { C << timed_batch; }));
+                    }
+                    return fastest;
+                };
+
                 Model M;
-                time_t batch_time_pre = utils::time_it([&]() { M << timed_batch; });
+                time_t batch_time_pre = batch_time(M);
                     
                 // a long random history (can violate #5 ARP)
                 for (size_t i = 0; i < SimulatedInfinity; ++i) 
                     M << InputSequence(InputSequence::circular_random, batch_size);
 
-                time_t batch_time_post = utils::time_it([&]() { M << timed_batch; });
+                time_t batch_time_post = batch_time(M);
 
                 double R = static_cast<double>(batch_time_post) / batch_time_pre;
                 double R_tolerated = 2;   // tolerate 100% noise, caching, allocation, etc. (R should be close to 1)  

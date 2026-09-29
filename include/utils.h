@@ -131,10 +131,13 @@ inline namespace utils {
             base::push_back(utils::random<Input>(base::back(), base::front()));
         }
 
-        // constructs a rhythm x y x y ... z with a specified length: its inputs repeat, so only counting reveals when z comes.
+        // constructs a rhythm x y x y ... z with a specified length
         InputSequence(rhythm_tag, size_t length)
         {
-            const Input x = utils::random<Input>(), y = utils::random<Input>(x), z = utils::random<Input>(x, y);
+            const Input x = utils::random<Input>(), 
+                        y = utils::random<Input>(x), 
+                        z = utils::random<Input>(x, y);
+                        
             for (size_t i = 0; i + 1 < length; ++i)
                 base::push_back(i % 2 ? y : x);
             base::push_back(z);
