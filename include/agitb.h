@@ -176,7 +176,7 @@ private:
             }
         },
         {
-            // A model cannot learn everything there is to learn, except for length-2 sequences.
+            // No model can learn everything there is to learn, except for length-2 sequences.
             "#6 Inevitable saturation",
             RepeatForever,
             []() {
@@ -197,7 +197,7 @@ private:
                     return true;
                 };
 
-                Model A;
+                Model A(Model::random);
 
                 ASSERT(inevitable_saturation(A));                                       // Requirement 6.a
                 ASSERT(universal_learnability_of_length_2_sequences(A));                // Requirement 6.b
