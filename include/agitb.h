@@ -53,13 +53,13 @@ public:
         std::clog << yellow("Artificial General Intelligence Testbed");
 
         std::clog << "\n\nRunning the tests...\n";
-        const std::string go_back(20, '\b');
+        const std::string go_back(25, '\b'), clear(5, ' ');
         for (const auto& [info, repetitions, test] : testbed) {
-            std::clog << info << "  " << std::endl;
+            std::clog << info << clear << std::endl;
 
             const size_t test_repetitions = repetitions_override == 0 ? (size_t)repetitions : std::min((size_t)repetitions, repetitions_override);
             for (size_t r = 1; r <= test_repetitions; ++r) {
-                std::clog << r << '/' << test_repetitions << "   " << go_back;
+                std::clog << r << '/' << test_repetitions << clear << go_back;
 
                 utils::rng.seed(utils::rng_seed = utils::rng());
 
@@ -91,8 +91,8 @@ public:
     }
             
 private:
-    static inline const auto all_distinct_inputs = std::views::iota(0, 1 << BitsPerInput)
-        | std::views::transform([](int i) { return Input(i); });
+    static const Model& adult() { static const Model A = Model::adult(SequenceLength); return A; }
+
     static inline const std::vector<std::tuple<std::string, test_repetitions, void(*)()>> testbed =
     {
         {
@@ -206,12 +206,21 @@ private:
         {
             // The model must be able to learn sequences with varying cycle lengths.
             "#7 Temporal adaptability",
-            RepeatOnce,
+            RepeatForever,
             []() {
-                Model A = Model::adult(SequenceLength);                 // an experienced model, not a fresh one
+                size_t informed_score = 0, uninformed_score = 0;
+                for (int i = 0; i < 20; ++i) {
+                    const InputSequence rhythm(InputSequence::rhythm, SequenceLength + 1);      // a period-8 sequence
+                    const auto until_last = rhythm | std::views::take(SequenceLength);
 
-                ASSERT(A.learn(InputSequence(InputSequence::trivial, SequenceLength)));
-                ASSERT(A.learn(InputSequence(InputSequence::trivial, SequenceLength + 1)));
+                    Model informed = adult(), uninformed = adult();                     // lived on period-7 sequences
+                    informed << rhythm << rhythm << until_last;                         // two passes reveal the period
+                    uninformed << until_last;
+
+                    informed_score += utils::match_score(informed.get_prediction(), rhythm.back());
+                    uninformed_score += utils::match_score(uninformed.get_prediction(), rhythm.back());
+                }
+                ASSERT(informed_score > uninformed_score);
             }
         },
         {
@@ -268,8 +277,6 @@ private:
             "#10 Denoising",
             RepeatForever,
             []() {
-                static const Model adult = Model::adult(SequenceLength);   // has lived a lifetime of learning (see utils.h)
-
                 size_t informed_score = 0, uninformed_score = 0;
                 for (int i = 0; i < 20; ++i) {
                     const InputSequence reality(InputSequence::circular_random, SequenceLength);
@@ -280,7 +287,7 @@ private:
                     do bit = utils::random(0uz, BitsPerInput - 1); while (not flippable[bit]);
                     noisy.back().flip(bit);
 
-                    Model informed = adult, uninformed = adult;
+                    Model informed = adult(), uninformed = adult();
                     informed << reality << reality << noisy;                // two passes reveal the cycle
                     uninformed << noisy;
 

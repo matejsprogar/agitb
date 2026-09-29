@@ -107,7 +107,7 @@ inline namespace utils {
     public:
         enum random_tag { random = 0 };
         enum circular_random_tag { circular_random = 0 };
-        enum trivial_tag { trivial = 0 };
+        enum rhythm_tag { rhythm = 0 };
 
         InputSequence() {}
         InputSequence(std::initializer_list<Input> il) : std::vector<Input>(il) {}
@@ -131,11 +131,13 @@ inline namespace utils {
             base::push_back(utils::random<Input>(base::back(), base::front()));
         }
 
-        // constructs a simple, easily adaptable sequence of inputs with a specified length.
-        InputSequence(trivial_tag, size_t length)
+        // constructs a rhythm x y x y ... z with a specified length: its inputs repeat, so only counting reveals when z comes.
+        InputSequence(rhythm_tag, size_t length)
         {
-            base::resize( length );
-            base::back() = ~Input{};                // [{0...0}, {0...0}, ..., {0...0}, {1...1}]
+            const Input x = utils::random<Input>(), y = utils::random<Input>(x), z = utils::random<Input>(x, y);
+            for (size_t i = 0; i + 1 < length; ++i)
+                base::push_back(i % 2 ? y : x);
+            base::push_back(z);
         }
      };
 
