@@ -310,10 +310,10 @@ inline namespace utils {
                 x0 = utils::random<Input>();
             } while (not admissible(x0, a) or not admissible(x0, b) or not admissible(x0, a + b) or rotate(x0, a) == rotate(x0, b));
 
-            y0 = rotate(rotate(describe_world().back(), a), b);
+            y0 = rotate(rotate(create_world().back(), a), b);
         }
         // x0, then steps_per_rule applications of rule 1, then steps_per_rule applications of rule 2
-        InputSequence<Input> describe_world() const
+        InputSequence<Input> create_world() const
         {
             InputSequence<Input> world = { x0 };
             for (int t = 0; t < steps_per_rule; ++t)
@@ -322,13 +322,18 @@ inline namespace utils {
                 world.push_back(rotate(world.back(), b));
             return world;
         }
-        // from the world's last state on, both rules in turn at every step: a prefix followed by its continuation
-        InputSequence<Input> generate(size_t prefix_size, size_t continuation_size) const
+        // from the world's last state on, both rules in turn at every step: a prefix and its continuation
+        std::pair<InputSequence<Input>, InputSequence<Input>> generate(size_t prefix_size, size_t continuation_size) const
         {
-            InputSequence<Input> problem = { y0 };
-            while (problem.size() < prefix_size + continuation_size)
-                problem.push_back(rotate(rotate(problem.back(), a), b));
-            return problem;
+            InputSequence<Input> prefix = { y0 };
+            while (prefix.size() < prefix_size)
+                prefix.push_back(rotate(rotate(prefix.back(), a), b));
+
+            InputSequence<Input> continuation = { rotate(rotate(prefix.back(), a), b) };
+            while (continuation.size() < continuation_size)
+                continuation.push_back(rotate(rotate(continuation.back(), a), b));
+
+            return { prefix, continuation };
         }
     };
 

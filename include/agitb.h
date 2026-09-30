@@ -314,16 +314,14 @@ private:
             RepeatForever,
             []() {
                 const size_t world_rule_description_size = 3;
-                const size_t prefix_size = 5, continuation_size = 3;
+                const size_t prefix_size = 1, continuation_size = 3;
 
                 size_t informed_score = 0, uninformed_score = 0;
                 const int num_of_runs = 20;
                 for (int i = 0; i < num_of_runs; ++i) {
                     const sequence_generator G(world_rule_description_size);   // unknown random rules
-                    const auto& world = G.describe_world();
-                    const auto& problem = G.generate(prefix_size, continuation_size);
-                    const auto prefix = problem | std::views::take(prefix_size);
-                    const auto continuation = problem | std::views::drop(prefix_size);
+                    const auto& world = G.create_world();
+                    const auto [prefix, continuation] = G.generate(prefix_size, continuation_size);
 
                     Model informed, uninformed;
                     informed << world << prefix;
