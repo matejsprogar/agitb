@@ -20,6 +20,10 @@
 
 #include <iostream>
 #include <string>
+#include <array>
+#include <vector>
+#include <unordered_map>
+#include <numeric>
 #include <bitset>
 #include <format>
 #include <algorithm>
@@ -178,6 +182,7 @@ inline namespace utils {
         Model& operator << (const Input& p) { current_prediction = model(p); return *this; }
         ////////////////
         const Input& get_prediction() const { return current_prediction; }
+        const Input& operator ()() const { return current_prediction; }
 
         // Sequentially feeds each element of the range to the target.
         template <std::ranges::range Range>
@@ -274,6 +279,55 @@ inline namespace utils {
                 *this << in;
             }
             return predictions;
+        }
+    };
+ 
+    // Generates a world and a problem from two unknown random rules: rule 1 rotates an input by a channels, rule 2 by b.
+    // The world shows each rule acting in a row on a random pattern: x1 = rule1(x0), x2 = rule1(x1), ..., then rule 2
+    // on from there. The problem continues from the world's last state by applying both rules in turn at every step,
+    // i.e. rotating by a + b. A rotated pattern stays admissible exactly when it shares no active bit with its own
+    // rotation, so admissibility is ensured once, here, for streams of any length. The world is `world_length` inputs.
+    template <typename Input>
+    class sequence_generator
+    {
+        static constexpr size_t L = Input{}.size();
+        const int steps_per_rule;
+        size_t a, b;
+        Input x0, y0;                                               // y0: both rules applied to the world's last state
+
+        static Input rotate(const Input& x, size_t k) { k %= L; return k == 0 ? x : (x << k) | (x >> (L - k)); }
+        static bool admissible(const Input& x, size_t k) { return x.any() and (x & rotate(x, k)).none(); }
+    public:
+        sequence_generator(size_t steps) : steps_per_rule(steps)
+        {
+            do {
+                a = utils::random(1uz, L - 1);
+                b = utils::random(1uz, L - 1);
+            } while (a == b or (a + b) % L == 0);                   // two different rules; together they must move the pattern
+
+            do {
+                x0 = utils::random<Input>();
+            } while (not admissible(x0, a) or not admissible(x0, b) or not admissible(x0, a + b) or rotate(x0, a) == rotate(x0, b));
+
+            y0 = rotate(rotate(describe_world().back(), a), b);
+        }
+        // x0, then steps_per_rule applications of rule 1, then steps_per_rule applications of rule 2
+        InputSequence<Input> describe_world() const
+        {
+            InputSequence<Input> world = { x0 };
+            for (int t = 0; t < steps_per_rule; ++t)
+                world.push_back(rotate(world.back(), a));
+            for (int t = 0; t < steps_per_rule; ++t)
+                world.push_back(rotate(world.back(), b));
+            return world;
+        }
+        // from the world's last state on, both rules in turn at every step: a prefix followed by its continuation
+        InputSequence<Input> generate(size_t prefix_size, size_t continuation_size) const
+        {
+            InputSequence<Input> problem = { y0 };
+            while (problem.size() < prefix_size + continuation_size)
+                problem.push_back(rotate(rotate(problem.back(), a), b));
+            return problem;
         }
     };
 

@@ -42,6 +42,7 @@ class TestBed
     using Input = std::bitset<BitsPerInput>;
     using InputSequence = utils::InputSequence<Input>;
     using Model = utils::Model<SystemUnderEvaluation, Input, SimulatedInfinity>;
+    using sequence_generator = utils::sequence_generator<Input>;
 
     enum test_repetitions { RepeatOnce = 1, RepeatForever = SimulatedInfinity };
 
@@ -133,10 +134,8 @@ private:
                 trajectory.reserve(SimulatedInfinity);
 
                 // simplest edge case
-                A << Input{};
-                trajectory.push_back(A);
-                A << Input{};
-                ASSERT(A != trajectory.back());
+                A << Input();
+                ASSERT(A != Model());
 
                 // general behaviour
                 while (trajectory.size() < SimulatedInfinity) {
@@ -213,11 +212,22 @@ private:
                 size_t informed_score = 0, uninformed_score = 0;
                 for (int i = 0; i < 20; ++i) {
                     const InputSequence rhythm(InputSequence::rhythm, SequenceLength + 1);      // a period-8 sequence
-                    const auto until_last = rhythm | std::views::take(SequenceLength);
+                    InputSequence played = rhythm;                                      // two passes and the next one up
+                    played.insert(played.end(), rhythm.begin(), rhythm.end());          // to the closing input, played
+                    played.insert(played.end(), rhythm.begin(), rhythm.end() - 1);      // sloppily: any beat may be off
+                    for (size_t k = 1; k + 1 < played.size(); ++k) {
+                        const Input flippable = played[k] | ~(played[k - 1] | played[k + 1]);
+                        if (flippable.any() and utils::random(0.5)) {
+                            size_t bit;
+                            do bit = utils::random(0uz, BitsPerInput - 1); while (not flippable[bit]);
+                            played[k].flip(bit);
+                        }
+                    }
+                    const auto last_pass = played | std::views::drop(2 * rhythm.size());
 
                     Model informed = adult(), uninformed = adult();                     // lived on period-7 sequences
-                    informed << rhythm << rhythm << until_last;                         // two passes reveal the period
-                    uninformed << until_last;
+                    informed << played;                                                 // two passes reveal the period
+                    uninformed << last_pass;
 
                     informed_score += utils::match_score(informed.get_prediction(), rhythm.back());
                     uninformed_score += utils::match_score(uninformed.get_prediction(), rhythm.back());
@@ -300,11 +310,42 @@ private:
             }
         },
         {
+            "#11 Generalisation",
+            RepeatForever,
+            []() {
+                const size_t world_rule_description_size = 3;
+                const size_t prefix_size = 5, continuation_size = 3;
+
+                size_t informed_score = 0, uninformed_score = 0;
+                const int num_of_runs = 20;
+                for (int i = 0; i < num_of_runs; ++i) {
+                    const sequence_generator G(world_rule_description_size);   // unknown random rules
+                    const auto& world = G.describe_world();
+                    const auto& problem = G.generate(prefix_size, continuation_size);
+                    const auto prefix = problem | std::views::take(prefix_size);
+                    const auto continuation = problem | std::views::drop(prefix_size);
+
+                    Model informed, uninformed;
+                    informed << world << prefix;
+                    uninformed << prefix;
+                    
+                    for (Input x : continuation) {
+                        informed_score += utils::match_score(informed(), x);
+                        uninformed_score += utils::match_score(uninformed(), x);
+                        informed << x;
+                        uninformed << x;
+                    }
+                }
+
+                ASSERT(informed_score > uninformed_score);
+            }                
+        },
+        {
             // Each model update completes within a fixed wall-clock time bound, independent of the input history.
             // 
             // Here, a model is considered to exhibit real-time liveness if its measured update time does not exhibit 
             // significant scaling with input-history length.
-            "#11 Real-time liveness",
+            "#12 Real-time liveness",
             RepeatForever,
             []() {
                 // Measure a batch of updates instead of a single update to reduce timing noise.
