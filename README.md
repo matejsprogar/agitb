@@ -4,7 +4,7 @@ A small, self-contained C++ benchmark that evaluates predictive models on raw bi
 intended as a practical step toward artificial general intelligence. Provide your model and run AGITB.
 By design, most systems will not pass.
 
-AGITB includes 11 short, intuitive, fully automated tests.
+AGITB includes 12 short, intuitive, fully automated tests.
 
 - header-only implementation
 - no dependencies
@@ -31,8 +31,8 @@ Running the tests...
 #3 Trace
 1/5000
 
-Assertion failed in agitb.h:154
-ASSERT(A==B or not A.behaves_identically(B))
+Assertion failed in agitb.h:138
+ASSERT(A != Model());
 
 rng_seed: 2140661623
 ```
@@ -52,11 +52,9 @@ To distinguish surface-level imitation from measurable progress toward true gene
 
 ## Implementation
 
-AGITB is distributed as a header-only library. Its core component is the class template `TestBed<MyModel>`, where `MyModel` is the AGI type under evaluation. 
-Each instance represents a candidate model that receives an input object and predicts the next one.
+AGITB is distributed as a header-only library. Its core component is the class template `TestBed<MyModel>`, where `MyModel` is the AGI type under evaluation. Each instance represents a candidate model that receives an input object and predicts the next one.
 
-An input is a binary sample originating from (simulated) sensors or actuators. It consists of multiple parallel one-bit channels captured at a single time step. 
-Internally, AGITB uses `std::bitset<10>`, but models may define a custom input type (e.g. `MyInput`) as long as it is constructible from and convertible 
+An input is a binary sample originating from (simulated) sensors or actuators. It consists of multiple parallel one-bit channels captured at a single time step. Internally, AGITB uses `std::bitset<10>`, but models may define a custom input type (e.g. `MyInput`) as long as it is constructible from and convertible 
 to `std::bitset<>` (see below).
 
 
@@ -75,7 +73,7 @@ The `MyModel` class must:
 ```cpp
 class MyModel
 {
-	using MyInput = std::bitset<20>;  // or a custom input type satisfying the requirements below
+	using MyInput = std::bitset<10>;  // or a custom input type satisfying the requirements below
 
 public:
     bool operator==(const MyModel& rhs) const {
@@ -90,8 +88,7 @@ public:
 };
 ```
 #### Support for a custom `MyInput` class
-If `MyModel` was originally designed to operate on input types other than `std::bitset`, it can still be used, as long as `MyInput` 
-supports construction from and conversion to `std::bitset`:
+If `MyModel` was originally designed to operate on input types other than `std::bitset`, it can still be used, as long as `MyInput` supports construction from and conversion to `std::bitset`:
 
 ```cpp
 struct MyInput
@@ -121,32 +118,20 @@ int main() {
 }
 ```
 
-For faster feedback during development, you can reduce the input size and stream length by specifying them as template parameters.
-
-For example, to use 10-bit input streams with a length of 5 bits, define the test bed as follows:
-
-```cpp
-using AGITB = sprogar::AGI::TestBed<
-    MyModel,
-    sprogar::AGI::testbed_traits<10, 5>_
->;  // L = 10, N = 5
-```
-
-You can also control the thoroughness of the evaluation by specifying the number of repetitions for each test:
+For faster feedback during development, you can control the thoroughness of the evaluation by specifying the number of repetitions for each test:
 
 ```cpp
 AGITB::run(10);  // Repeat each test 10 times
 ```
 
-Increasing the number of repetitions improves the thoroughness of the evaluation, while reducing the input size and stream length can significantly shorten execution time during development.
+Increasing the number of repetitions improves the thoroughness of the evaluation. However, no finite number of tests can prove that a requirement is satisfied, as doing so would require testing an infinite number of cases.
 
 
 ---
 
 ## Reproducibility
 
-When a benchmark run fails, AGITB stops immediately at the first failing test and reports the **random generator seed** used for that run, 
-allowing the exact scenario to be reproduced.
+When a benchmark run fails, AGITB stops immediately at the first failing test and reports the **random generator seed** used for that run, allowing the exact scenario to be reproduced.
 
 Rerun the benchmark with the reported values to recreate the failure.
 
@@ -158,14 +143,16 @@ AGITB::run(3, 830706803);
 ---
 ## Cheating the Benchmark
 
-Because AGITB's individual tests are intentionally simple and transparent, it is theoretically possible to tailor a model specifically to the benchmark rather than to the underlying capabilities it is intended to measure. For example, one could modify the model comparison function or otherwise exploit knowledge of the testbed's implementation. Such strategies do not demonstrate general learning ability — they merely exploit the benchmark itself.
+Because AGITB consists of intentionally simple and transparent tests, it is conceivable that a model could be engineered to optimise for the benchmark rather than for the underlying learning capabilities it is intended to measure. 
 
-A more subtle form of gaming the benchmark would exploit the fact that the unbounded criteria cannot be verified in finite time. In such cases, the benchmark only approximates an otherwise indefinite evaluation process with 5,000 iterations, keeping execution times reasonably low to support rapid experimentation and iterative model development.
+For example, a model with a built-in mechanism that shifts its input around a ring of channels passes the test of Req. 11 without learning anything from the world it is shown, although such built-in knowledge is forbidden by Req. 1. One might argue that a rotation mechanism is merely an architectural choice. It is, however, the very rule the test is built on, and any other operation the test might use could be built in just as easily. Such a model is useless in general as it does not learn rules that govern the world. Unfortunately, no test of Req. 1 can detect pre-installed knowledge, because it can only compare fresh instances of a model with each other, and all of them are built alike.
 
-While AGITB could be made more resistant to different types of manipulation, doing so would inevitably reduce its transparency, interpretability, and ease of inspection. Since one of the benchmark's primary goals is to help researchers understand and improve their models, the reference implementation deliberately prioritises readability over adversarial robustness. Some safeguards against trivial exploitation are already in place if they do not obscure the benchmark's operation.
+For example, a model with a built-in mechanism that shifts its input around a ring of channels can pass the test of Req. 11 without learning anything from the world it is presented with, even though such pre-installed knowledge is prohibited by Req. 1. One might argue that the rotation mechanism is merely an architectural choice. However, in this case, it is precisely the rule on which the test is based, and any other operation used by the test could be built into the model in the same way. Such a model is of little use in general, as it does not learn the rules governing the world. Unfortunately, no test of Req. 1 can detect pre-installed knowledge, because it can only compare fresh instances of a model with one another, and all instances share the same built-in knowledge.
 
-For these reasons, the AGITB reference implementation is intentionally kept simple, readable, and efficient. Unless a practical method of exploiting the benchmark is demonstrated, introducing additional complexity solely to make the implementation harder to game would offer little benefit while diminishing its value as a research tool.
 
+Other potential avenues include exploiting weaknesses in the benchmark's randomisation or exploiting properties of the comparison procedure between model instances. Such strategies optimise performance with respect to the benchmark implementation rather than the underlying capabilities being assessed.
+
+In principle, the benchmark could be hardened against these forms of exploitation by introducing additional randomisation, obfuscation, or verification mechanisms. However, these measures would inevitably increase implementation complexity while reducing transparency, interpretability, and reproducibility. Since AGITB is intended not only as an evaluation protocol but also as a practical development tool, the reference implementation deliberately favours simplicity and readability over resistance to benchmark-specific optimisations.
 ---
 
 ## Feedback and contributions welcome
