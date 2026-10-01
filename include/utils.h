@@ -194,17 +194,18 @@ inline namespace utils {
             return *this;
         }
 
-        static InputSequence learnable_random_sequence(const size_t length)
+        auto learn_anything(const size_t length)
         {
-            for (time_t time = 0; time < SimulatedInfinity; time += length) {
-                const InputSequence in(InputSequence::circular_random, length);
-                Model M;
-                if (M.learn(in))
-                    return in;
+            const Model starting_point = *this;
+            for (size_t attempt = 0; attempt < SimulatedInfinity; ++attempt) {
+                const InputSequence seq(InputSequence::circular_random, length);
+                const time_t time = time_to_learn(seq);
+                if (time < Infinity)
+                    return std::make_pair(time, seq);
+                *this = starting_point;
             }
 
-            const bool learned_at_least_one_sequence = false;
-            ASSERT(learned_at_least_one_sequence);
+            return std::make_pair(Infinity, InputSequence());
         }
 
         // Constructs an adult: a model that has reached its capacity (see #6a) and then lived as long again, but never
@@ -216,11 +217,15 @@ inline namespace utils {
             rng.seed();
 
             Model M;
-            time_t youth = 0;                                       // sequences learned before the first failure
-            time_t minimal_life = 50;
-            while (youth < SimulatedInfinity and M.learn(learnable_random_sequence(length)))
-                ++youth;
-            for (time_t time = youth + 1; time < std::max(minimal_life, 2 * youth); ++time)     // successful or not
+
+            size_t adaptations = 0;
+            for (bool saturated = false; !saturated; adaptations += 1) {
+                auto [time, _] = M.learn_anything(length);
+                saturated = time == Infinity;
+            }
+
+            const size_t minimal_life = 50;
+            for (size_t times = adaptations + 1; times < std::max(minimal_life, 2 * adaptations); ++times)     // successful or not
                 M.learn(InputSequence(InputSequence::circular_random, length));
 
             rng = rng_state;
@@ -299,7 +304,7 @@ inline namespace utils {
         static Input rotate(const Input& x, size_t k) { k %= L; return k == 0 ? x : (x << k) | (x >> (L - k)); }
         static bool admissible(const Input& x, size_t k) { return x.any() and (x & rotate(x, k)).none(); }
     public:
-        sequence_generator(size_t steps) : steps_per_rule(steps)
+        sequence_generator(int steps) : steps_per_rule(steps)
         {
             do {
                 a = utils::random(1uz, L - 1);

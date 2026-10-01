@@ -78,11 +78,11 @@ public:
     {
         utils::rng.seed(utils::rng_seed = seed);
         ASSERT(test_number > 0 and test_number <= testbed.size());
-                
+
         const auto& [info, repetitions, test] = testbed[test_number-1];
 
         std::clog << yellow("Artificial General Intelligence Testbed");
-        std::clog << "\nRunning the test #" << test_number;
+        std::clog << "\nRunning a single test";
         std::clog << "\nRandom seed: " << rng_seed;
         std::clog << "\n\n" << info << std::endl;
 
@@ -92,7 +92,7 @@ public:
         std::clog << green("\nPASS\n");
         return true;
     }
-            
+
 private:
     static const Model& adult() { static const Model A = Model::adult(SequenceLength); return A; }
 
@@ -182,10 +182,10 @@ private:
             RepeatForever,
             []() {
                 auto inevitable_saturation = [](Model& A) -> bool {
-                    for (time_t time = 0; time < SimulatedInfinity; ++time) {
-                        InputSequence learnable_sequence = Model::learnable_random_sequence(SequenceLength);
+                    for (time_t attempt = 0; attempt < SimulatedInfinity; ++attempt) {
+                        const auto [time, learnable_sequence] = A.learn_anything(SequenceLength);
 
-                        if (not A.learn(learnable_sequence))
+                        if (time == Infinity)
                             return true;
                     }
                     return false;
@@ -212,22 +212,12 @@ private:
                 size_t informed_score = 0, uninformed_score = 0;
                 for (int i = 0; i < 20; ++i) {
                     const InputSequence rhythm(InputSequence::rhythm, SequenceLength + 1);      // a period-8 sequence
-                    InputSequence played = rhythm;                                      // two passes and the next one up
-                    played.insert(played.end(), rhythm.begin(), rhythm.end());          // to the closing input, played
-                    played.insert(played.end(), rhythm.begin(), rhythm.end() - 1);      // sloppily: any beat may be off
-                    for (size_t k = 1; k + 1 < played.size(); ++k) {
-                        const Input flippable = played[k] | ~(played[k - 1] | played[k + 1]);
-                        if (flippable.any() and utils::random(0.5)) {
-                            size_t bit;
-                            do bit = utils::random(0uz, BitsPerInput - 1); while (not flippable[bit]);
-                            played[k].flip(bit);
-                        }
-                    }
-                    const auto last_pass = played | std::views::drop(2 * rhythm.size());
+                    const auto prefix = rhythm | std::views::take(rhythm.size() - 1);
 
-                    Model informed = adult(), uninformed = adult();                     // lived on period-7 sequences
-                    informed << played;                                                 // two passes reveal the period
-                    uninformed << last_pass;
+                    Model informed = adult(), uninformed = adult();                     // experience on period-7 sequences
+
+                    informed << rhythm << rhythm << prefix; 
+                    uninformed << prefix;
 
                     informed_score += utils::match_score(informed.get_prediction(), rhythm.back());
                     uninformed_score += utils::match_score(uninformed.get_prediction(), rhythm.back());
@@ -243,17 +233,14 @@ private:
                 // Null Hypothesis: Adaptation time is independent of the input sequence content
                 auto adaptation_time_is_input_dependent = []() -> bool {
                     Model A;
-                    const InputSequence base_seq = Model::learnable_random_sequence(SequenceLength);
-                    const time_t A_time = A.time_to_learn(base_seq);
+                    const auto [A_time, base_seq] = A.learn_anything(SequenceLength);
                     for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
-                        InputSequence seq(InputSequence::circular_random, SequenceLength);          // admissible by construction
+                        InputSequence seq(InputSequence::circular_random, SequenceLength);
 
-                        if (seq != base_seq) {
-                            Model B;
-                            time_t B_time = B.time_to_learn(seq);
-                            if (B_time < Infinity and A_time != B_time)
-                                return true;
-                        }
+                        Model B;
+                        time_t B_time = B.time_to_learn(seq);
+                        if (B_time < Infinity and A_time != B_time)
+                            return true;
                     }
                     return false;
                 };
@@ -268,12 +255,11 @@ private:
             []() {
                 // Null Hypothesis: Adaptation time is independent of the model
                 auto adaptation_time_is_model_dependent = []() -> bool {
-                    const InputSequence seq = Model::learnable_random_sequence(SequenceLength);     // A_time < Infinity
                     Model A;
-                    const time_t A_time = A.time_to_learn(seq);
+                    const auto [A_time, seq] = A.learn_anything(SequenceLength);
                     for (size_t attempts = 0; attempts < SimulatedInfinity; ++attempts) {
                         Model B(Model::random); 
-                        
+
                         time_t B_time = B.time_to_learn(seq);
                         if (B_time < Infinity and A_time != B_time)
                             return true;
@@ -326,7 +312,7 @@ private:
                     Model informed, uninformed;
                     informed << world << prefix;
                     uninformed << prefix;
-                    
+
                     for (Input x : continuation) {
                         informed_score += utils::match_score(informed(), x);
                         uninformed_score += utils::match_score(uninformed(), x);
@@ -336,7 +322,7 @@ private:
                 }
 
                 ASSERT(informed_score > uninformed_score);
-            }                
+            }
         },
         {
             // Each model update completes within a fixed wall-clock time bound, independent of the input history.
@@ -376,7 +362,7 @@ private:
 
                 Model M;
                 time_t batch_time_pre = batch_time(M);
-                    
+
                 // a long random history (can violate #5 ARP)
                 for (size_t i = 0; i < SimulatedInfinity; ++i) 
                     M << InputSequence(InputSequence::circular_random, batch_size);
@@ -384,8 +370,8 @@ private:
                 time_t batch_time_post = batch_time(M);
 
                 double R = static_cast<double>(batch_time_post) / batch_time_pre;
-                double R_tolerated = 2;   // tolerate 100% noise, caching, allocation, etc. (R should be close to 1)  
-                    
+                double R_tolerated = 2;   // tolerate 100% noise, caching, allocation, etc. (R should be close to 1)
+
                 ASSERT(R < R_tolerated);
             } 
         }
