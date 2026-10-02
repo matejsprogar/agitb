@@ -197,9 +197,13 @@ inline namespace utils {
                 const time_t time = time_to_learn(seq);
                 if (time < Infinity)
                     return std::make_pair(time, seq);
+
+                Model M;
+                if (M.learn(seq))
+                    break;
+                
                 *this = starting_point;
             }
-
             return std::make_pair(Infinity, InputSequence());
         }
 
@@ -213,15 +217,10 @@ inline namespace utils {
 
             Model M;
 
-            size_t adaptations = 0;
-            for (bool saturated = false; !saturated; adaptations += 1) {
-                auto [time, _] = M.learn_anything(length);
-                saturated = time == Infinity;
-            }
-
-            const size_t minimal_life = 50;
-            for (size_t times = adaptations + 1; times < std::max(minimal_life, 2 * adaptations); ++times)     // successful or not
-                M.learn(InputSequence(InputSequence::circular_random, length));
+            for (size_t adaptations=0; 
+                M.learn_anything(length).first != Infinity and adaptations < SimulatedInfinity; 
+                ++adaptations) 
+            {}
 
             rng = rng_state;
             return M;
