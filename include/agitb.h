@@ -129,21 +129,17 @@ private:
             "#3 Trace",
             RepeatForever,
             []() {
-                Model A;
-                std::vector<Model> trajectory;
-                trajectory.reserve(SimulatedInfinity);
+                const Input x = random<Input>();
 
-                // simplest edge case
-                A << Input();
-                ASSERT(A != Model());
+                Model A, B;
+                A << x;                                                         // ... one input apart ...
+                B << ~x;
 
-                // general behaviour
-                while (trajectory.size() < SimulatedInfinity) {
-                    trajectory.push_back(A);
-                    A << random<Input>();
+                const InputSequence future(InputSequence::random, SimulatedInfinity);
+                A << future;
+                B << future;
 
-                    ASSERT(std::find(trajectory.begin(), trajectory.end(), A) == trajectory.end());
-                }
+                ASSERT(not A.behaves_identically(B));                           // the one input still shows
             }
         },
         {
