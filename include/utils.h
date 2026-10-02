@@ -295,36 +295,37 @@ inline namespace utils {
     class sequence_generator
     {
         static constexpr size_t L = Input{}.size();
-        const int world_description_length;
-        const int world_param = 1, other_param = 2;
-
+        static Input rotate(const Input& x, size_t k) { k %= L; return k == 0 ? x : (x << k) | (x >> (L - k)); }
+        
         typedef Input(*operation)(const Input&, size_t);
         const operation fun = rotate;
 
-        static Input rotate(const Input& x, size_t k) { k %= L; return k == 0 ? x : (x << k) | (x >> (L - k)); }
+        const int world_rotation = 1, test_rotation = 3;
+        InputSequence<Input> world;
 
-    public:
-        sequence_generator(int description_length) : world_description_length(description_length)
+        public:
+        sequence_generator()
         {
+            const Input x0 = { 0b0101010001 };
+            world.push_back(x0);
+            do {
+                world.push_back(rotate(world.back(), world_rotation));
+            } 
+            while (world.back() != x0);
+            world.pop_back();
         }
-        InputSequence<Input> create_world() const
+        auto generate() const
         {
-            InputSequence<Input> world = { 0b0101010001 };
-            for (int t = 0; t < world_description_length; ++t)
-                world.push_back(rotate(world.back(), world_param));
-            return world;
-        }
-        std::pair<InputSequence<Input>, InputSequence<Input>> generate(size_t prefix_size, size_t continuation_size) const
-        {
-            InputSequence<Input> prefix = { fun(create_world().back(), other_param) };
+            const size_t prefix_size = 1, size_t continuation_size = 1;
+            InputSequence<Input> prefix = { fun(world.back(), test_rotation) };
             while (prefix.size() < prefix_size)
-                prefix.push_back(fun(prefix.back(), other_param));
+                prefix.push_back(fun(prefix.back(), test_rotation));
 
-            InputSequence<Input> continuation = { fun(prefix.back(), other_param) };
+            InputSequence<Input> continuation = { fun(prefix.back(), test_rotation) };
             while (continuation.size() < continuation_size)
-                continuation.push_back( fun(continuation.back(), other_param) );
+                continuation.push_back( fun(continuation.back(), test_rotation) );
 
-            return { prefix, continuation };
+            return std::make_tuple( world, prefix, continuation );
         }
     };
 

@@ -299,30 +299,22 @@ private:
             "#11 Generalisation",
             RepeatOnce,
             []() {
-                const size_t world_rule_description_size = 70;
-                const size_t prefix_size = 4, continuation_size = 1;
+                const sequence_generator<Input> G;
+                const auto [world, prefix, continuation] = G.generate();
 
+                Model informed, uninformed;
+                informed.learn(world);
+                
+                informed << prefix;
+                uninformed << prefix;
+                
                 size_t informed_score = 0, uninformed_score = 0;
-                const int num_of_runs = 20;
-                for (int i = 0; i < num_of_runs; ++i) {
-                    const sequence_generator<Input> G(world_rule_description_size);   // unknown random rules
-                    const auto& world = G.create_world();
-                    const auto [prefix, continuation] = G.generate(prefix_size, continuation_size);
+                for (Input x : continuation) {
+                    informed_score += informed() == x;
+                    uninformed_score += uninformed() == x;
 
-                    Model informed, uninformed;
-                    informed << world << prefix;
-                    uninformed << prefix;
-
-                    for (Input x : continuation) {
-                        informed_score += informed() == x;
-                        uninformed_score += uninformed() == x;
-                        //informed_score += utils::match_score(informed(), x);
-                        //uninformed_score += utils::match_score(uninformed(), x);
-                        informed << x;
-                        uninformed << x;
-
-                        std::clog << '\n' << informed_score << '\t' << uninformed_score;
-                    }
+                    informed << x;
+                    uninformed << x;
                 }
 
                 ASSERT(informed_score > uninformed_score);
