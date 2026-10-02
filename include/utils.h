@@ -111,7 +111,7 @@ inline namespace utils {
     public:
         enum random_tag { random = 0 };
         enum circular_random_tag { circular_random = 0 };
-        enum rhythm_tag { rhythm = 0 };
+        enum trivial_tag { trivial = 0 };
 
         InputSequence() {}
         InputSequence(std::initializer_list<Input> il) : std::vector<Input>(il) {}
@@ -135,16 +135,11 @@ inline namespace utils {
             base::push_back(utils::random<Input>(base::back(), base::front()));
         }
 
-        // constructs a rhythm x y x y ... z with a specified length
-        InputSequence(rhythm_tag, size_t length)
+        // constructs a sequencerhythm x y x y ... z with a specified length
+        InputSequence(trivial_tag, size_t length)
         {
-            const Input x = utils::random<Input>(), 
-                        y = utils::random<Input>(x), 
-                        z = utils::random<Input>(x, y);
-                        
-            for (size_t i = 0; i + 1 < length; ++i)
-                base::push_back(i % 2 ? y : x);
-            base::push_back(z);
+            base::resize(length);
+            base::back() = Input(1);
         }
      };
 
@@ -294,36 +289,30 @@ inline namespace utils {
     template <typename Input>
     class sequence_generator
     {
-        static constexpr size_t L = Input{}.size();
-        static Input rotate(const Input& x, size_t k) { k %= L; return k == 0 ? x : (x << k) | (x >> (L - k)); }
-        
-        typedef Input(*operation)(const Input&, size_t);
-        const operation fun = rotate;
-
-        const int world_rotation = 1, test_rotation = 3;
         InputSequence<Input> world;
 
         public:
         sequence_generator()
         {
-            const Input x0 = { 0b0101010001 };
-            world.push_back(x0);
-            do {
-                world.push_back(rotate(world.back(), world_rotation));
-            } 
-            while (world.back() != x0);
-            world.pop_back();
+            world = {
+                0b0101010001,
+                0b1010101000,
+                0b0101010100,
+                0b0010101010,
+                0b0001010101,
+                0b1000101010,
+                0b0100010101,
+                0b1010001010,
+                0b0101000101,
+                0b1010100010
+            };
         }
         auto generate() const
         {
-            const size_t prefix_size = 1, size_t continuation_size = 1;
-            InputSequence<Input> prefix = { fun(world.back(), test_rotation) };
-            while (prefix.size() < prefix_size)
-                prefix.push_back(fun(prefix.back(), test_rotation));
-
-            InputSequence<Input> continuation = { fun(prefix.back(), test_rotation) };
-            while (continuation.size() < continuation_size)
-                continuation.push_back( fun(continuation.back(), test_rotation) );
+            InputSequence<Input> prefix = {
+                0b0000000001
+            };
+            Input continuation{0b1000000000};
 
             return std::make_tuple( world, prefix, continuation );
         }

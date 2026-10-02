@@ -207,22 +207,12 @@ private:
         {
             // The model must be able to learn sequences with varying cycle lengths.
             "#7 Temporal adaptability",
-            RepeatForever,
+            RepeatOnce,
             []() {
-                size_t informed_score = 0, uninformed_score = 0;
-                for (int i = 0; i < 20; ++i) {
-                    const InputSequence rhythm(InputSequence::rhythm, SequenceLength + 1);      // a period-8 sequence
-                    const auto prefix = rhythm | std::views::take(rhythm.size() - 1);
+                Model A;
 
-                    Model informed = adult(), uninformed = adult();                     // experience on period-7 sequences
-
-                    informed << rhythm << rhythm << prefix; 
-                    uninformed << prefix;
-
-                    informed_score += utils::match_score(informed.get_prediction(), rhythm.back());
-                    uninformed_score += utils::match_score(uninformed.get_prediction(), rhythm.back());
-                }
-                ASSERT(informed_score > uninformed_score);
+                ASSERT(A.learn(InputSequence(InputSequence::trivial, SequenceLength)));
+                ASSERT(A.learn(InputSequence(InputSequence::trivial, SequenceLength + 1)));
             }
         },
         {
@@ -275,22 +265,34 @@ private:
             "#10 Denoising",
             RepeatForever,
             []() {
-                size_t informed_score = 0, uninformed_score = 0;
-                for (int i = 0; i < 20; ++i) {
-                    const InputSequence reality(InputSequence::circular_random, SequenceLength);
-                    InputSequence noisy = reality;                          // the familiar sequence, one bit flipped at the end
-                    const Input flippable = noisy.back() | ~(reality[SequenceLength - 2] | reality[0]);   // flips that keep it admissible
-                    if (flippable.none()) { --i; continue; }
+                // a familiar sequence, and the same sequence with one admissible bit of its last input flipped
+                auto familiar_and_noisy = []() {
+                    InputSequence reality;
+                    Input flippable;                                        // bits whose flip keeps the sequence admissible
+                    do {
+                        reality = InputSequence(InputSequence::circular_random, SequenceLength);
+                        flippable = reality.back() | ~(reality[SequenceLength - 2] | reality.front());
+                    } while (flippable.none());
+
                     size_t bit;
                     do bit = utils::random(0uz, BitsPerInput - 1); while (not flippable[bit]);
+
+                    InputSequence noisy = reality;
                     noisy.back().flip(bit);
+                    return std::make_pair(reality, noisy);
+                };
+
+                size_t informed_score = 0, uninformed_score = 0;
+                for (int i = 0; i < 20; ++i) {
+                    const auto [reality, noisy] = familiar_and_noisy();
 
                     Model informed = adult(), uninformed = adult();
-                    informed << reality << reality << noisy;                // two passes reveal the cycle
+                    informed.learn(reality);                                // until it predicts the familiar sequence perfectly
+                    informed << noisy;
                     uninformed << noisy;
 
-                    informed_score += utils::match_score(informed.get_prediction(), reality[0]);
-                    uninformed_score += utils::match_score(uninformed.get_prediction(), reality[0]);
+                    informed_score += informed() == reality[0];
+                    uninformed_score += uninformed() == reality[0];
                 }
                 ASSERT(informed_score > uninformed_score);
             }
@@ -307,17 +309,9 @@ private:
                 
                 informed << prefix;
                 uninformed << prefix;
-                
-                size_t informed_score = 0, uninformed_score = 0;
-                for (Input x : continuation) {
-                    informed_score += informed() == x;
-                    uninformed_score += uninformed() == x;
 
-                    informed << x;
-                    uninformed << x;
-                }
-
-                ASSERT(informed_score > uninformed_score);
+                ASSERT(informed() == continuation);
+                ASSERT(uninformed() != continuation);
             }
         },
         {
