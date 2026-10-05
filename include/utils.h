@@ -242,6 +242,20 @@ inline namespace utils {
             return time_to_learn(inputs) < Infinity;
         }
 
+        // Adapts the model to the given input sequence until it predicts the sequence perfectly twice in a row, so that
+        // what it learned remains active; returns true if this happens within SimulatedInfinity passes.
+        bool master(const InputSequence& inputs)
+        {
+            bool perfect_before = false;
+            for (size_t pass = 0; pass < SimulatedInfinity; ++pass) {
+                const bool perfect = process(inputs) == inputs;
+                if (perfect and perfect_before)
+                    return true;
+                perfect_before = perfect;
+            }
+            return false;
+        }
+
         bool behaves_identically(Model& B)
         {
             Input x = utils::random<Input>();
@@ -282,36 +296,26 @@ inline namespace utils {
         }
     };
  
-    // Generates a simple world governed by a single rule that rotates bits in an input by 1 position at each time step.
-    // The problem is to generalise when a rotation increases to 2 positions.
-    // The world is described using 
+    // Generates a simple world governed by a single rule: at each time step, every bit of the input moves one position
+    // to the right; bit 0 falls off and a new bit enters at bit 9 every 7 steps. Channels 7 apart therefore always fire
+    // together, so learning which channel follows which cannot tell the rule apart from coincidences; the problem is to
+    // apply the rule to an input never seen before.
     template <typename Input>
-    class sequence_generator
+    struct world_generator
     {
-        InputSequence<Input> world;
-
-        public:
-        sequence_generator()
+        static auto generate()
         {
-            world = {
-                0b0101010001,
-                0b1010101000,
-                0b0101010100,
-                0b0010101010,
-                0b0001010101,
-                0b1000101010,
-                0b0100010101,
-                0b1010001010,
-                0b0101000101,
-                0b1010100010
+            const InputSequence<Input> world = {
+                0b1000000100,
+                0b0100000010,
+                0b0010000001,
+                0b0001000000,
+                0b0000100000,
+                0b0000010000,
+                0b0000001000
             };
-        }
-        auto generate() const
-        {
-            InputSequence<Input> prefix = {
-                0b0000000001
-            };
-            Input continuation{0b1000000000};
+            const Input prefix        = 0b0010000100;
+            const Input continuation  = 0b0001000010;
 
             return std::make_tuple( world, prefix, continuation );
         }

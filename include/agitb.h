@@ -302,11 +302,11 @@ private:
             "#11 Generalisation",
             RepeatOnce,
             []() {
-                const sequence_generator<Input> G;
-                const auto [world, prefix, continuation] = G.generate();
+                const auto [world, prefix, continuation] = world_generator<Input>::generate();
 
                 Model informed, uninformed;
-                informed.learn(world);
+
+                ASSERT(informed.master(world));                     // learn the world's rules, for good
                 
                 informed << prefix;
                 uninformed << prefix;
