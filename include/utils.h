@@ -207,23 +207,24 @@ inline namespace utils {
             return std::make_pair(Infinity, InputSequence());
         }
 
-        // Constructs an adult: a model that has reached its capacity (see #6a) and then lived as long again, but never
-        // shorter than a minimal life, so that a model cannot shorten its own test by failing early.
+        // Constructs an adult: a model that has reached its capacity (see #6a).
         // Every run lives the same life, which keeps failures reproducible; the caller's random state is left untouched.
         static Model adult(const size_t length)
         {
             const auto rng_state = rng;
             rng.seed();
 
-            Model M;
+            Model M, S;
 
-            for (size_t adaptations=0; 
+            for (size_t adaptations=0;
                 M.learn_anything(length).first != Infinity and adaptations < SimulatedInfinity; 
                 ++adaptations) 
-            {}
+            {
+                S = M;
+            }
 
             rng = rng_state;
-            return M;
+            return S;
         }
 
         // Adapts the model to the given input sequence and returns the number of timesteps needed to learn the sequence.

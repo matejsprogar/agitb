@@ -285,10 +285,14 @@ private:
 
                 size_t informed_score = 0, uninformed_score = 0;
                 for (int i = 0; i < 20; ++i) {
-                    const auto [reality, noisy] = familiar_and_noisy();
+                    InputSequence reality, noisy;
+                    Model informed;
+                    do {                                                    // a sequence the adult can learn
+                        informed = adult();
+                        std::tie(reality, noisy) = familiar_and_noisy();
+                    } while (not informed.learn(reality));
 
-                    Model informed = adult(), uninformed = adult();
-                    informed.learn(reality);                                // until it predicts the familiar sequence perfectly
+                    Model uninformed = adult();
                     informed << noisy;
                     uninformed << noisy;
 
