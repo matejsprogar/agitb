@@ -129,29 +129,20 @@ private:
             "#3 Trace",
             RepeatForever,
             []() {
-                auto learn_forever = [](Model& M, const InputSequence& seq) {
-                    for (size_t i=0; i<SimulatedInfinity; ++i)
-                        M.learn(seq);
-                };
                 const Input x = random<Input>();
-
-                const InputSequence start_1 = { x, x };                // violation to ARP(#5)
-                const InputSequence start_2 = { x, Input() };
+                const InputSequence start_A = { x, x };                         // violation to ARP(#5)
+                const InputSequence start_B = { x, Input() };                   // one input apart
+                const InputSequence pattern(InputSequence::trivial, SequenceLength);
 
                 Model A, B;
-                A << start_1;
-                B << start_2;
+                A << start_A;
+                B << start_B;
 
-                const InputSequence pattern(InputSequence::trivial, SequenceLength);
-                learn_forever(A, pattern);
-                learn_forever(B, pattern);
-
-                // cross-over: both models live through both starts, so neither start alone is what sets them apart
-                A << start_1 << pattern << start_2 << pattern;
-                B << start_1 << pattern << start_2 << pattern;
-
-                learn_forever(A, pattern);
-                learn_forever(B, pattern);
+                // the same long life for both, in which both beginnings recur
+                for (size_t i = 0; i < SimulatedInfinity; ++i) {
+                    A << pattern << start_A << pattern << start_B;
+                    B << pattern << start_A << pattern << start_B;
+                }
 
                 ASSERT(not A.behaves_identically(B));                           // the one input still shows
             }
