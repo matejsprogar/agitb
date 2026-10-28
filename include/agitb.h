@@ -306,7 +306,21 @@ private:
             "#11 Generalisation",
             RepeatOnce,
             []() {
-                const auto [world, prefix, continuation] = world_generator<Input>::generate();
+                // a simple world governed by a single rule: at each time step, every bit of the input moves one position
+                // to the right; the problem is to apply the rule to an input never seen before.
+                const InputSequence world = {
+                    0b1000100001,   // start
+                    0b0100010000,   // shift
+                    0b0000000000,   // next
+                    0b0000101000,   // start
+                    0b0000010100,   // shift
+                    0b0000000000,   // next
+                    0b1010000010,   // start
+                    0b0101000001,   // shift
+                    0b0000000000,   // clear
+                };
+                const Input prefix          = 0b0100000100;
+                const Input continuation    = 0b0010000010;
 
                 Model informed, uninformed;
 
