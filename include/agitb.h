@@ -311,16 +311,20 @@ private:
                 const InputSequence world = {
                     0b1000100001,   // start
                     0b0100010000,   // shift
+                    0b0010001000,   // shift
                     0b0000000000,   // next
                     0b0000101000,   // start
                     0b0000010100,   // shift
                     0b0000000000,   // next
                     0b1010000010,   // start
                     0b0101000001,   // shift
-                    0b0000000000,   // clear
+                    0b0010100000,   // shift
+                    0b0001010000,   // shift
+                    0b0000101000,   // shift
+                    0b0000000000,   // next
                 };
-                const Input prefix          = 0b0100000100;
-                const Input continuation    = 0b0010000010;
+                const Input prefix          = 0b0100000000;
+                const Input continuation    = 0b0010000000;
 
                 Model informed, uninformed;
 
