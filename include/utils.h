@@ -297,31 +297,6 @@ inline namespace utils {
         }
     };
  
-    // Generates a simple world governed by a single rule: at each time step, every bit of the input moves one position
-    // to the right; bit 0 falls off and a new bit enters at bit 9 every 7 steps. Channels 7 apart therefore always fire
-    // together, so learning which channel follows which cannot tell the rule apart from coincidences; the problem is to
-    // apply the rule to an input never seen before.
-    template <typename Input>
-    struct world_generator
-    {
-        static auto generate()
-        {
-            const InputSequence<Input> world = {
-                0b1000000100,
-                0b0100000010,
-                0b0010000001,
-                0b0001000000,
-                0b0000100000,
-                0b0000010000,
-                0b0000001000
-            };
-            const Input prefix        = 0b0010000100;
-            const Input continuation  = 0b0001000010;
-
-            return std::make_tuple( world, prefix, continuation );
-        }
-    };
-
     template <typename Func>
     time_t time_it(Func&& f) 
     {
