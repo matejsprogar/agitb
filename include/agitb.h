@@ -323,8 +323,8 @@ private:
                     0b0000101000,   // shift
                     0b0000000000,   // next
                 };
-                const Input prefix          = 0b0100000000;
-                const Input continuation    = 0b0010000000;
+                const Input prefix          = 0b0001001000;
+                const Input continuation    = 0b0000100100;
 
                 Model informed, uninformed;
 
