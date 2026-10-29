@@ -31,8 +31,9 @@ Running the tests...
 #3 Trace
 1/5000
 
-Assertion failed in agitb.h:138
-ASSERT(A != Model());
+Assertion failed in agitb.h:147
+not A.behaves_identically(B)
+
 
 rng_seed: 2140661623
 ```
@@ -145,10 +146,7 @@ AGITB::run(3, 830706803);
 
 Because AGITB consists of intentionally simple and transparent tests, it is conceivable that a model could be engineered to optimise for the benchmark rather than for the underlying learning capabilities it is intended to measure. 
 
-For example, a model with a built-in mechanism that shifts its input around a ring of channels passes the test of Req. 11 without learning anything from the world it is shown, although such built-in knowledge is forbidden by Req. 1. One might argue that a rotation mechanism is merely an architectural choice. It is, however, the very rule the test is built on, and any other operation the test might use could be built in just as easily. Such a model is useless in general as it does not learn rules that govern the world. Unfortunately, no test of Req. 1 can detect pre-installed knowledge, because it can only compare fresh instances of a model with each other, and all of them are built alike.
-
-For example, a model with a built-in mechanism that shifts its input around a ring of channels can pass the test of Req. 11 without learning anything from the world it is presented with, even though such pre-installed knowledge is prohibited by Req. 1. One might argue that the rotation mechanism is merely an architectural choice. However, in this case, it is precisely the rule on which the test is based, and any other operation used by the test could be built into the model in the same way. Such a model is of little use in general, as it does not learn the rules governing the world. Unfortunately, no test of Req. 1 can detect pre-installed knowledge, because it can only compare fresh instances of a model with one another, and all instances share the same built-in knowledge.
-
+For example, a model with a built-in mechanism that shifts its input to the right passes the test of Req. 11 without learning anything from the world it is shown, although such built-in knowledge is forbidden by Req. 1. One might argue that a shifting mechanism is merely an architectural choice. It is, however, the very rule the test is built on, and any other operation the test might use could be built in just as easily. Such a model is useless in general as it does not learn rules that govern the world. Unfortunately, no test of Req. 1 can detect pre-installed knowledge, because it can only compare fresh instances of a model with each other, and all of them are built alike.
 
 Other potential avenues include exploiting weaknesses in the benchmark's randomisation or exploiting properties of the comparison procedure between model instances. Such strategies optimise performance with respect to the benchmark implementation rather than the underlying capabilities being assessed.
 

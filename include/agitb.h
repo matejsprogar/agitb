@@ -306,8 +306,8 @@ private:
             "#11 Generalisation",
             RepeatOnce,
             []() {
-                // a simple world governed by a single rule: at each time step, every bit of the input moves one position
-                // to the right; the problem is to apply the rule to an input never seen before.
+                // a simple world governed by a single rule: a starting input is shifted to the right at least once;
+                // the problem is to apply the rule to an input never seen before.
                 const InputSequence world = {
                     0b1000100001,   // start
                     0b0100010000,   // shift

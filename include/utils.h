@@ -58,22 +58,6 @@ inline namespace utils {
         { c(t) } -> std::convertible_to<T>;
     };
 
-    template <size_t BitsPerInput>
-    size_t match_score(const std::bitset<BitsPerInput>& a, const std::bitset<BitsPerInput>& b)
-    {
-        return BitsPerInput - (a ^ b).count();
-    }
-
-    template <std::ranges::input_range R1, std::ranges::input_range R2>
-    size_t match_score(const R1& r1, const R2& r2)
-    {
-        size_t count = 0;
-        for (const auto& [x1, x2] : std::views::zip(r1, r2))
-            count += match_score(x1, x2);
-
-        return count;
-    }
-    
     bool random(double p) { 
         std::bernoulli_distribution bd(p);
         return bd(rng); 
