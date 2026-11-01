@@ -227,20 +227,6 @@ inline namespace utils {
             return time_to_learn(inputs) < Infinity;
         }
 
-        // Adapts the model to the given input sequence until it predicts the sequence perfectly twice in a row, so that
-        // what it learned remains active; returns true if this happens within SimulatedInfinity passes.
-        bool master(const InputSequence& inputs)
-        {
-            bool perfect_before = false;
-            for (size_t pass = 0; pass < SimulatedInfinity; ++pass) {
-                const bool perfect = process(inputs) == inputs;
-                if (perfect and perfect_before)
-                    return true;
-                perfect_before = perfect;
-            }
-            return false;
-        }
-
         bool behaves_identically(Model& B)
         {
             Input x = utils::random<Input>();
