@@ -151,6 +151,7 @@ For example, a model with a built-in mechanism that shifts its input to the righ
 Other potential avenues include exploiting weaknesses in the benchmark's randomisation or exploiting properties of the comparison procedure between model instances. Such strategies optimise performance with respect to the benchmark implementation rather than the underlying capabilities being assessed.
 
 In principle, the benchmark could be hardened against these forms of exploitation by introducing additional randomisation, obfuscation, or verification mechanisms. However, these measures would inevitably increase implementation complexity while reducing transparency, interpretability, and reproducibility. Since AGITB is intended not only as an evaluation protocol but also as a practical development tool, the reference implementation deliberately favours simplicity and readability over resistance to benchmark-specific optimisations.
+
 ---
 
 ## Feedback and contributions welcome
