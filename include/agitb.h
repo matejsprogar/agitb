@@ -308,26 +308,25 @@ private:
             []() {
                 // a simple world governed by a single rule: a starting input is shifted to the right at least once;
                 // the problem is to apply the rule to an input never seen before.
-                const Input stop = 0b0000000000;
                 const InputSequence case_1 = {
                     0b1000100001,   // start
                     0b0100010000,   // shift
                     0b0010001000,   // shift
-                    stop };
+                    0b0000000000 }; // silence
                 const InputSequence case_2 = {
                     0b0000101000,   // start
                     0b0000010100,   // shift
-                    stop };
+                    0b0000000000 }; // silence
                 const InputSequence case_3 = {
                     0b1010000010,   // start
                     0b0101000001,   // shift
                     0b0010100000,   // shift
                     0b0001010000,   // shift
                     0b0000101000,   // shift
-                    stop };
+                    0b0000000000 }; // silence
 
-                const Input start_case_x = 0b0001001000;
-                const Input shift_case_x = 0b0000100100;
+                const Input case_x_prefix       = 0b0001001000;
+                const Input case_x_continuation = 0b0000100100;
 
                 Model informed, uninformed;
 
@@ -337,11 +336,11 @@ private:
                 ASSERT(informed.learn(case_3));
                 ASSERT(informed.learn(case_2));
                 
-                informed << start_case_x;
-                uninformed << start_case_x;
+                informed << case_x_prefix;
+                uninformed << case_x_prefix;
 
-                ASSERT(informed() == shift_case_x);
-                ASSERT(uninformed() != shift_case_x);
+                ASSERT(informed() == case_x_continuation);
+                ASSERT(uninformed() != case_x_continuation);
             }
         },
         {
