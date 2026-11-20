@@ -87,6 +87,13 @@ inline namespace utils {
         return random_p<Input>(0.5, turn_off...);
     }
 
+    template<typename Container>
+    Container::const_reference random_element(const Container& container)
+    {
+        auto it = std::begin(container);
+        std::advance(it, random(0, container.size() - 1));
+        return *it;
+    }
 
     template <typename Input>
     class InputSequence : public std::vector<Input>

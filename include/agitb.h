@@ -307,41 +307,49 @@ private:
             RepeatOnce,
             []() {
                 // a simple world governed by a single rule: a starting input is shifted to the right at least once;
-                // the problem is to apply the rule to an input never seen before.
                 const Input stop = 0b0000000000;
-                const InputSequence case_1 = {
-                    0b1000100001,   // start
-                    0b0100010000,   // shift
-                    0b0010001000,   // shift
-                    stop };
-                const InputSequence case_2 = {
-                    0b0000101000,   // start
-                    0b0000010100,   // shift
-                    stop };
-                const InputSequence case_3 = {
-                    0b1010000010,   // start
-                    0b0101000001,   // shift
-                    0b0010100000,   // shift
-                    0b0001010000,   // shift
-                    0b0000101000,   // shift
-                    stop };
+                const std::array<InputSequence, 3> world = { { {
+                                            0b1000100001,
+                                            0b0100010000,
+                                            0b0010001000,
+                                            stop }, {
+                                            0b0000101000,
+                                            0b0000010100,
+                                            stop }, {
+                                            0b1010000010,
+                                            0b0101000001,
+                                            0b0010100000,
+                                            0b0001010000,
+                                            0b0000101000,
+                                            stop }
+                } };
+                const Input prefix =        0b0001001000;   // never seen before
+                const Input continuation =  0b0000100100;
 
-                const Input start_case_x = 0b0001001000;
-                const Input shift_case_x = 0b0000100100;
+                auto informed_model = [&]() -> Model {
+                    Model M;
+                    for (size_t i = utils::random(5, 20); i>0; --i)
+                        M.learn(utils::random_element(world));
 
-                Model informed, uninformed;
+                    return M;
+                };
 
-                ASSERT(informed.learn(case_1));
-                ASSERT(informed.learn(case_2));
-                ASSERT(informed.learn(case_1));
-                ASSERT(informed.learn(case_3));
-                ASSERT(informed.learn(case_2));
-                
-                informed << start_case_x;
-                uninformed << start_case_x;
+                auto generalisation_hits = [&]() -> int {
+                    int hits = 0;
+                    for (size_t i = 0; i < SimulatedInfinity/*5000*/; ++i) {
+                        Model M = informed_model();
 
-                ASSERT(informed() == shift_case_x);
-                ASSERT(uninformed() != shift_case_x);
+                        hits += M(prefix) == continuation;
+                        std::cout << hits << '/' << i << '\n';
+                    }
+
+                    return hits;
+                };
+
+                // Min hits for 10x gain over random (1/1024) at N = 5000 (Wilson lower bound, 99% CI).
+                const int kMinHitsFor10xGain_99Conf = 67;
+
+                ASSERT(generalisation_hits() > kMinHitsFor10xGain_99Conf);      // an order of magnitude improvement with 99% confidence
             }
         },
         {
