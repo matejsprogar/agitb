@@ -334,22 +334,24 @@ private:
                     return M;
                 };
 
-                auto generalisation_hits = [&]() -> int {
-                    int hits = 0;
+                auto generalisation_outperforms_random_guessing_by_a_magnitude = [&]() -> bool {
+                    // Min hits for 10x gain over random (1/1024) at N = 5000 (Wilson lower bound, 99% CI).
+                    const int k_min_hits_for_10x_gain_99_confidence = 67;
+
+                    int k_hits = 0;
                     for (size_t i = 0; i < SimulatedInfinity/*5000*/; ++i) {
                         Model M = informed_model();
 
-                        hits += M(prefix) == continuation;
-                        std::cout << hits << '/' << i << '\n';
+                        k_hits += M(prefix) == continuation;
+                        if (k_hits > k_min_hits_for_10x_gain_99_confidence)
+                            return true;
                     }
 
-                    return hits;
+                    return false;
                 };
 
-                // Min hits for 10x gain over random (1/1024) at N = 5000 (Wilson lower bound, 99% CI).
-                const int kMinHitsFor10xGain_99Conf = 67;
 
-                ASSERT(generalisation_hits() > kMinHitsFor10xGain_99Conf);      // an order of magnitude improvement with 99% confidence
+                ASSERT(generalisation_outperforms_random_guessing_by_a_magnitude());
             }
         },
         {
