@@ -303,7 +303,7 @@ private:
             }
         },
         {
-            "#11 Generalisation",
+           "#11 Generalisation",
             RepeatOnce,
             []() {
                 // a simple world governed by a single rule: a starting input is shifted to the right at least once;
@@ -323,19 +323,19 @@ private:
                                             0b0000101000,
                                             stop }
                 } };
-                const Input prefix =        0b0001001000;   // never seen before
-                const Input continuation =  0b0000100100;
+                const Input prefix = 0b0001001000;   // never seen before
+                const Input continuation = 0b0000100100;
 
                 auto informed_model = [&]() -> Model {
                     Model M;
-                    for (size_t i = utils::random(5, 20); i>0; --i)
+                    for (size_t i = utils::random(5, 20); i > 0; --i)
                         M.learn(utils::random_element(world));
 
                     return M;
                 };
 
-                auto generalisation_outperforms_random_guessing_by_a_magnitude = [&]() -> bool {
-                    // Min hits for 10x gain over random (1/1024) at N = 5000 (Wilson lower bound, 99% CI).
+                auto model_outperforms_random_guessing_by_a_magnitude = [&]() -> bool {
+                    // Min hits for 10x gain over random guessing (1/1024) at N = 5000 (Wilson lower bound, 99% CI).
                     const int k_min_hits_for_10x_gain_99_confidence = 67;
 
                     int k_hits = 0;
@@ -351,7 +351,7 @@ private:
                 };
 
 
-                ASSERT(generalisation_outperforms_random_guessing_by_a_magnitude());
+                ASSERT(model_outperforms_random_guessing_by_a_magnitude());
             }
         },
         {
