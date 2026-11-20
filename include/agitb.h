@@ -303,6 +303,7 @@ private:
             }
         },
         {
+            // Requires an order of magnitude better performance than random guessing.
            "#11 Generalisation",
             RepeatOnce,
             []() {
