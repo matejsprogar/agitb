@@ -56,13 +56,12 @@ public:
         std::clog << yellow("Artificial General Intelligence Testbed");
 
         std::clog << "\n\nRunning the tests...\n";
-        const std::string go_back(25, '\b'), clear(5, ' ');
         for (const auto& [info, repetitions, test] : testbed) {
-            std::clog << info << clear << std::endl;
+            std::clog << info << "     " << std::endl;
 
             const size_t test_repetitions = repetitions_override == 0 ? (size_t)repetitions : std::min((size_t)repetitions, repetitions_override);
             for (size_t r = 1; r <= test_repetitions; ++r) {
-                std::clog << r << '/' << test_repetitions << clear << go_back;
+                std::clog << r << '/' << test_repetitions << go_back;
 
                 utils::rng.seed(utils::rng_seed = utils::rng());
 
@@ -343,12 +342,14 @@ private:
                     const int k_min_hits_for_10x_gain_99_confidence = (int)std::ceil(N*p0 + z*std::sqrt(N*p0*(1 - p0)));
 
                     int k_hits = 0;
-                    for (size_t i = 0; i < SimulatedInfinity/*5000*/; ++i) {
+                    for (size_t i = 0; i < SimulatedInfinity; ++i) {
                         Model M = informed_model();
 
                         k_hits += M(prefix) == continuation;
-                        if (k_hits > k_min_hits_for_10x_gain_99_confidence)
+                        if (k_hits >= k_min_hits_for_10x_gain_99_confidence)
                             return true;
+
+                        std::clog << i << '/' << SimulatedInfinity << go_back;
                     }
 
                     return false;

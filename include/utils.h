@@ -38,9 +38,11 @@ namespace sprogar {
                                 red("Assertion failed"), __FILE__, __LINE__, #expression, utils::rng_seed), \
                             exit(-1), 0))
 
+// UI helpers
 inline std::string red(const char* msg) { return std::format("\033[91m{}\033[0m", msg); }
 inline std::string green(const char* msg) { return std::format("\033[92m{}\033[0m", msg); }
 inline std::string yellow(const char* msg) { return std::format("\033[93m{}\033[0m", msg); }
+inline const char go_back[] = "     \b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b";
 
 namespace AGI {
 inline namespace utils {
