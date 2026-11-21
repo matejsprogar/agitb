@@ -56,13 +56,12 @@ public:
         std::clog << yellow("Artificial General Intelligence Testbed");
 
         std::clog << "\n\nRunning the tests...\n";
-        const std::string go_back(25, '\b'), clear(5, ' ');
         for (const auto& [info, repetitions, test] : testbed) {
-            std::clog << info << clear << std::endl;
+            std::clog << info << "     " << std::endl;
 
             const size_t test_repetitions = repetitions_override == 0 ? (size_t)repetitions : std::min((size_t)repetitions, repetitions_override);
             for (size_t r = 1; r <= test_repetitions; ++r) {
-                std::clog << r << '/' << test_repetitions << clear << go_back;
+                std::clog << r << '/' << test_repetitions << go_back;
 
                 utils::rng.seed(utils::rng_seed = utils::rng());
 
@@ -303,44 +302,61 @@ private:
             }
         },
         {
-            "#11 Generalisation",
+            // Requires an order of magnitude better performance than random guessing.
+           "#11 Generalisation",
             RepeatOnce,
             []() {
                 // a simple world governed by a single rule: a starting input is shifted to the right at least once;
-                // the problem is to apply the rule to an input never seen before.
-                const InputSequence case_1 = {
-                    0b1000100001,   // start
-                    0b0100010000,   // shift
-                    0b0010001000,   // shift
-                    0b0000000000 }; // silence
-                const InputSequence case_2 = {
-                    0b0000101000,   // start
-                    0b0000010100,   // shift
-                    0b0000000000 }; // silence
-                const InputSequence case_3 = {
-                    0b1010000010,   // start
-                    0b0101000001,   // shift
-                    0b0010100000,   // shift
-                    0b0001010000,   // shift
-                    0b0000101000,   // shift
-                    0b0000000000 }; // silence
+                const Input stop = 0b0000000000;
+                const std::array<InputSequence, 3> world = { { {
+                                            0b1000100001,
+                                            0b0100010000,
+                                            0b0010001000,
+                                            stop }, {
+                                            0b0000101000,
+                                            0b0000010100,
+                                            stop }, {
+                                            0b1010000010,
+                                            0b0101000001,
+                                            0b0010100000,
+                                            0b0001010000,
+                                            0b0000101000,
+                                            stop }
+                } };
+                const Input prefix = 0b0001001000;   // never seen before
+                const Input continuation = 0b0000100100;
 
-                const Input case_x_prefix       = 0b0001001000;
-                const Input case_x_continuation = 0b0000100100;
+                auto informed_model = [&]() -> Model {
+                    Model M;
+                    for (size_t i = utils::random(5, 20); i > 0; --i)
+                        M.learn(utils::random_element(world));
 
-                Model informed, uninformed;
+                    return M;
+                };
 
-                ASSERT(informed.learn(case_1));
-                ASSERT(informed.learn(case_2));
-                ASSERT(informed.learn(case_1));
-                ASSERT(informed.learn(case_3));
-                ASSERT(informed.learn(case_2));
-                
-                informed << case_x_prefix;
-                uninformed << case_x_prefix;
+                auto model_outperforms_random_guessing_by_a_magnitude = [&]() -> bool {
+                    const double z = 2.576/*99% confidence*/, gain = 10;
+                    const double random_guess_prob = 1.0 / (1 << BitsPerInput);
+                    const double N = SimulatedInfinity, p0 = gain * random_guess_prob;
+                    // Min 67 hits for 10x gain over random guessing (1/1024) at N = 5000 (Wilson lower bound, 99% CI).
+                    const int k_min_hits_for_10x_gain_99_confidence = (int)std::ceil(N*p0 + z*std::sqrt(N*p0*(1 - p0)));
 
-                ASSERT(informed() == case_x_continuation);
-                ASSERT(uninformed() != case_x_continuation);
+                    int k_hits = 0;
+                    for (size_t i = 0; i < SimulatedInfinity; ++i) {
+                        Model M = informed_model();
+
+                        k_hits += M(prefix) == continuation;
+                        if (k_hits >= k_min_hits_for_10x_gain_99_confidence)
+                            return true;
+
+                        std::clog << i << '/' << SimulatedInfinity << go_back;
+                    }
+
+                    return false;
+                };
+
+
+                ASSERT(model_outperforms_random_guessing_by_a_magnitude());
             }
         },
         {

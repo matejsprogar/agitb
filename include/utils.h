@@ -38,9 +38,11 @@ namespace sprogar {
                                 red("Assertion failed"), __FILE__, __LINE__, #expression, utils::rng_seed), \
                             exit(-1), 0))
 
+// UI helpers
 inline std::string red(const char* msg) { return std::format("\033[91m{}\033[0m", msg); }
 inline std::string green(const char* msg) { return std::format("\033[92m{}\033[0m", msg); }
 inline std::string yellow(const char* msg) { return std::format("\033[93m{}\033[0m", msg); }
+inline const char go_back[] = "     \b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b";
 
 namespace AGI {
 inline namespace utils {
@@ -87,6 +89,13 @@ inline namespace utils {
         return random_p<Input>(0.5, turn_off...);
     }
 
+    template<typename Container>
+    Container::const_reference random_element(const Container& container)
+    {
+        auto it = std::begin(container);
+        std::advance(it, random(0, container.size() - 1));
+        return *it;
+    }
 
     template <typename Input>
     class InputSequence : public std::vector<Input>
