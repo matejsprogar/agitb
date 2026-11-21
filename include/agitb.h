@@ -336,8 +336,11 @@ private:
                 };
 
                 auto model_outperforms_random_guessing_by_a_magnitude = [&]() -> bool {
-                    // Min hits for 10x gain over random guessing (1/1024) at N = 5000 (Wilson lower bound, 99% CI).
-                    const int k_min_hits_for_10x_gain_99_confidence = 67;
+                    const double z = 2.576/*99% confidence*/, gain = 10;
+                    const double random_guess_prob = 1.0 / (1 << BitsPerInput);
+                    const double N = SimulatedInfinity, p0 = gain * random_guess_prob;
+                    // Min 67 hits for 10x gain over random guessing (1/1024) at N = 5000 (Wilson lower bound, 99% CI).
+                    const int k_min_hits_for_10x_gain_99_confidence = (int)std::ceil(N*p0 + z*std::sqrt(N*p0*(1 - p0)));
 
                     int k_hits = 0;
                     for (size_t i = 0; i < SimulatedInfinity/*5000*/; ++i) {
