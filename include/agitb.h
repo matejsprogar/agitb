@@ -302,11 +302,11 @@ private:
             }
         },
         {
-            // Requires an order of magnitude better performance than random guessing.
+            // Experience of the world improves prediction by an order of magnitude.
            "#11 Generalisation",
             RepeatOnce,
             []() {
-                // a simple world governed by a single rule: a starting input is shifted to the right at least once;
+                // a simple world governed by a single rule: a starting input is shifted to the right at least once
                 const Input stop = 0b0000000000;
                 const std::array<InputSequence, 3> world = { { {
                                             0b1000100001,
@@ -323,51 +323,56 @@ private:
                                             0b0000101000,
                                             stop }
                 } };
-                const Input prefix = 0b0001001000;   // never seen before
-                const Input continuation = 0b0000100100;
+                const Input prefix =        0b0001001000;    // never seen before
+                const Input continuation =  0b0000100100;    // never seen before
 
-                auto informed_model = [&]() -> Model {
-                    Model M;
-                    for (size_t i = utils::random(5, 20); i > 0; --i)
-                        M.learn(utils::random_element(world));
-
-                    return M;
+                // experience: the world model learns random cases of the world, the random model gets as many random inputs
+                auto world_and_random_models = [&]() {
+                    Model world_model, random_model;
+                    for (size_t i = utils::random(5, 20); i > 0; --i) {
+                        const InputSequence& world_case = utils::random_element(world);
+                        auto steps = world_model.time_to_learn(world_case);
+                        const size_t inputs = steps == Infinity ? SimulatedInfinity * world_case.size() : steps + world_case.size();
+                        random_model << InputSequence(InputSequence::random, inputs);
+                    }
+                    return std::pair{ world_model, random_model };
                 };
 
-                auto model_outperforms_random_guessing_by_a_magnitude = [&]() -> bool {
-                    const double z = 2.576/*99% confidence*/, gain = 10;
-                    const double random_guess_prob = 1.0 / (1 << BitsPerInput);
-                    const double N = SimulatedInfinity, p0 = gain * random_guess_prob;
-                    // Min 67 hits for 10x gain over random guessing (1/1024) at N = 5000 (Wilson lower bound, 99% CI).
-                    const int k_min_hits_for_10x_gain_99_confidence = (int)std::ceil(N*p0 + z*std::sqrt(N*p0*(1 - p0)));
-
-                    int k_hits = 0;
+                // sign test: a world model ten times better than the random one would win 10 in 11 pairs where only one model hits
+                auto experience_of_the_world_makes_an_order_of_magnitude_difference = [&]() -> bool {
+                    int W_only = 0, R_only = 0;
                     for (size_t i = 0; i < SimulatedInfinity; ++i) {
-                        Model M = informed_model();
-
-                        k_hits += M(prefix) == continuation;
-                        if (k_hits >= k_min_hits_for_10x_gain_99_confidence)
-                            return true;
+                        auto [W, R] = world_and_random_models();
+                        const bool W_hit = W(prefix) == continuation;
+                        const bool R_hit = R(prefix) == continuation;
+                        W_only += W_hit and not R_hit;
+                        R_only += R_hit and not W_hit;
 
                         std::clog << i << '/' << SimulatedInfinity << go_back;
                     }
 
-                    return false;
+                    // p_chance: the probability of at least W_only wins in n = W_only + R_only disagreeing pairs
+                    // if the world model were just ten times better, i.e. won each such pair with probability q = 10/11
+                    const double q = 10.0 / 11;
+                    const int n = W_only + R_only;
+                    double p_chance = 0;
+                    for (int k = W_only; k <= n; ++k)               // sum of C(n, k) q^k (1-q)^(n-k)
+                        p_chance += std::exp(std::lgamma(n + 1) - std::lgamma(k + 1) - std::lgamma(n - k + 1)
+                                            + k * std::log(q) + (n - k) * std::log(1 - q));
+
+                    return p_chance < 0.01;                         // more than ten times better
                 };
 
-
-                ASSERT(model_outperforms_random_guessing_by_a_magnitude());
+                ASSERT(Model{}(prefix) != continuation);            // the answer is not built in
+                ASSERT(experience_of_the_world_makes_an_order_of_magnitude_difference());
             }
         },
         {
             // Each model update completes within a fixed wall-clock time bound, independent of the input history.
-            // 
-            // Here, a model is considered to exhibit real-time liveness if its measured update time does not exhibit 
-            // significant scaling with input-history length.
             "#12 Real-time liveness",
             RepeatForever,
             []() {
-                // Measure a batch of updates instead of a single update to reduce timing noise.
+                // measure a batch of updates instead of a single update to reduce timing noise.
                 auto autotune_batch_size = [=]() -> size_t {
                     const time_t min_batch_duration_us = 100;
 
