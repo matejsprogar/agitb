@@ -331,36 +331,36 @@ private:
                     Model world_model, random_model;
                     for (size_t i = utils::random(5, 20); i > 0; --i) {
                         const InputSequence& world_case = utils::random_element(world);
-                        auto steps = world_model.time_to_learn(world_case);
-                        const size_t inputs = steps == Infinity ? SimulatedInfinity * world_case.size() : steps + world_case.size();
-                        random_model << InputSequence(InputSequence::random, inputs);
+                        InputSequence random_case(InputSequence::random, world_case.size());
+                        random_case.back() = stop;
+
+                        const time_t steps = world_model.time_to_learn(world_case);
+                        const size_t passes = steps == Infinity ? SimulatedInfinity : steps / world_case.size() + 1;
+                        for (size_t pass = 0; pass < passes; ++pass)
+                            random_model << random_case;
                     }
                     return std::pair{ std::move(world_model), std::move(random_model) };
                 };
 
-                // sign test: a world model ten times better than the random one would win 10 in 11 pairs where only one model hits
+                // of the pairs where only one model hits, a world model ten times better than the random one would win 10 in 11
                 auto experience_of_the_world_makes_an_order_of_magnitude_difference = [&]() -> bool {
-                    int W_only = 0, R_only = 0;
+                    int n_W = 0, n_R = 0;
                     for (size_t i = 0; i < SimulatedInfinity; ++i) {
                         auto [W, R] = world_and_random_models();
+
                         const bool W_hit = W(prefix) == continuation;
                         const bool R_hit = R(prefix) == continuation;
-                        W_only += W_hit and not R_hit;
-                        R_only += R_hit and not W_hit;
+                        n_W += W_hit and not R_hit;
+                        n_R += R_hit and not W_hit;
 
                         std::clog << i << '/' << SimulatedInfinity << go_back;
                     }
 
-                    // p_chance: the probability of at least W_only wins in n = W_only + R_only disagreeing pairs
-                    // if the world model were just ten times better, i.e. won each such pair with probability q = 10/11
-                    const double q = 10.0 / 11;
-                    const int n = W_only + R_only;
-                    double p_chance = 0;
-                    for (int k = W_only; k <= n; ++k)               // sum of C(n, k) q^k (1-q)^(n-k)
-                        p_chance += std::exp(std::lgamma(n + 1) - std::lgamma(k + 1) - std::lgamma(n - k + 1)
-                                            + k * std::log(q) + (n - k) * std::log(1 - q));
+                    // McNemar's statistic with 10x gain: how far n_W exceeds ten times n_R, in standard deviations
+                    const double gain = 10;
+                    const double z = (n_W - gain * n_R) / std::sqrt(gain * (n_W + n_R));
 
-                    return p_chance < 0.01;                         // more than ten times better
+                    return z > 2.326;                               // more than ten times better, at the 1% level (one-sided)
                 };
 
                 ASSERT(Model{}(prefix) != continuation);            // the answer is not built in
