@@ -335,7 +335,7 @@ private:
                         const size_t inputs = steps == Infinity ? SimulatedInfinity * world_case.size() : steps + world_case.size();
                         random_model << InputSequence(InputSequence::random, inputs);
                     }
-                    return std::pair{ world_model, random_model };
+                    return std::pair{ std::move(world_model), std::move(random_model) };
                 };
 
                 // sign test: a world model ten times better than the random one would win 10 in 11 pairs where only one model hits
